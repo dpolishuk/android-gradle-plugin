@@ -1,0 +1,15 @@
+//
+// A basic Android application split over a couple of Gradle projects.
+//
+
+apply plugin: 'android'
+
+version='1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':util')
+}
