@@ -13,14 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle
 
-class BuildType {
-    final String name
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.*
 
-    boolean zipAlign = true
+class ZipAlign extends DefaultTask {
+    @OutputFile
+    File outputFile
 
-    BuildType(String name) {
-        this.name = name
+    @Input
+    File sdkDir
+
+    @InputFile
+    File inputFile
+
+    @TaskAction
+    void generate() {
+        project.exec {
+            executable = new File(getSdkDir(), "tools/zipalign")
+            args '-f', '4'
+            args getInputFile()
+            args getOutputFile()
+        }
     }
 }

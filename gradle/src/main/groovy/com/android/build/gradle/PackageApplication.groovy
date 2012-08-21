@@ -13,24 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.*
 
-class InstallApplication extends DefaultTask {
+class PackageApplication extends DefaultTask {
+    @OutputFile
+    File outputFile
+
     @Input
     File sdkDir
 
     @InputFile
-    File packageFile
+    File resourceFile
+
+    @InputFile
+    File dexFile
 
     @TaskAction
     void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/adb")
-            args 'install'
-            args getPackageFile()
+        def antJar = new File(getSdkDir(), "tools/lib/anttasks.jar")
+        ant.taskdef(resource: "anttasks.properties", classpath: antJar)
+        ant.apkbuilder(apkFilepath: getOutputFile(),
+                resourcefile: project.fileResolver.withBaseDir(getOutputFile().parentFile).resolveAsRelativePath(getResourceFile()),
+                outfolder: getOutputFile().getParentFile(),
+                debugsigning: true) {
+            dex(path: getDexFile())
         }
     }
 }

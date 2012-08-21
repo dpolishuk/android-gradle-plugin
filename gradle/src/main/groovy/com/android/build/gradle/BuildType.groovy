@@ -13,30 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.*
+class BuildType {
+    final String name
 
-class Dex extends DefaultTask {
-    @OutputFile
-    File outputFile
+    boolean zipAlign = true
 
-    @Input
-    File sdkDir
-
-    @InputFiles
-    Iterable<File> sourceFiles
-
-    @TaskAction
-    void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/dx")
-            args '--dex'
-            args '--output', getOutputFile()
-            getSourceFiles().each {
-                args it
-            }
-        }
+    BuildType(String name) {
+        this.name = name
     }
 }

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.OutputFile
-import org.gradle.android.internal.AndroidManifest
+import com.android.build.gradle.internal.AndroidManifest
 import org.gradle.api.tasks.Optional
 
 class GenerateManifest extends DefaultTask {

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android.internal
+package com.android.build.gradle.internal
 
-import org.gradle.android.BuildType
+import com.android.build.gradle.BuildType
 import org.gradle.api.tasks.SourceSet
 
 class BuildTypeDimension {

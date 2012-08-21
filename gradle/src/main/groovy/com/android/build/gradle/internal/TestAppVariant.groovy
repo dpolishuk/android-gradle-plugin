@@ -13,29 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android.internal
+package com.android.build.gradle.internal
 
-import org.gradle.android.ProductFlavor
-import org.gradle.api.tasks.SourceSet
+import com.android.build.gradle.ProductFlavor
+import org.gradle.api.file.FileCollection
 
-class ProductFlavorDimension {
+class TestAppVariant implements ApplicationVariant {
+    final String name
     final ProductFlavor productFlavor
-    final Set<ProductionAppVariant> variants = []
-    final SourceSet mainSource
-    final SourceSet testSource
-    ProductionAppVariant debugVariant
+    FileCollection runtimeClasspath
+    FileCollection resourcePackage
 
-    ProductFlavorDimension(ProductFlavor productFlavor, SourceSet mainSource, SourceSet testSource) {
+    TestAppVariant(ProductFlavor productFlavor) {
+        this.name = "${productFlavor.name.capitalize()}Test"
         this.productFlavor = productFlavor
-        this.mainSource = mainSource
-        this.testSource = testSource
     }
 
-    String getName() {
-        return productFlavor.name
+    @Override
+    String getDescription() {
+        return "$productFlavor.name test"
     }
 
-    String getAssembleTaskName() {
-        return "assemble${productFlavor.name.capitalize()}"
+    String getDirName() {
+        return "${productFlavor.name}/test"
+    }
+
+    String getBaseName() {
+        return "$productFlavor.name-test"
+    }
+
+    @Override
+    boolean getZipAlign() {
+        return false
     }
 }

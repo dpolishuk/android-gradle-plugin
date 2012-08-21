@@ -3,5 +3,8 @@ local.properties
 *.ipr
 *.iws
 .gradle
-build
+/build
+gradle/build
+testapps/*/build
+testapps/multiproject/*/build
 /repo
