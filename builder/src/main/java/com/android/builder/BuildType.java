@@ -30,6 +30,8 @@ public class BuildType {
     private boolean mDebugSigningKey;
     private String mPackageNameSuffix = null;
 
+    private boolean mZipAlign = true;
+
     public BuildType(@NonNull String name) {
         this.mName = name;
         if (DEBUG.equals(name)) {
@@ -43,6 +45,7 @@ public class BuildType {
         mDebuggable = true;
         mDebugJniBuild = true;
         mDebugSigningKey = true;
+        mZipAlign = false;
     }
 
     private void initRelease() {
@@ -85,6 +88,14 @@ public class BuildType {
 
     @Nullable public String getPackageNameSuffix() {
         return mPackageNameSuffix;
+    }
+
+    public void setZipAlign(boolean zipAlign) {
+        mZipAlign = zipAlign;
+    }
+
+    public boolean isZipAlign() {
+        return mZipAlign;
     }
 
     /*

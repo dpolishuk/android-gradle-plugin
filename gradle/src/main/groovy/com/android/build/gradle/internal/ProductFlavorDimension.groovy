@@ -15,7 +15,7 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.build.gradle.ProductFlavor
+import com.android.builder.ProductFlavor
 import org.gradle.api.tasks.SourceSet
 
 class ProductFlavorDimension {

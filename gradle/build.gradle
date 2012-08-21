@@ -4,6 +4,7 @@ apply plugin: 'maven'
 
 dependencies {
     compile gradleApi()
+    compile project(':builder')
     groovy localGroovy()
 }
 
