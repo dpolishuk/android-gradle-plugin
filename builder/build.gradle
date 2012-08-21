@@ -1,0 +1,14 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// this is temporary
+	compile fileTree(dir: 'prebuilts', include: '*.jar')
+	testCompile 'junit:junit:3.8.1'
+}
+
