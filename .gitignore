@@ -2,5 +2,6 @@ local.properties
 *.iml
 *.ipr
 *.iws
-build
 .gradle
+build
+/repo

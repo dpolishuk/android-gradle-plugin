@@ -57,21 +57,25 @@ Have a look at the `basic/build.gradle` and `customized/build.gradle` build file
 
 The source tree contains the following:
 
-* The `buildSrc` directory contains the plugin implementation.
-* The `basic` directory contains a simple application that follows the conventions
-* The `customized` directory contains an application with some custom build types, product flavors and other
+* The `gradle` directory contains the plugin implementation.
+* The `testapps/basic` directory contains a simple application that follows the conventions
+* The `testapps/customized` directory contains an application with some custom build types, product flavors and other
 customizations.
-* The `multiproject` directory contains an application composed from several Gradle projects.
+* The `testapps/multiproject` directory contains an application composed from several Gradle projects.
 
 ## Usage
 
-Before you start, edit the `basic/local.properties` and `customized/local.properties` files to point at your local install
-of the Android SDK. Normally, these files would not be checked into source control, but would be generated when the
-project is bootstrapped.
+To build the plugin, run `./gradlew uploadArchives`
 
-Try `./gradlew basic:tasks` in the root directory.
+To import the plugin into the IDE, run `./gradlew idea` or `./gradlew eclipse`.
 
-You can also run:
+To build a test application:
+1. cd into the root directory of the test application.
+2. Edit the `local.properties` file to point at your local install of the Android SDK. Normally, these files would not
+be checked into source control, but would be generated when the project is bootstrapped.
+3. Run `../../gradlew tasks` to see the tasks that are available.
+
+You can also run these tasks:
 
 * `assemble` - builds all combinations of build type and product flavor
 * `assemble$BuildType` - build all flavors for the given build type.
