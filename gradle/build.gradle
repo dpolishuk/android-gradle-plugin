@@ -7,7 +7,7 @@ dependencies {
     groovy localGroovy()
 }
 
-group = 'com.google.android'
+group = 'com.android.build'
 version = '0.1-SNAPSHOT'
 archivesBaseName = 'gradle-android'
 

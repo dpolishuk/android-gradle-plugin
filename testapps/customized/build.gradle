@@ -3,7 +3,7 @@ buildscript {
         maven { url '../../repo' }
     }
     dependencies {
-        classpath 'com.google.android:gradle-android:0.1-SNAPSHOT'
+        classpath 'com.android.build:gradle-android:0.1-SNAPSHOT'
     }
 }
 apply plugin: 'android'

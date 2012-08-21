@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle
 
-import org.gradle.api.Action
-import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.*
 
-class AndroidLibraryExtension {
-    final NamedDomainObjectContainer<BuildType> buildTypes
+class InstallApplication extends DefaultTask {
+    @Input
+    File sdkDir
 
-    AndroidLibraryExtension(NamedDomainObjectContainer<BuildType> buildTypes) {
-        this.buildTypes = buildTypes
-    }
+    @InputFile
+    File packageFile
 
-    void buildTypes(Action<? super NamedDomainObjectContainer<BuildType>> action) {
-        action.execute(buildTypes)
+    @TaskAction
+    void generate() {
+        project.exec {
+            executable = new File(getSdkDir(), "platform-tools/adb")
+            args 'install'
+            args getPackageFile()
+        }
     }
 }

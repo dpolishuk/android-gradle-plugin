@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle.internal
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.*
+import org.gradle.api.file.FileCollection
 
-class CrunchResources extends DefaultTask {
-    @OutputDirectory
-    File outputDir
+/**
+ * Represents something that can be packaged into an APK and installed.
+ */
+public interface ApplicationVariant {
+    String getName()
 
-    @Input
-    File sdkDir
+    String getDescription()
 
-    @InputFiles
-    Iterable<File> sourceDirectories
+    String getDirName()
 
-    @TaskAction
-    void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/aapt")
-            args 'crunch'
-            args '-C', getOutputDir()
-            getSourceDirectories().each {
-                args '-S', it
-            }
-        }
-    }
+    String getBaseName()
+
+    boolean getZipAlign()
+
+    FileCollection getRuntimeClasspath()
+
+    FileCollection getResourcePackage()
 }

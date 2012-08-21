@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android
+package com.android.build.gradle
 
-import org.gradle.android.internal.BuildTypeDimension
-import org.gradle.android.internal.ProductFlavorDimension
+import com.android.build.gradle.internal.BuildTypeDimension
+import com.android.build.gradle.internal.ProductFlavorDimension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.Compile
-import org.gradle.android.internal.AndroidManifest
+import com.android.build.gradle.internal.AndroidManifest
 import org.gradle.internal.reflect.Instantiator
 
-import org.gradle.android.internal.ApplicationVariant
-import org.gradle.android.internal.TestAppVariant
-import org.gradle.android.internal.ProductionAppVariant
+import com.android.build.gradle.internal.ApplicationVariant
+import com.android.build.gradle.internal.TestAppVariant
+import com.android.build.gradle.internal.ProductionAppVariant
 
 class AndroidPlugin implements Plugin<Project> {
     private final Set<ProductionAppVariant> variants = []

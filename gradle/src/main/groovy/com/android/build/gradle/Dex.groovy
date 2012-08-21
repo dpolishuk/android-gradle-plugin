@@ -13,13 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android.internal
+package com.android.build.gradle
 
-/**
- * Represents something that contains source and resources.
- */
-public interface SourceVariant {
-    String getName()
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.*
 
-    String getDirName()
+class Dex extends DefaultTask {
+    @OutputFile
+    File outputFile
+
+    @Input
+    File sdkDir
+
+    @InputFiles
+    Iterable<File> sourceFiles
+
+    @TaskAction
+    void generate() {
+        project.exec {
+            executable = new File(getSdkDir(), "platform-tools/dx")
+            args '--dex'
+            args '--output', getOutputFile()
+            getSourceFiles().each {
+                args it
+            }
+        }
+    }
 }

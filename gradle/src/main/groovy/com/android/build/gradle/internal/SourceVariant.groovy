@@ -13,25 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android.internal
-
-import org.gradle.api.file.FileCollection
+package com.android.build.gradle.internal
 
 /**
- * Represents something that can be packaged into an APK and installed.
+ * Represents something that contains source and resources.
  */
-public interface ApplicationVariant {
+public interface SourceVariant {
     String getName()
 
-    String getDescription()
-
     String getDirName()
-
-    String getBaseName()
-
-    boolean getZipAlign()
-
-    FileCollection getRuntimeClasspath()
-
-    FileCollection getResourcePackage()
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.android.internal
+package com.android.build.gradle.internal
 
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
