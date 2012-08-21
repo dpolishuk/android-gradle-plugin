@@ -1,0 +1,11 @@
+apply plugin: 'java'
+
+version='1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.guava:guava:11.0.2'
+}
