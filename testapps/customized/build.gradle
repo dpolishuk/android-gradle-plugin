@@ -1,3 +1,11 @@
+buildscript {
+    repositories {
+        maven { url '../../repo' }
+    }
+    dependencies {
+        classpath 'com.google.android:gradle-android:0.1-SNAPSHOT'
+    }
+}
 apply plugin: 'android'
 
 version='1.0'

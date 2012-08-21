@@ -1,0 +1,20 @@
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'maven'
+
+dependencies {
+    compile gradleApi()
+    groovy localGroovy()
+}
+
+group = 'com.google.android'
+version = '0.1-SNAPSHOT'
+archivesBaseName = 'gradle-android'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri("$rootDir/repo"))
+        }
+    }
+}
