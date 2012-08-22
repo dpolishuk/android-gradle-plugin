@@ -18,6 +18,7 @@ package com.android.build.gradle.internal
 import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.compile.Compile
 
 class ProductionAppVariant implements ApplicationVariant {
     final String name
@@ -25,6 +26,7 @@ class ProductionAppVariant implements ApplicationVariant {
     final ProductFlavor productFlavor
     FileCollection runtimeClasspath
     FileCollection resourcePackage
+    Compile compileTask
 
     ProductionAppVariant(BuildType buildType, ProductFlavor productFlavor) {
         this.name = "${productFlavor.name.capitalize()}${buildType.name.capitalize()}"

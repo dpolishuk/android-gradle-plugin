@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal
+package com.android.builder;
 
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
+import java.io.File;
+import java.util.Set;
 
 /**
- * Represents something that can be packaged into an APK and installed.
+ * Provides paths for configuration (either ProductFlavor or BuildType)
  */
-public interface ApplicationVariant {
-    String getName()
+public interface PathProvider {
 
-    String getDescription()
+    Set<File> getJavaSource();
+    Set<File> getJavaResources();
 
-    String getDirName()
+    File getAndroidResources();
+    File getAndroidAssets();
+    File getAndroidManifest();
 
-    String getBaseName()
-
-    boolean getZipAlign()
-
-    FileCollection getRuntimeClasspath()
-
-    FileCollection getResourcePackage()
-
-    Compile getCompileTask()
+    File getAidlSource();
+    File getRenderscriptSource();
+    File getNativeSource();
 }

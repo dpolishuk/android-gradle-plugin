@@ -40,8 +40,8 @@ class AndroidLibraryPlugin implements Plugin<Project> {
             throw new UnsupportedOperationException("Removing build types is not implemented yet.")
         }
 
-        buildTypes.create('debug')
-        buildTypes.create('release')
+        buildTypes.create(BuildType.DEBUG)
+        buildTypes.create(BuildType.RELEASE)
     }
 
     void addBuildType(BuildType buildType) {

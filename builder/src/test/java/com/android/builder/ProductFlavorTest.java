@@ -40,7 +40,7 @@ public class ProductFlavorTest extends TestCase {
     }
 
     public void testMergeOnDefault() {
-        ProductFlavor flavor = mCustom.mergeWith(mDefault);
+        ProductFlavor flavor = mCustom.mergeOver(mDefault);
 
         assertEquals(42, flavor.getMinSdkVersion());
         assertEquals(43, flavor.getTargetSdkVersion());
@@ -52,7 +52,7 @@ public class ProductFlavorTest extends TestCase {
     }
 
     public void testMergeOnCustom() {
-        ProductFlavor flavor = mDefault.mergeWith(mCustom);
+        ProductFlavor flavor = mDefault.mergeOver(mCustom);
 
         assertEquals(42, flavor.getMinSdkVersion());
         assertEquals(43, flavor.getTargetSdkVersion());
@@ -64,7 +64,7 @@ public class ProductFlavorTest extends TestCase {
     }
 
     public void testMergeDefaultOnDefault() {
-        ProductFlavor flavor = mDefault.mergeWith(mDefault2);
+        ProductFlavor flavor = mDefault.mergeOver(mDefault2);
 
         assertEquals(-1, flavor.getMinSdkVersion());
         assertEquals(-1, flavor.getTargetSdkVersion());

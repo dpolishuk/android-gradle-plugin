@@ -17,17 +17,18 @@ package com.android.build.gradle.internal
 
 import com.android.builder.ProductFlavor
 import org.gradle.api.tasks.SourceSet
+import com.android.builder.ProductFlavorHolder
 
-class ProductFlavorDimension {
+class ProductFlavorDimension extends BaseDimension implements ProductFlavorHolder {
     final ProductFlavor productFlavor
     final Set<ProductionAppVariant> variants = []
-    final SourceSet mainSource
     final SourceSet testSource
     ProductionAppVariant debugVariant
 
-    ProductFlavorDimension(ProductFlavor productFlavor, SourceSet mainSource, SourceSet testSource) {
+    ProductFlavorDimension(ProductFlavor productFlavor, SourceSet mainSource, SourceSet testSource,
+                           String baseDir) {
+        super(mainSource, baseDir, productFlavor.name)
         this.productFlavor = productFlavor
-        this.mainSource = mainSource
         this.testSource = testSource
     }
 

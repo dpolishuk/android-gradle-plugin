@@ -19,10 +19,12 @@ package com.android.builder;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AaptOptions {
+public class AaptOptions implements Serializable {
+    private static final long serialVersionUID = 5790194851736528545L;
 
     private String mIgnoreAssetsPattern;
     private List<String> mNoCompressList;

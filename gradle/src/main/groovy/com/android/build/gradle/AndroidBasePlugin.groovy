@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal
+package com.android.build.gradle
 
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
+import com.android.builder.AndroidBuilder
+import com.android.builder.ProductFlavorHolder
+import com.android.builder.SdkParser
+import com.android.utils.ILogger
 
 /**
- * Represents something that can be packaged into an APK and installed.
+ * Base class for all Android plugins
  */
-public interface ApplicationVariant {
-    String getName()
+interface AndroidBasePlugin {
 
-    String getDescription()
+    SdkParser getSdkParser()
+    String getTarget()
+    ILogger getLogger()
+    boolean isVerbose()
 
-    String getDirName()
+    ProductFlavorHolder getMainFlavor()
 
-    String getBaseName()
-
-    boolean getZipAlign()
-
-    FileCollection getRuntimeClasspath()
-
-    FileCollection getResourcePackage()
-
-    Compile getCompileTask()
+    void setAndroidBuilder(AndroidBuilder androidBuilder)
 }

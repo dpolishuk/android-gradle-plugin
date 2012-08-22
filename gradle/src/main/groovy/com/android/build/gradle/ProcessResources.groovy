@@ -15,57 +15,44 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.OutputDirectory
+import com.android.builder.AaptOptions
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.InputFile
 
-class ProcessResources extends DefaultTask {
-    @Input
-    File sdkDir
-
-    @InputFiles
-    Iterable<File> sourceDirectories
-
-    @InputFiles
-    Iterable<File> includeFiles
+class ProcessResources extends BaseAndroidTask {
 
     @InputFile
-    File androidManifestFile
+    File manifestFile
 
-    @Input
-    String packageName
+    @InputDirectory @Optional
+    File crunchDir
 
     @OutputDirectory @Optional
     File sourceOutputDir
 
-    @OutputFile
+    @OutputFile @Optional
     File packageFile
+
+    @OutputFile @Optional
+    File proguardFile
+
+    @Input
+    AaptOptions aaptOptions
 
     @TaskAction
     void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/aapt")
-            args 'package'
-            args '-f'
-            args '-m'
-            args '--generate-dependencies'
-            args '--rename-manifest-package', getPackageName()
-            if (getSourceOutputDir() != null) {
-                args '-J', getSourceOutputDir()
-            }
-            args '-F', getPackageFile()
-            args '-M', getAndroidManifestFile()
-            getSourceDirectories().each {
-                args '-S', it
-            }
-            getIncludeFiles().each {
-                args '-I', it
-            }
-        }
+
+        provider.androidBuilder.processResources(
+                getManifestFile().absolutePath,
+                getCrunchDir()?.absolutePath,
+                getSourceOutputDir()?.absolutePath,
+                getPackageFile()?.absolutePath,
+                getProguardFile()?.absolutePath,
+                getAaptOptions())
     }
 }

@@ -16,34 +16,36 @@
 package com.android.build.gradle
 
 import com.android.builder.AndroidBuilder
-import com.android.builder.BuildType
-import com.android.builder.DefaultSdkParser
-import com.android.builder.ProductFlavor
-import com.android.utils.StdLogger
+import com.android.builder.BuildTypeHolder
+import com.android.builder.ProductFlavorHolder
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 /**
  */
 class ConfigureVariant extends DefaultTask {
-    AndroidPlugin plugin
+    AndroidBasePlugin plugin
 
     @Input
-    BuildType buildType
+    BuildTypeHolder buildType
 
-    @Input
-    ProductFlavor mainProductFlavor
-
-    @Input
-    ProductFlavor productFlavor
+    @Input @Optional
+    ProductFlavorHolder productFlavor
 
     @TaskAction
     void generate() {
-        plugin.androidBuilder = new AndroidBuilder(new DefaultSdkParser(sdkDir),
-                    new StdLogger(SdkLogger.Level.VERBOSE), true)
+        AndroidBuilder androidBuilder = new AndroidBuilder(plugin.sdkParser, plugin.logger, plugin.verbose)
 
-        plugin.androidBuilder.setTarget(plugin.extension.target)
-        plugin.androidBuilder.setBuildVariant(mainProductFlavor, productFlavor, buildType)
+        androidBuilder.setTarget(plugin.target)
+
+        androidBuilder.setBuildVariant(plugin.mainFlavor, buildType)
+
+        if (productFlavor != null) {
+            androidBuilder.addProductFlavor(productFlavor)
+        }
+
+        plugin.setAndroidBuilder(androidBuilder)
     }
 }

@@ -40,25 +40,27 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This is the main builder class. It is given all the data to process the build (such as
- * {@link ProductFlavor}, {@link BuildType} and dependencies) and use them when doing specific
+ * {@link ProductFlavor}s, {@link BuildType} and dependencies) and use them when doing specific
  * build steps.
  *
  * To use:
  * create a builder with {@link #AndroidBuilder(SdkParser, ILogger, boolean)},
  * configure compile target with {@link #setTarget(String)}
- * configure build variant with {@link #setBuildVariant(ProductFlavor, ProductFlavor, BuildType)},
+ * configure build variant with {@link #setBuildVariant(ProductFlavorHolder, BuildTypeHolder)},
+ * optionally add flavors with {@link #addProductFlavor(ProductFlavorHolder)},
  * configure dependencies with {@link #setAndroidDependencies(List)} and
  *     {@link #setJarDependencies(List)},
  *
  * then build steps can be done with
- * {@link #generateBuildConfig(String, String)}
+ * {@link #generateBuildConfig(String, java.util.List)}
  * {@link #mergeLibraryManifests(File, List, File)}
- * {@link #processResources(String, String, String, String, String, String, String, String, String, String, String, AaptOptions)}
+ * {@link #processResources(String, String, String, String, String, AaptOptions)}
  * {@link #convertBytecode(String, String, DexOptions)}
- * {@link #packageApk(String, String, String, String, String, String, String)}
+ * {@link #packageApk(String, String, String, String)}
  *
  * Java compilation is not handled but the builder provides the runtime classpath with
  * {@link #getRuntimeClasspath()}.
@@ -73,8 +75,10 @@ public class AndroidBuilder {
 
     private IAndroidTarget mTarget;
 
-    private ProductFlavor mProductFlavor;
-    private BuildType mBuildType;
+    private BuildTypeHolder mBuildTypeHolder;
+    private ProductFlavorHolder mMainFlavorHolder;
+    private List<ProductFlavorHolder> mFlavorHolderList;
+    private ProductFlavor mMergedFlavor;
 
     private List<JarDependency> mJars;
 
@@ -137,17 +141,39 @@ public class AndroidBuilder {
     }
 
     /**
-     * Sets the build variant by providing the main and custom flavors and the build type
-     * @param mainFlavor
-     * @param productFlavor
-     * @param buildType
+     * Sets the initial build variant by providing the main flavor and the build type.
+     * @param mainFlavorHolder the main ProductFlavor
+     * @param buildTypeHolder the Build Type.
      */
     public void setBuildVariant(
-            @NonNull ProductFlavor mainFlavor,
-            @NonNull ProductFlavor productFlavor,
-            @NonNull BuildType buildType) {
-        mProductFlavor = productFlavor.mergeWith(mainFlavor);
-        mBuildType = buildType;
+            @NonNull ProductFlavorHolder mainFlavorHolder,
+            @NonNull BuildTypeHolder buildTypeHolder) {
+        mMainFlavorHolder = mainFlavorHolder;
+        mBuildTypeHolder = buildTypeHolder;
+        mMergedFlavor = mMainFlavorHolder.getProductFlavor();
+        validateMainFlavor();
+    }
+
+    /**
+     * Add a new ProductFlavor.
+     *
+     * If multiple flavors are added, the priority follows the order they are added when it
+     * comes to resolving Android resources overlays (ie earlier added flavors supersedes
+     * latter added ones).
+     *
+     * @param productFlavorHolder the ProductFlavorHolder
+     */
+    public void addProductFlavor(ProductFlavorHolder productFlavorHolder) {
+        if (mMainFlavorHolder == null) {
+            throw new IllegalArgumentException(
+                    "main flavor is null. setBuildVariant must be called first");
+        }
+        if (mFlavorHolderList == null) {
+            mFlavorHolderList = new ArrayList<ProductFlavorHolder>();
+        }
+
+        mFlavorHolderList.add(productFlavorHolder);
+        mMergedFlavor = productFlavorHolder.getProductFlavor().mergeOver(mMergedFlavor);
     }
 
     /**
@@ -192,16 +218,25 @@ public class AndroidBuilder {
         resolveIndirectLibraryDependencies(directLibraryProjects, mFlatLibraryProjects);
     }
 
+    /**
+     * Generate the BuildConfig class for the project.
+     * @param sourceOutputDir directory where to put this. This is the source folder, not the
+     *                        package folder.
+     * @param additionalLines additional lines to put in the class. These must be valid Java lines.
+     * @throws IOException
+     */
     public void generateBuildConfig(
-            @NonNull String manifestLocation,
-            @NonNull String outGenLocation,
+            @NonNull String sourceOutputDir,
             @Nullable List<String> additionalLines) throws IOException {
-        if (mProductFlavor == null || mBuildType == null) {
+        if (mMainFlavorHolder == null || mBuildTypeHolder == null) {
             throw new IllegalArgumentException("No Product Flavor or Build Type set.");
         }
         if (mTarget == null) {
             throw new IllegalArgumentException("Target not set.");
         }
+
+        File manifest = mMainFlavorHolder.getAndroidManifest();
+        String manifestLocation = manifest.getAbsolutePath();
 
         String packageName = getPackageOverride(manifestLocation);
         if (packageName == null) {
@@ -209,16 +244,22 @@ public class AndroidBuilder {
         }
 
         BuildConfigGenerator generator = new BuildConfigGenerator(
-                outGenLocation, packageName, mBuildType.isDebuggable());
+                sourceOutputDir, packageName, mBuildTypeHolder.getBuildType().isDebuggable());
         generator.generate(additionalLines);
     }
 
-    public void preprocessResources(
-            @NonNull String mainResLocation,
-            @Nullable String flavorResLocation,
-            @Nullable String typeResLocation,
-            @NonNull String outResLocation) throws IOException, InterruptedException {
-        if (mProductFlavor == null || mBuildType == null) {
+    /**
+     * Pre-process resources. This crunches images and process 9-patches before they can
+     * be packaged.
+     * This is incremental.
+     *
+     * @param resOutputDir where the processed resources are stored.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void preprocessResources(@NonNull String resOutputDir)
+            throws IOException, InterruptedException {
+        if (mMainFlavorHolder == null || mBuildTypeHolder == null) {
             throw new IllegalArgumentException("No Product Flavor or Build Type set.");
         }
         if (mTarget == null) {
@@ -238,31 +279,41 @@ public class AndroidBuilder {
             command.add("-v");
         }
 
-        if (typeResLocation != null) {
+        File typeResLocation = mBuildTypeHolder.getAndroidResources();
+        if (typeResLocation != null && typeResLocation.isDirectory()) {
             command.add("-S");
-            command.add(typeResLocation);
+            command.add(typeResLocation.getAbsolutePath());
         }
 
-        if (flavorResLocation != null) {
-            command.add("-S");
-            command.add(flavorResLocation);
+        for (ProductFlavorHolder holder : mFlavorHolderList) {
+            File flavorResLocation = holder.getAndroidResources();
+            if (flavorResLocation != null && flavorResLocation.isDirectory()) {
+                command.add("-S");
+                command.add(flavorResLocation.getAbsolutePath());
+            }
         }
 
-        command.add("-S");
-        command.add(mainResLocation);
+        File mainResLocation = mMainFlavorHolder.getAndroidResources();
+        if (mainResLocation != null && mainResLocation.isDirectory()) {
+            command.add("-S");
+            command.add(mainResLocation.getAbsolutePath());
+        }
 
         command.add("-C");
-        command.add(outResLocation);
+        command.add(resOutputDir);
 
         mCmdLineRunner.runCmdLine(command);
     }
 
-    public void mergeManifest(
-            @NonNull String mainLocation,
-            @Nullable String flavorLocation,
-            @Nullable String typeLocation,
-            @NonNull String outManifestLocation) {
-        if (mProductFlavor == null || mBuildType == null) {
+    /**
+     * Merges all the manifest from the BuildType and ProductFlavor(s) into a single manifest.
+     *
+     * TODO: figure out the order. Libraries first or buildtype/flavors first?
+     *
+     * @param outManifestLocation the output location for the merged manifest
+     */
+    public void mergeManifest(@NonNull String outManifestLocation) {
+        if (mMainFlavorHolder == null || mBuildTypeHolder == null) {
             throw new IllegalArgumentException("No Product Flavor or Build Type set.");
         }
         if (mTarget == null) {
@@ -270,40 +321,52 @@ public class AndroidBuilder {
         }
 
         try {
-            if (flavorLocation == null && typeLocation == null &&
-                    mFlatLibraryProjects.size() == 0) {
-                new FileOp().copyFile(new File(mainLocation), new File(outManifestLocation));
+            File mainLocation = mMainFlavorHolder.getAndroidManifest();
+            File typeLocation = mBuildTypeHolder.getAndroidManifest();
+            if (typeLocation != null && typeLocation.isDirectory() == false) {
+                typeLocation = null;
+            }
+
+            List<File> flavorManifests = new ArrayList<File>();
+            for (ProductFlavorHolder holder : mFlavorHolderList) {
+                File f = holder.getAndroidManifest();
+                if (f != null && f.isDirectory()) {
+                    flavorManifests.add(f);
+                }
+            }
+
+            // if no manifest to merge, just copy to location
+            if (typeLocation == null && flavorManifests.isEmpty() &&
+                    mFlatLibraryProjects.isEmpty()) {
+                new FileOp().copyFile(mainLocation, new File(outManifestLocation));
             } else {
-                File appMergeOut;
-                if (mFlatLibraryProjects.size() == 0) {
-                    appMergeOut = new File(outManifestLocation);
+                if (mFlatLibraryProjects.isEmpty()) {
+
+                    File appMergeOut = new File(outManifestLocation);
+
+                    List<File> manifests = new ArrayList<File>();
+                    if (typeLocation != null) {
+                        manifests.add(typeLocation);
+                    }
+                    manifests.addAll(flavorManifests);
+
+                    ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger));
+                    if (merger.process(
+                            appMergeOut,
+                            mainLocation,
+                            manifests.toArray(new File[manifests.size()])) == false) {
+                        throw new RuntimeException();
+                    }
                 } else {
-                    appMergeOut = File.createTempFile("manifestMerge", ".xml");
+
+                    File appMergeOut = File.createTempFile("manifestMerge", ".xml");
                     appMergeOut.deleteOnExit();
-                }
 
-                List<File> manifests = new ArrayList<File>();
-                if (typeLocation != null) {
-                    manifests.add(new File(typeLocation));
-                }
-                if (flavorLocation != null) {
-                    manifests.add(new File(flavorLocation));
-                }
-
-                ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger));
-                if (merger.process(
-                        appMergeOut,
-                        new File(mainLocation),
-                        manifests.toArray(new File[manifests.size()])) == false) {
-                    throw new RuntimeException();
-                }
-
-                if (mFlatLibraryProjects.size() > 0) {
                     // recursively merge all manifests starting with the leaves and up toward the
                     // root (the app)
                     mergeLibraryManifests(appMergeOut, mDirectLibraryProjects,
                             new File(outManifestLocation));
-                }
+                    }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -341,19 +404,13 @@ public class AndroidBuilder {
     }
 
     public void processResources(
-            @NonNull String manifestLocation,
-            @NonNull String mainResLocation,
-            @Nullable String flavorResLocation,
-            @Nullable String typeResLocation,
-            @Nullable String crunchedResLocation,
-            @NonNull String mainAssetsLocation,
-            @Nullable String flavorAssetsLocation,
-            @Nullable String typeAssetsLocation,
-            @Nullable String outGenLocation,
-            @Nullable String outResPackageLocation,
-            @NonNull String outProguardLocation,
+            @NonNull String manifestFile,
+            @Nullable String preprocessResDir,
+            @Nullable String sourceOutputDir,
+            @Nullable String resPackageOutput,
+            @Nullable String proguardOutput,
             @NonNull AaptOptions options) throws IOException, InterruptedException {
-        if (mProductFlavor == null || mBuildType == null) {
+        if (mMainFlavorHolder == null || mBuildTypeHolder == null) {
             throw new IllegalArgumentException("No Product Flavor or Build Type set.");
         }
         if (mTarget == null) {
@@ -361,7 +418,7 @@ public class AndroidBuilder {
         }
 
         // if both output types are empty, then there's nothing to do and this is an error
-        if (outGenLocation == null && outResPackageLocation == null) {
+        if (sourceOutputDir == null && resPackageOutput == null) {
             throw new IllegalArgumentException("no output provided for aapt task");
         }
 
@@ -381,77 +438,87 @@ public class AndroidBuilder {
         command.add("-f");
         command.add("--no-crunch");
 
-
         // inputs
         command.add("-I");
         command.add(mTarget.getPath(IAndroidTarget.ANDROID_JAR));
 
         command.add("-M");
-        command.add(manifestLocation);
+        command.add(manifestFile);
 
         // TODO: handle libraries!
         boolean useOverlay =  false;
-        if (crunchedResLocation != null) {
+        if (preprocessResDir != null) {
             command.add("-S");
-            command.add(crunchedResLocation);
+            command.add(preprocessResDir);
             useOverlay = true;
         }
 
-        if (typeResLocation != null) {
+        File typeResLocation = mBuildTypeHolder.getAndroidResources();
+        if (typeResLocation != null && typeResLocation.isDirectory()) {
             command.add("-S");
-            command.add(typeResLocation);
+            command.add(typeResLocation.getAbsolutePath());
             useOverlay = true;
         }
 
-        if (flavorResLocation != null) {
-            command.add("-S");
-            command.add(flavorResLocation);
-            useOverlay = true;
+        for (ProductFlavorHolder holder : mFlavorHolderList) {
+            File flavorResLocation = holder.getAndroidResources();
+            if (flavorResLocation != null && typeResLocation.isDirectory()) {
+                command.add("-S");
+                command.add(flavorResLocation.getAbsolutePath());
+                useOverlay = true;
+            }
         }
 
+        File mainResLocation = mMainFlavorHolder.getAndroidResources();
         command.add("-S");
-        command.add(mainResLocation);
+        command.add(mainResLocation.getAbsolutePath());
 
         if (useOverlay) {
             command.add("--auto-add-overlay");
         }
 
-        if (typeAssetsLocation != null) {
-            command.add("-A");
-            command.add(typeAssetsLocation);
-        }
+        // TODO support 2+ assets folders.
+//        if (typeAssetsLocation != null) {
+//            command.add("-A");
+//            command.add(typeAssetsLocation);
+//        }
+//
+//        if (flavorAssetsLocation != null) {
+//            command.add("-A");
+//            command.add(flavorAssetsLocation);
+//        }
 
-        if (flavorAssetsLocation != null) {
+        File mainAssetsLocation = mMainFlavorHolder.getAndroidAssets();
+        if (mainAssetsLocation != null && mainAssetsLocation.isDirectory()) {
             command.add("-A");
-            command.add(flavorAssetsLocation);
+            command.add(mainAssetsLocation.getAbsolutePath());
         }
-
-        command.add("-A");
-        command.add(mainAssetsLocation);
 
         // outputs
 
-        if (outGenLocation != null) {
+        if (sourceOutputDir != null) {
             command.add("-m");
             command.add("-J");
-            command.add(outGenLocation);
+            command.add(sourceOutputDir);
         }
 
-        if (outResPackageLocation != null) {
+        if (resPackageOutput != null) {
             command.add("-F");
-            command.add(outResPackageLocation);
+            command.add(resPackageOutput);
 
-            command.add("-G");
-            command.add(outProguardLocation);
+            if (proguardOutput != null) {
+                command.add("-G");
+                command.add(proguardOutput);
+            }
         }
 
         // options controlled by build variants
 
-        if (mBuildType.isDebuggable()) {
+        if (mBuildTypeHolder.getBuildType().isDebuggable()) {
             command.add("--debug-mode");
         }
 
-        String packageOverride = getPackageOverride(manifestLocation);
+        String packageOverride = getPackageOverride(manifestFile);
         if (packageOverride != null) {
             command.add("--rename-manifest-package");
             command.add(packageOverride);
@@ -460,7 +527,7 @@ public class AndroidBuilder {
 
         boolean forceErrorOnReplace = false;
 
-        int versionCode = mProductFlavor.getVersionCode();
+        int versionCode = mMergedFlavor.getVersionCode();
         if (versionCode != -1) {
             command.add("--version-code");
             command.add(Integer.toString(versionCode));
@@ -468,7 +535,7 @@ public class AndroidBuilder {
             forceErrorOnReplace = true;
         }
 
-        String versionName = mProductFlavor.getVersionName();
+        String versionName = mMergedFlavor.getVersionName();
         if (versionName != null) {
             command.add("--version-name");
             command.add(versionName);
@@ -476,7 +543,7 @@ public class AndroidBuilder {
             forceErrorOnReplace = true;
         }
 
-        int minSdkVersion = mProductFlavor.getMinSdkVersion();
+        int minSdkVersion = mMergedFlavor.getMinSdkVersion();
         if (minSdkVersion != -1) {
             command.add("--min-sdk-version");
             command.add(Integer.toString(minSdkVersion));
@@ -484,7 +551,7 @@ public class AndroidBuilder {
             forceErrorOnReplace = true;
         }
 
-        int targetSdkVersion = mProductFlavor.getTargetSdkVersion();
+        int targetSdkVersion = mMergedFlavor.getTargetSdkVersion();
         if (targetSdkVersion != -1) {
             command.add("--target-sdk-version");
             command.add(Integer.toString(targetSdkVersion));
@@ -516,10 +583,10 @@ public class AndroidBuilder {
     }
 
     public void convertBytecode(
-            @NonNull String classesLocation,
+            @NonNull List<String> classesLocation,
             @NonNull String outDexFile,
             @NonNull DexOptions dexOptions) throws IOException, InterruptedException {
-        if (mProductFlavor == null || mBuildType == null) {
+        if (mMainFlavorHolder == null || mBuildTypeHolder == null) {
             throw new IllegalArgumentException("No Product Flavor or Build Type set.");
         }
         if (mTarget == null) {
@@ -533,18 +600,21 @@ public class AndroidBuilder {
         String dxPath = mTarget.getPath(IAndroidTarget.DX);
         command.add(dxPath);
 
+        command.add("--dex");
+
         if (mVerboseExec) {
-            command.add("-v");
+            command.add("--verbose");
         }
 
         command.add("--output");
         command.add(outDexFile);
 
         // TODO: handle dependencies
+        // TODO: handle dex options
 
         mLogger.verbose("Input: " + classesLocation);
 
-        command.add(classesLocation);
+        command.addAll(classesLocation);
 
         mCmdLineRunner.runCmdLine(command);
     }
@@ -553,21 +623,15 @@ public class AndroidBuilder {
      * Packages the apk.
      * @param androidResPkgLocation
      * @param classesDexLocation
-     * @param mainJavaResLocation
-     * @param flavorJavaResLocation
-     * @param buildTypeJavaResLocation
      * @param jniLibsLocation
      * @param outApkLocation
      */
     public void packageApk(
             @NonNull String androidResPkgLocation,
             @NonNull String classesDexLocation,
-            @NonNull String mainJavaResLocation,
-            @Nullable String flavorJavaResLocation,
-            @Nullable String buildTypeJavaResLocation,
-            @NonNull String jniLibsLocation,
-            @NonNull String outApkLocation) {
-        if (mProductFlavor == null || mBuildType == null) {
+            @Nullable String jniLibsLocation,
+            @NonNull String outApkLocation) throws DuplicateFileException {
+        if (mMainFlavorHolder == null || mBuildTypeHolder == null) {
             throw new IllegalArgumentException("No Product Flavor or Build Type set.");
         }
         if (mTarget == null) {
@@ -575,7 +639,7 @@ public class AndroidBuilder {
         }
 
         SigningInfo signingInfo = null;
-        if (mBuildType.isDebugSigningKey()) {
+        if (mBuildTypeHolder.getBuildType().isDebugSigningKey()) {
             try {
                 String storeLocation = DebugKeyHelper.defaultDebugKeyStoreLocation();
                 File storeFile = new File(storeLocation);
@@ -610,22 +674,42 @@ public class AndroidBuilder {
                     outApkLocation, androidResPkgLocation, classesDexLocation,
                     signingInfo, mLogger);
 
-            packager.setDebugJniMode(mBuildType.isDebugJniBuild());
+            packager.setDebugJniMode(mBuildTypeHolder.getBuildType().isDebugJniBuild());
 
             // figure out conflicts!
             JavaResourceProcessor resProcessor = new JavaResourceProcessor(packager);
-            resProcessor.addSourceFolder(buildTypeJavaResLocation);
-            resProcessor.addSourceFolder(flavorJavaResLocation);
-            resProcessor.addSourceFolder(mainJavaResLocation);
+
+            Set<File> buildTypeJavaResLocations = mBuildTypeHolder.getJavaResources();
+            for (File buildTypeJavaResLocation : buildTypeJavaResLocations) {
+                if (buildTypeJavaResLocation != null && buildTypeJavaResLocation.isDirectory()) {
+                    resProcessor.addSourceFolder(buildTypeJavaResLocation.getAbsolutePath());
+                }
+            }
+
+            for (ProductFlavorHolder holder : mFlavorHolderList) {
+
+                Set<File> flavorJavaResLocations = holder.getJavaResources();
+                for (File flavorJavaResLocation : flavorJavaResLocations) {
+                    if (flavorJavaResLocation != null && flavorJavaResLocation.isDirectory()) {
+                        resProcessor.addSourceFolder(flavorJavaResLocation.getAbsolutePath());
+                    }
+                }
+            }
+
+            Set<File> mainJavaResLocations = mMainFlavorHolder.getJavaResources();
+            for (File mainJavaResLocation : mainJavaResLocations) {
+                if (mainJavaResLocation != null && mainJavaResLocation.isDirectory()) {
+                    resProcessor.addSourceFolder(mainJavaResLocation.getAbsolutePath());
+                }
+            }
 
             // also add resources from library projects and jars
-
-            packager.addNativeLibraries(jniLibsLocation);
+            if (jniLibsLocation != null) {
+                packager.addNativeLibraries(jniLibsLocation);
+            }
 
             packager.sealApk();
         } catch (PackagerException e) {
-            throw new RuntimeException(e);
-        } catch (DuplicateFileException e) {
             throw new RuntimeException(e);
         } catch (SealedPackageException e) {
             throw new RuntimeException(e);
@@ -634,8 +718,8 @@ public class AndroidBuilder {
 
     @VisibleForTesting
     String getPackageOverride(@NonNull String manifestLocation) {
-        String packageName = mProductFlavor.getPackageName();
-        String packageSuffix = mBuildType.getPackageNameSuffix();
+        String packageName = mMergedFlavor.getPackageName();
+        String packageSuffix = mBuildTypeHolder.getBuildType().getPackageNameSuffix();
 
         if (packageSuffix != null) {
             if (packageName == null) {
@@ -682,6 +766,14 @@ public class AndroidBuilder {
             if (outFlatDependencies.contains(library) == false) {
                 outFlatDependencies.add(0, library);
             }
+        }
+    }
+
+    protected void validateMainFlavor() {
+        File manifest = mMainFlavorHolder.getAndroidManifest();
+        if (!manifest.isFile()) {
+            throw new IllegalArgumentException(
+                    "Main Manifest missing from " + manifest.getAbsolutePath());
         }
     }
 

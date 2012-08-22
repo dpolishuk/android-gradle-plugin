@@ -16,15 +16,32 @@
 
 package com.android.builder;
 
+import com.android.annotations.NonNull;
+import com.android.utils.ILogger;
 import com.android.utils.StdLogger;
-
 import junit.framework.TestCase;
 
 public class AndroidBuilderTest extends TestCase {
 
-    private ProductFlavor mMain;
-    private ProductFlavor mFlavor;
-    private BuildType mDebug;
+    private ProductFlavorHolder mMain;
+    private ProductFlavorHolder mFlavor;
+    private BuildTypeHolder mDebug;
+
+    private static class AndroidBuilderMock extends AndroidBuilder {
+
+        public AndroidBuilderMock(@NonNull SdkParser sdkParser, ILogger logger, boolean verboseExec) {
+            super(sdkParser, logger, verboseExec);
+        }
+
+        AndroidBuilderMock(@NonNull SdkParser sdkParser, @NonNull ManifestParser manifestParser, @NonNull CommandLineRunner cmdLineRunner, @NonNull ILogger logger, boolean verboseExec) {
+            super(sdkParser, manifestParser, cmdLineRunner, logger, verboseExec);
+        }
+
+        @Override
+        protected void validateMainFlavor() {
+            // do nothing
+        }
+    }
 
     private static class ManifestParserMock implements ManifestParser {
 
@@ -42,51 +59,55 @@ public class AndroidBuilderTest extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        mMain = new ProductFlavor("main");
-        mFlavor = new ProductFlavor("flavor");
-        mDebug = new BuildType("debug");
+        mMain = new ProductFlavorHolderMock(new ProductFlavor("main"));
+        mFlavor = new ProductFlavorHolderMock(new ProductFlavor("flavor"));
+        mDebug = new BuildTypeHolderMock(new BuildType("debug"));
     }
 
     public void testPackageOverrideNone() {
-        AndroidBuilder builder = new AndroidBuilder(new DefaultSdkParser(""),
+        AndroidBuilder builder = new AndroidBuilderMock(new DefaultSdkParser(""),
                 new StdLogger(StdLogger.Level.ERROR), false /*verboseExec*/);
 
-        builder.setBuildVariant(mMain, mFlavor, mDebug);
+        builder.setBuildVariant(mMain, mDebug);
+        builder.addProductFlavor(mFlavor);
 
         assertNull(builder.getPackageOverride(""));
     }
 
     public void testPackageOverridePackageFromFlavor() {
-        AndroidBuilder builder = new AndroidBuilder(new DefaultSdkParser(""),
+        AndroidBuilder builder = new AndroidBuilderMock(new DefaultSdkParser(""),
                 new StdLogger(StdLogger.Level.ERROR), false /*verboseExec*/);
 
-        mFlavor.setPackageName("foo.bar");
+        mFlavor.getProductFlavor().setPackageName("foo.bar");
 
-        builder.setBuildVariant(mMain, mFlavor, mDebug);
+        builder.setBuildVariant(mMain, mDebug);
+        builder.addProductFlavor(mFlavor);
 
         assertEquals("foo.bar", builder.getPackageOverride(""));
     }
 
     public void testPackageOverridePackageFromFlavorWithSuffix() {
-        AndroidBuilder builder = new AndroidBuilder(new DefaultSdkParser(""),
+        AndroidBuilder builder = new AndroidBuilderMock(new DefaultSdkParser(""),
                 new StdLogger(StdLogger.Level.ERROR), false /*verboseExec*/);
 
-        mFlavor.setPackageName("foo.bar");
-        mDebug.setPackageNameSuffix(".fortytwo");
+        mFlavor.getProductFlavor().setPackageName("foo.bar");
+        mDebug.getBuildType().setPackageNameSuffix(".fortytwo");
 
-        builder.setBuildVariant(mMain, mFlavor, mDebug);
+        builder.setBuildVariant(mMain, mDebug);
+        builder.addProductFlavor(mFlavor);
 
         assertEquals("foo.bar.fortytwo", builder.getPackageOverride(""));
     }
 
     public void testPackageOverridePackageFromFlavorWithSuffix2() {
-        AndroidBuilder builder = new AndroidBuilder(new DefaultSdkParser(""),
+        AndroidBuilder builder = new AndroidBuilderMock(new DefaultSdkParser(""),
                 new StdLogger(StdLogger.Level.ERROR), false /*verboseExec*/);
 
-        mFlavor.setPackageName("foo.bar");
-        mDebug.setPackageNameSuffix("fortytwo");
+        mFlavor.getProductFlavor().setPackageName("foo.bar");
+        mDebug.getBuildType().setPackageNameSuffix("fortytwo");
 
-        builder.setBuildVariant(mMain, mFlavor, mDebug);
+        builder.setBuildVariant(mMain, mDebug);
+        builder.addProductFlavor(mFlavor);
 
         assertEquals("foo.bar.fortytwo", builder.getPackageOverride(""));
     }
@@ -94,16 +115,17 @@ public class AndroidBuilderTest extends TestCase {
     public void testPackageOverridePackageWithSuffixOnly() {
         StdLogger logger = new StdLogger(StdLogger.Level.ERROR);
 
-        AndroidBuilder builder = new AndroidBuilder(
+        AndroidBuilder builder = new AndroidBuilderMock(
                 new DefaultSdkParser(""),
                 new ManifestParserMock("fake.package.name"),
                 new CommandLineRunner(logger),
                 logger,
                 false /*verboseExec*/);
 
-        mDebug.setPackageNameSuffix("fortytwo");
+        mDebug.getBuildType().setPackageNameSuffix("fortytwo");
 
-        builder.setBuildVariant(mMain, mFlavor, mDebug);
+        builder.setBuildVariant(mMain, mDebug);
+        builder.addProductFlavor(mFlavor);
 
         assertEquals("fake.package.name.fortytwo", builder.getPackageOverride(""));
     }

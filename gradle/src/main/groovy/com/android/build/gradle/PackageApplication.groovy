@@ -15,15 +15,16 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.*
+import com.android.builder.packaging.DuplicateFileException
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 
-class PackageApplication extends DefaultTask {
+class PackageApplication extends BaseAndroidTask {
     @OutputFile
     File outputFile
-
-    @Input
-    File sdkDir
 
     @InputFile
     File resourceFile
@@ -31,15 +32,25 @@ class PackageApplication extends DefaultTask {
     @InputFile
     File dexFile
 
+    @InputDirectory @Optional
+    File jniDir
+
     @TaskAction
     void generate() {
-        def antJar = new File(getSdkDir(), "tools/lib/anttasks.jar")
-        ant.taskdef(resource: "anttasks.properties", classpath: antJar)
-        ant.apkbuilder(apkFilepath: getOutputFile(),
-                resourcefile: project.fileResolver.withBaseDir(getOutputFile().parentFile).resolveAsRelativePath(getResourceFile()),
-                outfolder: getOutputFile().getParentFile(),
-                debugsigning: true) {
-            dex(path: getDexFile())
+
+        try {
+            provider.androidBuilder.packageApk(
+                    getResourceFile().absolutePath,
+                    getDexFile().absolutePath,
+                    getJniDir()?.absolutePath,
+                    getOutputFile().absolutePath)
+        } catch (DuplicateFileException e) {
+            def logger = getLogger()
+            logger.error("Error: duplicate files during packaging of APK " + getOutputFile().absolutePath)
+            logger.error("\tPath in archive: " + e.archivePath)
+            logger.error("\tOrigin 1: " + e.file1)
+            logger.error("\tOrigin 2: " + e.file2)
+            throw new RuntimeException();
         }
     }
 }
