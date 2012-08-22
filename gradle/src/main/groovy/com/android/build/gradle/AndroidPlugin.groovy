@@ -25,9 +25,7 @@ import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidBuilder
 import com.android.builder.BuildType
-import com.android.builder.DefaultSdkParser
 import com.android.builder.ProductFlavor
-import com.android.utils.StdLogger
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
@@ -138,9 +136,6 @@ class AndroidPlugin implements Plugin<Project> {
         if (!sdkDir.directory) {
             throw new RuntimeException("The SDK directory '$sdkDir' specified in local.properties does not exist.")
         }
-
-        androidBuilder = new AndroidBuilder(new DefaultSdkParser(sdkDir),
-                new StdLogger(SdkLogger.Level.VERBOSE), true);
     }
 
     private void addBuildType(BuildType buildType) {
@@ -233,8 +228,16 @@ class AndroidPlugin implements Plugin<Project> {
             productFlavor.debugVariant = variant
         }
 
+        // add the base configure task
+        def configureTask = project.tasks.add("configure${variant.name}", ConfigureVariant)
+        configureTask.plugin = this
+        configureTask.mainProductFlavor = variant.productFlavor
+        configureTask.productFlavor = variant.productFlavor
+        configureTask.buildType = variant.buildType
+
         // Add a task to generate the manifest
         def generateManifestTask = project.tasks.add("generate${variant.name}Manifest", GenerateManifest)
+        generateManifestTask.dependsOn configureTask
         generateManifestTask.sourceFile = project.file('src/main/AndroidManifest.xml')
         generateManifestTask.conventionMapping.outputFile = { project.file("$project.buildDir/manifests/main/$variant.dirName/AndroidManifest.xml") }
         generateManifestTask.conventionMapping.packageName = { getMainManifest().packageName }
@@ -243,6 +246,7 @@ class AndroidPlugin implements Plugin<Project> {
 
         // Add a task to crunch resource files
         def crunchTask = project.tasks.add("crunch${variant.name}Resources", CrunchResources)
+        crunchTask.dependsOn configureTask
         crunchTask.conventionMapping.outputDir = { project.file("$project.buildDir/resources/main/$variant.dirName") }
         crunchTask.sdkDir = sdkDir
         crunchTask.conventionMapping.sourceDirectories =  {
