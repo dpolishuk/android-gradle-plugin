@@ -2,20 +2,32 @@ apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'maven'
 
+configurations {
+    gradleApi
+    compile.extendsFrom gradleApi
+    gradleApi.extendsFrom groovy
+}
+
 dependencies {
-    compile gradleApi()
-    compile project(':builder')
+    gradleApi gradleApi()
     groovy localGroovy()
+    compile project(':builder')
 }
 
 group = 'com.android.build'
 version = '0.1-SNAPSHOT'
 archivesBaseName = 'gradle-android'
 
+jar {
+    from { (configurations.runtime - configurations.gradleApi).collect { it.directory ? it : zipTree(it) } }
+}
+
 uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: uri("$rootDir/repo"))
+            // Discard all the dependencies from the POM, as they are packaged in the JAR.
+            pom.scopeMappings.mappings.clear()
         }
     }
 }
