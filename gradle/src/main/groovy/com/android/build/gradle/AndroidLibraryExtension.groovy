@@ -15,6 +15,7 @@
  */
 package com.android.build.gradle
 
+import com.android.builder.BuildType
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 

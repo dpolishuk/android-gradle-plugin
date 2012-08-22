@@ -15,8 +15,8 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.build.gradle.BuildType
-import com.android.build.gradle.ProductFlavor
+import com.android.builder.BuildType
+import com.android.builder.ProductFlavor
 import org.gradle.api.file.FileCollection
 
 class ProductionAppVariant implements ApplicationVariant {

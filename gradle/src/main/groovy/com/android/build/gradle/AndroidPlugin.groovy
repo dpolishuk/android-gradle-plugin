@@ -15,19 +15,24 @@
  */
 package com.android.build.gradle
 
+import org.gradle.internal.reflect.Instantiator
+
+import com.android.build.gradle.internal.AndroidManifest
+import com.android.build.gradle.internal.ApplicationVariant
 import com.android.build.gradle.internal.BuildTypeDimension
 import com.android.build.gradle.internal.ProductFlavorDimension
+import com.android.build.gradle.internal.ProductionAppVariant
+import com.android.build.gradle.internal.TestAppVariant
+import com.android.builder.AndroidBuilder
+import com.android.builder.BuildType
+import com.android.builder.DefaultSdkParser
+import com.android.builder.ProductFlavor
+import com.android.utils.StdLogger
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.Compile
-import com.android.build.gradle.internal.AndroidManifest
-import org.gradle.internal.reflect.Instantiator
-
-import com.android.build.gradle.internal.ApplicationVariant
-import com.android.build.gradle.internal.TestAppVariant
-import com.android.build.gradle.internal.ProductionAppVariant
 
 class AndroidPlugin implements Plugin<Project> {
     private final Set<ProductionAppVariant> variants = []
@@ -37,6 +42,7 @@ class AndroidPlugin implements Plugin<Project> {
     private SourceSet main
     private SourceSet test
     private File sdkDir
+    private AndroidBuilder androidBuilder;
     private AndroidExtension extension
     private AndroidManifest mainManifest
 
@@ -73,9 +79,7 @@ class AndroidPlugin implements Plugin<Project> {
             throw new UnsupportedOperationException("Removing build types is not implemented yet.")
         }
 
-        buildTypes.create('debug') {
-            zipAlign = false
-        }
+        buildTypes.create('debug')
         buildTypes.create('release')
 
         productFlavors.whenObjectAdded { ProductFlavor flavor ->
@@ -112,21 +116,31 @@ class AndroidPlugin implements Plugin<Project> {
 
     private void findSdk(Project project) {
         def localProperties = project.file("local.properties")
-        if (!localProperties) {
-            throw new RuntimeException("No local.properties file found at ${localProperties}.")
+        if (localProperties) {
+            Properties properties = new Properties()
+            localProperties.withInputStream { instr ->
+                properties.load(instr)
+            }
+            def sdkDirProp = properties.getProperty('sdk.dir')
+            if (!sdkDirProp) {
+                throw new RuntimeException("No sdk.dir property defined in local.properties file.")
+            }
+            sdkDir = new File(sdkDirProp)
+        } else {
+            sdkDir = System.getProperty("ANDROID_HOME");
+
         }
-        Properties properties = new Properties()
-        localProperties.withInputStream { instr ->
-            properties.load(instr)
+
+        if (sdkDir == null) {
+            throw new RuntimeException("SDK location not found. Define location with sdk.dir in local.properties file or with ANDROID_HOME environment variable.")
         }
-        def sdkDirProp = properties.getProperty('sdk.dir')
-        if (!sdkDirProp) {
-            throw new RuntimeException("No sdk.dir property defined in local.properties file.")
-        }
-        sdkDir = new File(sdkDirProp)
+
         if (!sdkDir.directory) {
             throw new RuntimeException("The SDK directory '$sdkDir' specified in local.properties does not exist.")
         }
+
+        androidBuilder = new AndroidBuilder(new DefaultSdkParser(sdkDir),
+                new StdLogger(SdkLogger.Level.VERBOSE), true);
     }
 
     private void addBuildType(BuildType buildType) {

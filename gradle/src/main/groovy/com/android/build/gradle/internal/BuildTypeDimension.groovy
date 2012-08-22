@@ -15,7 +15,7 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.build.gradle.BuildType
+import com.android.builder.BuildType
 import org.gradle.api.tasks.SourceSet
 
 class BuildTypeDimension {
