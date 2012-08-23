@@ -13,28 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal
-
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
+package com.android.builder;
 
 /**
- * Represents something that can be packaged into an APK and installed.
+ * Holds a ProductFlavor and gives access to its various paths
  */
-public interface ApplicationVariant {
-    String getName()
+public interface ProductFlavorHolder extends PathProvider {
 
-    String getDescription()
-
-    String getDirName()
-
-    String getBaseName()
-
-    boolean getZipAlign()
-
-    FileCollection getRuntimeClasspath()
-
-    FileCollection getResourcePackage()
-
-    Compile getCompileTask()
+    ProductFlavor getProductFlavor();
 }

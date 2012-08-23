@@ -70,6 +70,6 @@ public class DebugKeyHelper {
             throws KeytoolException, FileNotFoundException {
 
         return KeystoreHelper.getSigningInfo(
-                keyStoreLocation, PASSWORD_STRING, storeStype, PASSWORD_STRING, PASSWORD_STRING);
+                keyStoreLocation, PASSWORD_STRING, storeStype, DEBUG_ALIAS, PASSWORD_STRING);
     }
 }

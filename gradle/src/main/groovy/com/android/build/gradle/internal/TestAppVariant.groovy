@@ -17,12 +17,14 @@ package com.android.build.gradle.internal
 
 import com.android.builder.ProductFlavor
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.compile.Compile
 
 class TestAppVariant implements ApplicationVariant {
     final String name
     final ProductFlavor productFlavor
     FileCollection runtimeClasspath
     FileCollection resourcePackage
+    Compile compileTask
 
     TestAppVariant(ProductFlavor productFlavor) {
         this.name = "${productFlavor.name.capitalize()}Test"

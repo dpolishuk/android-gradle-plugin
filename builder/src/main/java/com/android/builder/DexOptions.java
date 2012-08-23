@@ -16,6 +16,9 @@
 
 package com.android.builder;
 
-public class DexOptions {
+import java.io.Serializable;
+
+public class DexOptions implements Serializable {
+    private static final long serialVersionUID = -1484459443169056493L;
 
 }

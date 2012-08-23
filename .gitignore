@@ -8,3 +8,4 @@ gradle/build
 testapps/*/build
 testapps/multiproject/*/build
 /repo
+/out

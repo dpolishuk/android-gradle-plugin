@@ -16,6 +16,7 @@
 
 package com.android.builder.packaging;
 
+import com.android.annotations.NonNull;
 import com.android.builder.signing.SignedJarBuilder.IZipEntryFilter.ZipAbortException;
 
 import java.io.File;
@@ -29,7 +30,8 @@ public final class DuplicateFileException extends ZipAbortException {
     private final File mFile1;
     private final File mFile2;
 
-    public DuplicateFileException(String archivePath, File file1, File file2) {
+    public DuplicateFileException(@NonNull String archivePath, @NonNull File file1,
+                                  @NonNull File file2) {
         super();
         mArchivePath = archivePath;
         mFile1 = file1;
@@ -50,6 +52,6 @@ public final class DuplicateFileException extends ZipAbortException {
 
     @Override
     public String getMessage() {
-        return "Duplicate files at the same path inside the APK";
+        return "Duplicate files at the same path inside the APK: " + mArchivePath;
     }
 }

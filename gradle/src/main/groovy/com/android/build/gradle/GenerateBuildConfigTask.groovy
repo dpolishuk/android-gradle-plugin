@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal
+package com.android.build.gradle
 
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.TaskAction
 
-/**
- * Represents something that can be packaged into an APK and installed.
- */
-public interface ApplicationVariant {
-    String getName()
+class GenerateBuildConfigTask extends BaseAndroidTask {
 
-    String getDescription()
+    @OutputDirectory
+    File sourceOutputDir
 
-    String getDirName()
+    @Input @Optional
+    List<String> optionalJavaLines;
 
-    String getBaseName()
-
-    boolean getZipAlign()
-
-    FileCollection getRuntimeClasspath()
-
-    FileCollection getResourcePackage()
-
-    Compile getCompileTask()
+    @TaskAction
+    void generate() {
+        provider.androidBuilder.generateBuildConfig(getSourceOutputDir().absolutePath,
+                optionalJavaLines);
+    }
 }

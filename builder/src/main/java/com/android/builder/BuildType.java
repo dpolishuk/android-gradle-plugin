@@ -29,6 +29,7 @@ public class BuildType {
     private boolean mDebugJniBuild;
     private boolean mDebugSigningKey;
     private String mPackageNameSuffix = null;
+    private boolean mRunProguard = false;
 
     private boolean mZipAlign = true;
 
@@ -88,6 +89,14 @@ public class BuildType {
 
     @Nullable public String getPackageNameSuffix() {
         return mPackageNameSuffix;
+    }
+
+    public void setRunProguard(boolean runProguard) {
+        mRunProguard = runProguard;
+    }
+
+    public boolean isRunProguard() {
+        return mRunProguard;
     }
 
     public void setZipAlign(boolean zipAlign) {

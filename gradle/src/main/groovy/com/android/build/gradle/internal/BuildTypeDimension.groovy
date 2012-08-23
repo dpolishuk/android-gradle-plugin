@@ -17,15 +17,15 @@ package com.android.build.gradle.internal
 
 import com.android.builder.BuildType
 import org.gradle.api.tasks.SourceSet
+import com.android.builder.BuildTypeHolder
 
-class BuildTypeDimension {
+class BuildTypeDimension extends BaseDimension implements BuildTypeHolder {
     final BuildType buildType
     final Set<ProductionAppVariant> variants = []
-    final SourceSet mainSource
 
-    BuildTypeDimension(BuildType buildType, SourceSet mainSource) {
+    BuildTypeDimension(BuildType buildType, SourceSet mainSource, String baseDir) {
+        super(mainSource, baseDir, buildType.name)
         this.buildType = buildType
-        this.mainSource = mainSource
     }
 
     String getName() {

@@ -95,10 +95,10 @@ public class ProductFlavor {
 
     /**
      * Merges the flavor on top of a base platform and returns a new object with the result.
-     * @param base
-     * @return
+     * @param base the flavor to merge on top of
+     * @return a new merged product flavor
      */
-    ProductFlavor mergeWith(@NonNull ProductFlavor base) {
+    ProductFlavor mergeOver(@NonNull ProductFlavor base) {
         ProductFlavor flavor = new ProductFlavor("");
 
         flavor.mMinSdkVersion = chooseInt(mMinSdkVersion, base.mMinSdkVersion);

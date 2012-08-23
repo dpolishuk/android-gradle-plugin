@@ -23,7 +23,7 @@ import org.gradle.api.tasks.OutputFile
 import com.android.build.gradle.internal.AndroidManifest
 import org.gradle.api.tasks.Optional
 
-class GenerateManifest extends DefaultTask {
+class GenerateTestManifest extends DefaultTask {
     @InputFile @Optional
     File sourceFile
 
@@ -33,12 +33,6 @@ class GenerateManifest extends DefaultTask {
     @Input
     String packageName
 
-    @Input
-    Integer versionCode
-
-    @Input
-    String versionName
-
     @TaskAction
     def generate() {
         AndroidManifest manifest = new AndroidManifest()
@@ -46,8 +40,6 @@ class GenerateManifest extends DefaultTask {
             manifest.load(getSourceFile())
         }
         manifest.packageName = getPackageName()
-        manifest.versionCode = getVersionCode()
-        manifest.versionName = getVersionName()
         manifest.save(getOutputFile())
     }
 }

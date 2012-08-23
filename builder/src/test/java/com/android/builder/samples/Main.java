@@ -3,8 +3,10 @@ package com.android.builder.samples;
 import com.android.builder.AaptOptions;
 import com.android.builder.AndroidBuilder;
 import com.android.builder.BuildType;
+import com.android.builder.BuildTypeHolder;
 import com.android.builder.DefaultSdkParser;
 import com.android.builder.ProductFlavor;
+import com.android.builder.ProductFlavorHolder;
 import com.android.utils.StdLogger;
 
 import java.io.File;
@@ -12,6 +14,38 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class Main {
+
+    private static class DefaultBuildTypeHolder extends DefaultPathProvider
+            implements BuildTypeHolder {
+
+        private final BuildType mBuildType;
+
+        DefaultBuildTypeHolder(String root, BuildType buildType) {
+            super(root + File.separatorChar + "src" + File.separatorChar + buildType.getName());
+            mBuildType = buildType;
+        }
+
+        @Override
+        public BuildType getBuildType() {
+            return mBuildType;
+        }
+    }
+
+    private static class DefaultProductFlavorHolder extends DefaultPathProvider
+            implements ProductFlavorHolder {
+
+        private final ProductFlavor mProductFlavor;
+
+        DefaultProductFlavorHolder(String root, ProductFlavor productFlavor) {
+            super(root + File.separatorChar + "src" + File.separatorChar + productFlavor.getName());
+            mProductFlavor = productFlavor;
+        }
+
+        @Override
+        public ProductFlavor getProductFlavor() {
+            return mProductFlavor;
+        }
+    }
 
     /**
      * Usage: <sdklocation> <samplelocation>
@@ -38,8 +72,6 @@ public class Main {
 
         AaptOptions aaptOptions = new AaptOptions();
 
-        builder.setBuildVariant(mainFlavor, customFlavor, debug);
-
         String sample = args[1];
         String build = sample + File.separator + "build";
         checkFolder(build);
@@ -50,29 +82,26 @@ public class Main {
         String outRes = build + File.separator + "res";
         checkFolder(outRes);
 
+        DefaultProductFlavorHolder mainHolder = new DefaultProductFlavorHolder(sample, mainFlavor);
+        builder.setBuildVariant(
+                mainHolder,
+                new DefaultBuildTypeHolder(sample, debug));
+        builder.addProductFlavor(new DefaultProductFlavorHolder(sample, customFlavor));
+
+
         String[] lines = new String[] {
                 "public final static int A = 1;"
         };
         builder.generateBuildConfig(
-                sample + File.separator + "AndroidManifest.xml",
                 gen,
                 Arrays.asList(lines));
 
         builder.preprocessResources(
-                sample + File.separator + "res",
-                null, /*flavorResLocation*/
-                null, /*typeResLocation*/
                 outRes);
 
         builder.processResources(
-                sample + File.separator + "AndroidManifest.xml",
-                sample + File.separator + "res",
-                null, /*flavorResLocation*/
-                null, /*typeResLocation*/
+                mainHolder.getAndroidManifest().getAbsolutePath(),
                 outRes,
-                sample + File.separator + "assets",
-                null, /*flavorAssetsLocation*/
-                null, /*typeAssetsLocation*/
                 gen,
                 build + File.separator + "foo.apk_",
                 build + File.separator + "foo.proguard.txt",

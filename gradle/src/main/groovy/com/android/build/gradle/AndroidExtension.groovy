@@ -19,16 +19,18 @@ import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
+import com.android.builder.AaptOptions
+import com.android.builder.DexOptions
 
 class AndroidExtension {
     final NamedDomainObjectContainer<BuildType> buildTypes
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
     String target = "android-16"
-    String packageName
-    Integer versionCode
-    String versionName
+    final AaptOptions aaptOptions = new AaptOptions()
+    final DexOptions dexOptions = new DexOptions()
 
-    AndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes, NamedDomainObjectContainer<ProductFlavor> productFlavors) {
+    AndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes,
+                     NamedDomainObjectContainer<ProductFlavor> productFlavors) {
         this.buildTypes = buildTypes
         this.productFlavors = productFlavors
     }

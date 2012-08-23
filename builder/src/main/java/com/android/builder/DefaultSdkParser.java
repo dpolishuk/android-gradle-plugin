@@ -22,6 +22,8 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.android.utils.ILogger;
 
+import java.io.File;
+
 /**
  * Default implementation of {@link SdkParser} for a normal Android SDK distribution.
  */
@@ -30,7 +32,11 @@ public class DefaultSdkParser implements SdkParser {
     private final String mSdkLocation;
 
     public DefaultSdkParser(@NonNull String sdkLocation) {
-        mSdkLocation = sdkLocation;
+        if (!sdkLocation.endsWith(File.separator)) {
+            mSdkLocation = sdkLocation + File.separator;
+        } else {
+            mSdkLocation = sdkLocation;
+        }
     }
 
     @Override

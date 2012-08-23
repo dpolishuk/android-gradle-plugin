@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal
+package com.android.build.gradle
 
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
+import com.android.builder.AndroidBuilder
 
 /**
- * Represents something that can be packaged into an APK and installed.
+ * Gives access to an {@link AndroidBuilder}
  */
-public interface ApplicationVariant {
-    String getName()
+public interface AndroidBuilderProvider {
 
-    String getDescription()
-
-    String getDirName()
-
-    String getBaseName()
-
-    boolean getZipAlign()
-
-    FileCollection getRuntimeClasspath()
-
-    FileCollection getResourcePackage()
-
-    Compile getCompileTask()
+    /**
+     * Returns an {@link AndroidBuilder}
+     * @return an {@link AndroidBuilder}
+     */
+    AndroidBuilder getAndroidBuilder()
 }

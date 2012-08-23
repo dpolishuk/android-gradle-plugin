@@ -15,28 +15,31 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.*
+import com.android.builder.DexOptions
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 
-class Dex extends DefaultTask {
+class Dex extends BaseAndroidTask {
     @OutputFile
     File outputFile
-
-    @Input
-    File sdkDir
 
     @InputFiles
     Iterable<File> sourceFiles
 
+    @Input
+    DexOptions dexOptions
+
     @TaskAction
     void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/dx")
-            args '--dex'
-            args '--output', getOutputFile()
-            getSourceFiles().each {
-                args it
+        List<String> files = new ArrayList<String>();
+        for (File f : getSourceFiles()) {
+            if (f != null && f.exists()) {
+                files.add(f.absolutePath)
             }
         }
+
+        provider.androidBuilder.convertBytecode(files, getOutputFile().absolutePath, dexOptions)
     }
 }
