@@ -23,4 +23,14 @@ dependencies {
 
 android {
     target = "android-15"
+
+	productFlavors {
+		main {
+			signingStoreLocation = "debug.keystore"
+			signingStorePassword = "android"
+			signingKeyAlias = "androiddebugkey"
+			signingKeyPassword = "android"
+		}
+
+	}
 }
