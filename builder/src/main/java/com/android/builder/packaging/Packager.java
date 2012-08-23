@@ -244,7 +244,8 @@ public final class Packager implements IArchiveBuilder {
 
             mBuilder = new SignedJarBuilder(
                     new FileOutputStream(apkFile, false /* append */),
-                    signingInfo.getKey(), signingInfo.getCertificate());
+                    signingInfo != null ? signingInfo.getKey() : null,
+                    signingInfo != null ? signingInfo.getCertificate() : null);
 
             mLogger.verbose("Packaging %s", apkFile.getName());
 

@@ -20,3 +20,7 @@ repositories {
 dependencies {
     compile 'com.google.guava:guava:11.0.2'
 }
+
+android {
+    target = "android-15"
+}

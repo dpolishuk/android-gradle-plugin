@@ -27,6 +27,6 @@ class MergeManifest extends BaseAndroidTask {
 
     @TaskAction
     void generate() {
-        provider.androidBuilder.mergeManifest(getMergedManifest().absolutePath)
+        getBuilder().mergeManifest(getMergedManifest().absolutePath)
     }
 }

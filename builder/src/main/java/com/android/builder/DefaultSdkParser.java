@@ -30,6 +30,7 @@ import java.io.File;
 public class DefaultSdkParser implements SdkParser {
 
     private final String mSdkLocation;
+    private SdkManager mManager;
 
     public DefaultSdkParser(@NonNull String sdkLocation) {
         if (!sdkLocation.endsWith(File.separator)) {
@@ -41,12 +42,14 @@ public class DefaultSdkParser implements SdkParser {
 
     @Override
     public IAndroidTarget resolveTarget(String target, ILogger logger) {
-        SdkManager manager = SdkManager.createManager(mSdkLocation, logger);
-        if (manager != null) {
-            return manager.getTargetFromHashString(target);
-        } else {
-            throw new RuntimeException("failed to parse SDK!");
+        if (mManager == null) {
+            mManager = SdkManager.createManager(mSdkLocation, logger);
+            if (mManager == null) {
+                throw new RuntimeException("failed to parse SDK!");
+            }
         }
+
+        return mManager.getTargetFromHashString(target);
     }
 
     @Override

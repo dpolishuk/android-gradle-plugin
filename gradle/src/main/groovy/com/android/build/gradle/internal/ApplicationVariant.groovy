@@ -15,6 +15,8 @@
  */
 package com.android.build.gradle.internal
 
+import com.android.build.gradle.AndroidBasePlugin
+import com.android.builder.AndroidBuilder
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
 
@@ -32,9 +34,13 @@ public interface ApplicationVariant {
 
     boolean getZipAlign()
 
+    boolean isSigned()
+
     FileCollection getRuntimeClasspath()
 
     FileCollection getResourcePackage()
 
     Compile getCompileTask()
+
+    AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
 }

@@ -40,6 +40,6 @@ class Dex extends BaseAndroidTask {
             }
         }
 
-        provider.androidBuilder.convertBytecode(files, getOutputFile().absolutePath, dexOptions)
+        getBuilder().convertBytecode(files, getOutputFile().absolutePath, dexOptions)
     }
 }

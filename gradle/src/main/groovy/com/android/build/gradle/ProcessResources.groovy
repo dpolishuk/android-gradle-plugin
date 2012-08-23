@@ -47,7 +47,7 @@ class ProcessResources extends BaseAndroidTask {
     @TaskAction
     void generate() {
 
-        provider.androidBuilder.processResources(
+        getBuilder().processResources(
                 getManifestFile().absolutePath,
                 getCrunchDir()?.absolutePath,
                 getSourceOutputDir()?.absolutePath,

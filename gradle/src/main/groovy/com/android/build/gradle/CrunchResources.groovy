@@ -24,6 +24,6 @@ class CrunchResources extends BaseAndroidTask {
 
     @TaskAction
     void generate() {
-        provider.androidBuilder.preprocessResources(getOutputDir().absolutePath)
+        getBuilder().preprocessResources(getOutputDir().absolutePath)
     }
 }
