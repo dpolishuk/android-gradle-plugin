@@ -15,39 +15,65 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.builder.BuildType
-import com.android.builder.ProductFlavor
+import com.android.build.gradle.AndroidBasePlugin
+import com.android.builder.AndroidBuilder
+import com.android.builder.BuildTypeHolder
+import com.android.builder.ProductFlavorHolder
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
 
 class ProductionAppVariant implements ApplicationVariant {
     final String name
-    final BuildType buildType
-    final ProductFlavor productFlavor
+    final BuildTypeHolder buildTypeHolder
+    final ProductFlavorHolder productFlavorHolder
     FileCollection runtimeClasspath
     FileCollection resourcePackage
     Compile compileTask
 
-    ProductionAppVariant(BuildType buildType, ProductFlavor productFlavor) {
-        this.name = "${productFlavor.name.capitalize()}${buildType.name.capitalize()}"
-        this.buildType = buildType
-        this.productFlavor = productFlavor
+    ProductionAppVariant(BuildTypeHolder buildTypeHolder, ProductFlavorHolder productFlavorHolder) {
+        this.name = "${productFlavorHolder.productFlavor.name.capitalize()}${buildTypeHolder.buildType.name.capitalize()}"
+        this.buildTypeHolder = buildTypeHolder
+        this.productFlavorHolder = productFlavorHolder
     }
 
     String getDescription() {
-        return "$productFlavor.name $buildType.name"
+        return "$productFlavorHolder.productFlavor.name $buildTypeHolder.buildType.name"
     }
 
     String getDirName() {
-        return "$productFlavor.name/$buildType.name"
+        return "$productFlavorHolder.productFlavor.name/$buildTypeHolder.buildType.name"
     }
 
     String getBaseName() {
-        return "$productFlavor.name-$buildType.name"
+        return "$productFlavorHolder.productFlavor.name-$buildTypeHolder.buildType.name"
     }
 
     @Override
     boolean getZipAlign() {
-        return buildType.zipAlign
+        return buildTypeHolder.buildType.zipAlign
+    }
+
+    @Override
+    boolean isSigned() {
+        return buildTypeHolder.buildType.debugSigned ||
+                productFlavorHolder.productFlavor.isSigningReady()
+    }
+
+    @Override
+    AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin) {
+        AndroidBuilder androidBuilder = new AndroidBuilder(
+                androidBasePlugin.sdkParser,
+                androidBasePlugin.logger,
+                androidBasePlugin.verbose)
+
+        androidBuilder.setTarget(androidBasePlugin.target)
+
+        androidBuilder.setBuildVariant(androidBasePlugin.mainFlavor, buildTypeHolder)
+
+        if (productFlavorHolder != null) {
+            androidBuilder.addProductFlavor(productFlavorHolder)
+        }
+
+        return androidBuilder
     }
 }

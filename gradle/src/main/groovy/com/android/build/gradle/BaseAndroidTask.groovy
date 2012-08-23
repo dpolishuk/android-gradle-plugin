@@ -15,9 +15,23 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.ApplicationVariant
+import com.android.builder.AndroidBuilder
 import org.gradle.api.DefaultTask
 
 abstract class BaseAndroidTask extends DefaultTask {
 
-    AndroidBuilderProvider provider
+    AndroidBasePlugin plugin
+    ApplicationVariant variant
+
+    protected AndroidBuilder getBuilder() {
+        AndroidBuilder androidBuilder = plugin.getAndroidBuilder(variant);
+
+        if (androidBuilder == null) {
+            androidBuilder = variant.createBuilder(plugin)
+            plugin.setAndroidBuilder(variant, androidBuilder)
+        }
+
+        return androidBuilder
+    }
 }

@@ -25,7 +25,7 @@ import com.android.builder.DexOptions
 class AndroidExtension {
     final NamedDomainObjectContainer<BuildType> buildTypes
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
-    String target = "android-16"
+    String target
     final AaptOptions aaptOptions = new AaptOptions()
     final DexOptions dexOptions = new DexOptions()
 

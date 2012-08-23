@@ -39,7 +39,7 @@ class PackageApplication extends BaseAndroidTask {
     void generate() {
 
         try {
-            provider.androidBuilder.packageApk(
+            getBuilder().packageApk(
                     getResourceFile().absolutePath,
                     getDexFile().absolutePath,
                     getJniDir()?.absolutePath,

@@ -59,7 +59,7 @@ import java.util.Set;
  * {@link #generateBuildConfig(String, java.util.List)}
  * {@link #mergeLibraryManifests(File, List, File)}
  * {@link #processResources(String, String, String, String, String, AaptOptions)}
- * {@link #convertBytecode(String, String, DexOptions)}
+ * {@link #convertBytecode(java.util.List, String, DexOptions)}
  * {@link #packageApk(String, String, String, String)}
  *
  * Java compilation is not handled but the builder provides the runtime classpath with
@@ -639,7 +639,7 @@ public class AndroidBuilder {
         }
 
         SigningInfo signingInfo = null;
-        if (mBuildTypeHolder.getBuildType().isDebugSigningKey()) {
+        if (mBuildTypeHolder.getBuildType().isDebugSigned()) {
             try {
                 String storeLocation = DebugKeyHelper.defaultDebugKeyStoreLocation();
                 File storeFile = new File(storeLocation);

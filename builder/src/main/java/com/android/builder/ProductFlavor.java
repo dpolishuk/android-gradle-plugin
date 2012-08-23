@@ -29,6 +29,11 @@ public class ProductFlavor {
     private String mTestPackageName = null;
     private String mTestInstrumentationRunner = null;
 
+    private String mSigningStoreLocation = null;
+    private String mSigningStorePassword = null;
+    private String mSigningKeyAlias = null;
+    private String mSigningKeyPassword = null;
+
     public ProductFlavor(String name) {
         mName = name;
     }
@@ -93,6 +98,45 @@ public class ProductFlavor {
         return mTestInstrumentationRunner;
     }
 
+    public String getSigningStoreLocation() {
+        return mSigningStoreLocation;
+    }
+
+    public void setSigningStoreLocation(String signingStoreLocation) {
+        mSigningStoreLocation = signingStoreLocation;
+    }
+
+    public String getSigningStorePassword() {
+        return mSigningStorePassword;
+    }
+
+    public void setSigningStorePassword(String signingStorePassword) {
+        mSigningStorePassword = signingStorePassword;
+    }
+
+    public String getSigningKeyAlias() {
+        return mSigningKeyAlias;
+    }
+
+    public void setSigningKeyAlias(String signingKeyAlias) {
+        mSigningKeyAlias = signingKeyAlias;
+    }
+
+    public String getSigningKeyPassword() {
+        return mSigningKeyPassword;
+    }
+
+    public void setSigningKeyPassword(String signingKeyPassword) {
+        mSigningKeyPassword = signingKeyPassword;
+    }
+
+    public boolean isSigningReady() {
+        return mSigningStoreLocation != null &&
+                mSigningStorePassword != null &&
+                mSigningKeyAlias != null &&
+                mSigningKeyPassword != null;
+    }
+
     /**
      * Merges the flavor on top of a base platform and returns a new object with the result.
      * @param base the flavor to merge on top of
@@ -112,6 +156,13 @@ public class ProductFlavor {
         flavor.mTestPackageName = chooseString(mTestPackageName, base.mTestPackageName);
         flavor.mTestInstrumentationRunner = chooseString(mTestInstrumentationRunner,
                 base.mTestInstrumentationRunner);
+
+        flavor.mSigningStoreLocation = chooseString(mSigningStoreLocation,
+                base.mSigningStoreLocation);
+        flavor.mSigningStorePassword = chooseString(mSigningStorePassword,
+                base.mSigningStorePassword);
+        flavor.mSigningKeyAlias = chooseString(mSigningKeyAlias, base.mSigningKeyAlias);
+        flavor.mSigningKeyPassword = chooseString(mSigningKeyPassword, base.mSigningKeyPassword);
 
         return flavor;
     }

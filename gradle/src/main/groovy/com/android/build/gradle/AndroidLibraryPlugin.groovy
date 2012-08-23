@@ -16,18 +16,16 @@
 package com.android.build.gradle
 
 import com.android.builder.BuildType
+import com.android.builder.BuildTypeHolder
+import com.android.builder.ProductFlavorHolder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaBasePlugin
 
-class AndroidLibraryPlugin implements Plugin<Project> {
-    private Project project
+class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        this.project = project
-
-        project.apply plugin: JavaBasePlugin
+        super.apply(project)
 
         def buildTypes = project.container(BuildType)
 
@@ -48,5 +46,20 @@ class AndroidLibraryPlugin implements Plugin<Project> {
         def assemble = project.tasks.add("assemble${buildType.name.capitalize()}")
 
         project.tasks.assemble.dependsOn assemble
+    }
+
+    @Override
+    String getTarget() {
+        return null  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    ProductFlavorHolder getMainFlavor() {
+        return null  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    BuildTypeHolder getDebugType() {
+        return null  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

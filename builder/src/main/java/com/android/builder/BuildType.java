@@ -27,7 +27,7 @@ public class BuildType {
     private final String mName;
     private boolean mDebuggable;
     private boolean mDebugJniBuild;
-    private boolean mDebugSigningKey;
+    private boolean mDebugSigned;
     private String mPackageNameSuffix = null;
     private boolean mRunProguard = false;
 
@@ -45,14 +45,14 @@ public class BuildType {
     private void initDebug() {
         mDebuggable = true;
         mDebugJniBuild = true;
-        mDebugSigningKey = true;
+        mDebugSigned = true;
         mZipAlign = false;
     }
 
     private void initRelease() {
         mDebuggable = false;
         mDebugJniBuild = false;
-        mDebugSigningKey = false;
+        mDebugSigned = false;
     }
 
     public String getName() {
@@ -75,12 +75,12 @@ public class BuildType {
         return mDebugJniBuild;
     }
 
-    public void setDebugSigningKey(boolean debugSigningKey) {
-        mDebugSigningKey = debugSigningKey;
+    public void setDebugSigned(boolean debugSigned) {
+        mDebugSigned = debugSigned;
     }
 
-    public boolean isDebugSigningKey() {
-        return mDebugSigningKey;
+    public boolean isDebugSigned() {
+        return mDebugSigned;
     }
 
     public void setPackageNameSuffix(@Nullable String packageNameSuffix) {
@@ -108,7 +108,6 @@ public class BuildType {
     }
 
     /*
-proguard enabled + rules
 Buildconfig: DEBUG flag + other custom properties?
      */
 }
