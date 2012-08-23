@@ -175,9 +175,27 @@ public class ProductFlavor {
         return overlay != null ? overlay : base;
     }
 
+    @Override
+    public String toString() {
+        return "ProductFlavor{" +
+                "name='" + mName + '\'' +
+                ", minSdkVersion=" + mMinSdkVersion +
+                ", targetSdkVersion=" + mTargetSdkVersion +
+                ", versionCode=" + mVersionCode +
+                ", versionName='" + mVersionName + '\'' +
+                ", packageName='" + mPackageName + '\'' +
+                ", testPackageName='" + mTestPackageName + '\'' +
+                ", testInstrumentationRunner='" + mTestInstrumentationRunner + '\'' +
+                ", signingStoreLocation='" + mSigningStoreLocation + '\'' +
+                ", signingStorePassword='" + mSigningStorePassword + '\'' +
+                ", signingKeyAlias='" + mSigningKeyAlias + '\'' +
+                ", signingKeyPassword='" + mSigningKeyPassword + '\'' +
+                '}';
+    }
+
     /*
-    release signing info (keystore, key alias, passwords,...).
-    native abi filter
-*/
+        release signing info (keystore, key alias, passwords,...).
+        native abi filter
+    */
 
 }

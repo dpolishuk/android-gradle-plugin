@@ -179,7 +179,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             testCompile.options.bootClasspath = getRuntimeJars(testAppVariant)
         }
 
-
         testAppVariant.runtimeClasspath = testCompile.outputs.files + testCompile.classpath
         testAppVariant.resourcePackage = project.files({processResources.packageFile}) { builtBy processResources }
         testAppVariant.compileTask = testCompile
@@ -272,7 +271,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             "${project.archivesBaseName}-${variant.baseName}-unaligned.apk" :
             "${project.archivesBaseName}-${variant.baseName}-unsigned.apk"
 
-        logger.info(apkName)
         packageApp.conventionMapping.outputFile = { project.file("$project.buildDir/apk/${apkName}") }
         packageApp.conventionMapping.resourceFile = { variant.resourcePackage.singleFile }
         packageApp.conventionMapping.dexFile = { dexTask.outputFile }

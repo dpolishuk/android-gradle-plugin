@@ -16,26 +16,22 @@
 package com.android.build.gradle
 
 import com.android.builder.BuildType
-import com.android.builder.ProductFlavor
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
-import com.android.builder.AaptOptions
-import com.android.builder.DexOptions
 
-class AndroidExtension extends BaseAndroidExtension {
-    final NamedDomainObjectContainer<ProductFlavor> productFlavors
+/**
+ * Base android extension for all android plugins.
+ */
+class BaseAndroidExtension {
 
-    // FIXME?
-    final AaptOptions aaptOptions = new AaptOptions()
-    final DexOptions dexOptions = new DexOptions()
+    String target
+    final NamedDomainObjectContainer<BuildType> buildTypes
 
-    AndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes,
-                     NamedDomainObjectContainer<ProductFlavor> productFlavors) {
-        super(buildTypes)
-        this.productFlavors = productFlavors
+    BaseAndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes) {
+        this.buildTypes = buildTypes
     }
 
-    void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavor>> action) {
-        action.execute(productFlavors)
+    void buildTypes(Action<? super NamedDomainObjectContainer<BuildType>> action) {
+        action.execute(buildTypes)
     }
 }

@@ -23,13 +23,16 @@ import org.gradle.api.Project
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
+    AndroidLibraryExtension extension
+
+
     @Override
     void apply(Project project) {
         super.apply(project)
 
         def buildTypes = project.container(BuildType)
 
-        project.extensions.create('android', AndroidLibraryExtension, buildTypes)
+        extension = project.extensions.create('android', AndroidLibraryExtension, buildTypes)
 
         buildTypes.whenObjectAdded { BuildType buildType ->
             addBuildType(buildType)
@@ -50,7 +53,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
 
     @Override
     String getTarget() {
-        return null  //To change body of implemented methods use File | Settings | File Templates.
+        return extension.target
     }
 
     @Override

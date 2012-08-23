@@ -16,17 +16,11 @@
 package com.android.build.gradle
 
 import com.android.builder.BuildType
-import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 
-class AndroidLibraryExtension {
-    final NamedDomainObjectContainer<BuildType> buildTypes
+class AndroidLibraryExtension extends BaseAndroidExtension {
 
     AndroidLibraryExtension(NamedDomainObjectContainer<BuildType> buildTypes) {
-        this.buildTypes = buildTypes
-    }
-
-    void buildTypes(Action<? super NamedDomainObjectContainer<BuildType>> action) {
-        action.execute(buildTypes)
+        super(buildTypes)
     }
 }
