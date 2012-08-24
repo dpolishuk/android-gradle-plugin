@@ -17,58 +17,52 @@
 package com.android.builder;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Set;
 
-class BuildTypeHolderMock implements BuildTypeHolder {
+/**
+ * Implementation of SourceSet for testing that provides the default convention paths.
+ */
+class MockSourceSet implements SourceSet {
 
-    private final BuildType mBuildType;
-
-    BuildTypeHolderMock(BuildType buildType) {
-        mBuildType = buildType;
+    public MockSourceSet(String root) {
+        mRoot = root;
     }
 
-    @Override
-    public BuildType getBuildType() {
-        return mBuildType;
-    }
-
-    @Override
-    public Set<File> getJavaSource() {
-        return null;
-    }
+    private final String mRoot;
 
     @Override
     public Set<File> getJavaResources() {
-        return null;
+        return Collections.singleton(new File(mRoot, "resources"));
     }
 
     @Override
     public File getAndroidResources() {
-        return null;
+        return new File(mRoot, "res");
     }
 
     @Override
     public File getAndroidAssets() {
-        return null;
+        return new File(mRoot, "assets");
     }
 
     @Override
     public File getAndroidManifest() {
-        return null;
+        return new File(mRoot, "AndroidManifest.xml");
     }
 
     @Override
     public File getAidlSource() {
-        return null;
+        return new File(mRoot, "aidl");
     }
 
     @Override
     public File getRenderscriptSource() {
-        return null;
+        return new File(mRoot, "rs");
     }
 
     @Override
     public File getNativeSource() {
-        return null;
+        return new File(mRoot, "jni");
     }
 }

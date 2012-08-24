@@ -18,6 +18,7 @@ package com.android.build.gradle
 import com.android.builder.BuildType
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
+import com.android.builder.ProductFlavor
 
 /**
  * Base android extension for all android plugins.
@@ -25,6 +26,8 @@ import org.gradle.api.NamedDomainObjectContainer
 class BaseAndroidExtension {
 
     String target
+    final ProductFlavor defaultConfig = new ProductFlavor("main");
+
     final NamedDomainObjectContainer<BuildType> buildTypes
 
     BaseAndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes) {
@@ -33,5 +36,9 @@ class BaseAndroidExtension {
 
     void buildTypes(Action<? super NamedDomainObjectContainer<BuildType>> action) {
         action.execute(buildTypes)
+    }
+
+    void defaultConfig(Action<ProductFlavor> action) {
+        action.execute(defaultConfig)
     }
 }

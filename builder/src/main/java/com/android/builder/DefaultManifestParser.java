@@ -17,19 +17,18 @@
 package com.android.builder;
 
 import com.android.xml.AndroidXPathFactory;
-
 import org.xml.sax.InputSource;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 public class DefaultManifestParser implements ManifestParser {
 
     @Override
-    public String getPackage(String manifestFile) {
+    public String getPackage(File manifestFile) {
         XPath xpath = AndroidXPathFactory.newXPath();
 
         try {

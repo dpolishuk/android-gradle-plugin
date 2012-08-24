@@ -17,46 +17,61 @@ package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
-import com.android.builder.BuildTypeHolder
-import com.android.builder.ProductFlavorHolder
+import com.android.builder.VariantConfiguration
+import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
 
 class ProductionAppVariant implements ApplicationVariant {
     final String name
-    final BuildTypeHolder buildTypeHolder
-    final ProductFlavorHolder productFlavorHolder
+    final VariantConfiguration variant
     FileCollection runtimeClasspath
     FileCollection resourcePackage
     Compile compileTask
+    Task assembleTask
 
-    ProductionAppVariant(BuildTypeHolder buildTypeHolder, ProductFlavorHolder productFlavorHolder) {
-        this.name = "${productFlavorHolder.productFlavor.name.capitalize()}${buildTypeHolder.buildType.name.capitalize()}"
-        this.buildTypeHolder = buildTypeHolder
-        this.productFlavorHolder = productFlavorHolder
+    ProductionAppVariant(VariantConfiguration variant) {
+        this.variant = variant
+        if (variant.hasFlavors()) {
+            this.name = "${variant.firstFlavor.name.capitalize()}${variant.buildType.name.capitalize()}"
+        } else {
+            this.name = "${variant.buildType.name.capitalize()}"
+        }
     }
 
     String getDescription() {
-        return "$productFlavorHolder.productFlavor.name $buildTypeHolder.buildType.name"
+        if (variant.hasFlavors()) {
+            return "Assembles the ${variant.buildType.name.capitalize()} build for flavor ${variant.firstFlavor.name.capitalize()}"
+        } else {
+            return "Assembles the ${variant.buildType.name.capitalize()} build"
+        }
     }
 
     String getDirName() {
-        return "$productFlavorHolder.productFlavor.name/$buildTypeHolder.buildType.name"
+        if (variant.hasFlavors()) {
+            return "$variant.firstFlavor.name/$variant.buildType.name"
+        } else {
+            return "$variant.buildType.name"
+        }
     }
 
     String getBaseName() {
-        return "$productFlavorHolder.productFlavor.name-$buildTypeHolder.buildType.name"
+        if (variant.hasFlavors()) {
+            return "$variant.firstFlavor.name-$variant.buildType.name"
+        } else {
+            return "$variant.buildType.name"
+        }
     }
 
     @Override
     boolean getZipAlign() {
-        return buildTypeHolder.buildType.zipAlign
+        return variant.buildType.zipAlign
     }
 
     @Override
     boolean isSigned() {
-        return buildTypeHolder.buildType.debugSigned ||
-                productFlavorHolder.productFlavor.isSigningReady()
+        return variant.buildType.debugSigned ||
+                variant.mergedFlavor.isSigningReady()
     }
 
     @Override
@@ -67,12 +82,7 @@ class ProductionAppVariant implements ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-
-        androidBuilder.setBuildVariant(androidBasePlugin.mainFlavor, buildTypeHolder)
-
-        if (productFlavorHolder != null) {
-            androidBuilder.addProductFlavor(productFlavorHolder)
-        }
+        androidBuilder.setBuildVariant(variant, null /*testedVariant*/)
 
         return androidBuilder
     }

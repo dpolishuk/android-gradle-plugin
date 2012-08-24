@@ -15,68 +15,62 @@
  */
 package com.android.build.gradle.internal
 
+import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSet
-import com.android.builder.PathProvider
 
 /**
- * Base Dimension providing an implementation of PathProvider for a given SourceSet.
+ * Implementation of the AndroidBuilder SourceSet on top of a gradle SourceSet
  */
-class BaseDimension implements PathProvider {
+public class AndroidSourceSet implements com.android.builder.SourceSet {
 
-    final SourceSet mainSource
-    private final String baseDir
+    final SourceSet sourceSet
     private final String name
+    private final Project project
 
-
-    BaseDimension(SourceSet mainSource, String baseDir, String name) {
-        this.mainSource = mainSource
-        this.baseDir = baseDir
+    public AndroidSourceSet(SourceSet sourceSet, String name, Project project) {
+        this.sourceSet = sourceSet
         this.name = name
-    }
-
-    @Override
-    Set<File> getJavaSource() {
-        return mainSource.allJava.srcDirs
+        this.project = project
     }
 
     @Override
     Set<File> getJavaResources() {
-        return mainSource.resources.srcDirs
+        return sourceSet.resources.srcDirs
     }
 
     @Override
     File getAndroidResources() {
         // FIXME: make this configurable by the SourceSet
-        return new File("$baseDir/src/$name/res")
+        return project.file("src/$name/res")
     }
 
     @Override
     File getAndroidAssets() {
         // FIXME: make this configurable by the SourceSet
-        return new File("$baseDir/src/$name/assets")
+        return project.file("src/$name/assets")
     }
 
     @Override
     File getAndroidManifest() {
         // FIXME: make this configurable by the SourceSet
-        return new File("$baseDir/src/$name/AndroidManifest.xml")
+        return project.file("src/$name/AndroidManifest.xml")
     }
 
     @Override
     File getAidlSource() {
         // FIXME: make this configurable by the SourceSet
-        return new File("$baseDir/src/$name/aidl")
+        return project.file("src/$name/aidl")
     }
 
     @Override
     File getRenderscriptSource() {
         // FIXME: make this configurable by the SourceSet
-        return new File("$baseDir/src/$name/rs")
+        return project.file("src/$name/rs")
     }
 
     @Override
     File getNativeSource() {
         // FIXME: make this configurable by the SourceSet
-        return new File("$baseDir/src/$name/jni")
+        return project.file("src/$name/jni")
     }
 }

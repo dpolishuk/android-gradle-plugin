@@ -25,7 +25,7 @@ public class BuildTypeTest extends TestCase {
 
         assertTrue(type.isDebuggable());
         assertTrue(type.isDebugJniBuild());
-        assertTrue(type.isDebugSigningKey());
+        assertTrue(type.isDebugSigned());
     }
 
     public void testRelease() {
@@ -33,6 +33,6 @@ public class BuildTypeTest extends TestCase {
 
         assertFalse(type.isDebuggable());
         assertFalse(type.isDebugJniBuild());
-        assertFalse(type.isDebugSigningKey());
+        assertFalse(type.isDebugSigned());
     }
 }

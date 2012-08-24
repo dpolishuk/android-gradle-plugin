@@ -16,15 +16,12 @@
 package com.android.build.gradle
 
 import com.android.builder.BuildType
-import com.android.builder.BuildTypeHolder
-import com.android.builder.ProductFlavorHolder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
     AndroidLibraryExtension extension
-
 
     @Override
     void apply(Project project) {
@@ -33,6 +30,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         def buildTypes = project.container(BuildType)
 
         extension = project.extensions.create('android', AndroidLibraryExtension, buildTypes)
+        setDefaultConfig(extension.defaultConfig)
 
         buildTypes.whenObjectAdded { BuildType buildType ->
             addBuildType(buildType)
@@ -54,15 +52,5 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
     @Override
     String getTarget() {
         return extension.target
-    }
-
-    @Override
-    ProductFlavorHolder getMainFlavor() {
-        return null  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    BuildTypeHolder getDebugType() {
-        return null  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

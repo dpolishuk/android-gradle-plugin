@@ -107,7 +107,21 @@ public class BuildType {
         return mZipAlign;
     }
 
+    @Override
+    public String toString() {
+        return "BuildType{" +
+                "name='" + mName + '\'' +
+                ", debuggable=" + mDebuggable +
+                ", debugJniBuild=" + mDebugJniBuild +
+                ", debugSigned=" + mDebugSigned +
+                ", packageNameSuffix='" + mPackageNameSuffix + '\'' +
+                ", runProguard=" + mRunProguard +
+                ", zipAlign=" + mZipAlign +
+                '}';
+    }
+
+
     /*
 Buildconfig: DEBUG flag + other custom properties?
-     */
+    */
 }
