@@ -18,7 +18,9 @@ package com.android.builder;
 
 import com.android.annotations.NonNull;
 
+import java.io.File;
+
 public interface ManifestParser {
 
-    String getPackage(@NonNull String manifestFile);
+    String getPackage(@NonNull File manifestFile);
 }

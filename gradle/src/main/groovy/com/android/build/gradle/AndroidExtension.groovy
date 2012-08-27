@@ -25,6 +25,8 @@ import com.android.builder.DexOptions
 class AndroidExtension extends BaseAndroidExtension {
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
 
+    String testBuildType = "debug"
+
     // FIXME?
     final AaptOptions aaptOptions = new AaptOptions()
     final DexOptions dexOptions = new DexOptions()

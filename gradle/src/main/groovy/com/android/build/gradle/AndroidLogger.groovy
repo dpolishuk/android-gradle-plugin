@@ -51,6 +51,6 @@ class AndroidLogger implements ILogger {
 
     @Override
     void verbose(String s, Object... objects) {
-        logger.log(LogLevel.DEBUG, s, objects)
+        logger.log(LogLevel.INFO, s, objects)
     }
 }

@@ -31,9 +31,21 @@ android {
 		signingKeyPassword = "android"
 	}
 
+	productFlavors {
+	    foo {
+			packageName = "org.gradle.sample.foo2"
+			signingStoreLocation = "debug.keystore2"
+			signingStorePassword = "android2"
+		}
+	    bloo {
+			packageName = "org.gradle.sample.bloo"
+		}
+	}
+	
 	buildTypes {
 		blah {
 			packageNameSuffix = ".blah"
+			debugSigned = true
 		}
 	}
 }

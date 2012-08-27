@@ -16,23 +16,25 @@
 package com.android.build.gradle.internal
 
 import com.android.builder.BuildType
+import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.SourceSet
-import com.android.builder.BuildTypeHolder
 
-class BuildTypeDimension extends BaseDimension implements BuildTypeHolder {
+class BuildTypeData {
     final BuildType buildType
-    final Set<ProductionAppVariant> variants = []
 
-    BuildTypeDimension(BuildType buildType, SourceSet mainSource, String baseDir) {
-        super(mainSource, baseDir, buildType.name)
+    final SourceSet mainSource
+    final AndroidSourceSet androidSourceSet
+
+    final Task assembleTask
+
+    BuildTypeData(BuildType buildType, SourceSet mainSource, Project project) {
         this.buildType = buildType
-    }
+        this.mainSource = mainSource
+        androidSourceSet = new AndroidSourceSet(mainSource, buildType.name, project)
 
-    String getName() {
-        return buildType.name
-    }
-
-    String getAssembleTaskName() {
-        return "assemble${buildType.name.capitalize()}"
+        assembleTask = project.tasks.add("assemble${buildType.name.capitalize()}")
+        assembleTask.description = "Assembles all ${buildType.name.capitalize()} builds"
+        assembleTask.group = "Build"
     }
 }

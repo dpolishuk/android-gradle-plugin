@@ -16,36 +16,31 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.AndroidManifest
+import com.android.build.gradle.internal.AndroidSourceSet
 import com.android.build.gradle.internal.ApplicationVariant
-import com.android.build.gradle.internal.BuildTypeDimension
-import com.android.build.gradle.internal.ProductFlavorDimension
+import com.android.build.gradle.internal.BuildTypeData
+import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.BuildType
-import com.android.builder.BuildTypeHolder
 import com.android.builder.ProductFlavor
-import com.android.builder.ProductFlavorHolder
+import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.tasks.SourceSet
+import org.gradle.api.Task
 import org.gradle.api.tasks.compile.Compile
 import org.gradle.internal.reflect.Instantiator
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
-    private final Set<ProductionAppVariant> variants = []
-    private final Map<String, BuildTypeDimension> buildTypes = [:]
-    private final Map<String, ProductFlavorDimension> productFlavors = [:]
-    private SourceSet main
-    private SourceSet test
+    private final Map<String, BuildTypeData> buildTypes = [:]
+    private final Map<String, ProductFlavorData> productFlavors = [:]
+
     private AndroidExtension extension
     private AndroidManifest mainManifest
 
     @Override
     void apply(Project project) {
         super.apply(project)
-
-        project.apply plugin: JavaBasePlugin
 
         def buildTypes = project.container(BuildType)
         // TODO - do the decoration by default
@@ -54,11 +49,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         }
 
         extension = project.extensions.create('android', AndroidExtension, buildTypes, productFlavors)
+        setDefaultConfig(extension.defaultConfig)
 
         findSdk(project)
-
-        main = project.sourceSets.add('main')
-        test = project.sourceSets.add('test')
 
         buildTypes.whenObjectAdded { BuildType buildType ->
             addBuildType(buildType)
@@ -70,17 +63,147 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         buildTypes.create(BuildType.DEBUG)
         buildTypes.create(BuildType.RELEASE)
 
-        productFlavors.whenObjectAdded { ProductFlavor flavor ->
-            addProductFlavor(flavor)
+        productFlavors.whenObjectAdded { ProductFlavor productFlavor ->
+            addProductFlavor(productFlavor)
         }
+
         productFlavors.whenObjectRemoved {
-            throw new UnsupportedOperationException("Removing product flavors is not implemented yet.")
+            throw new UnsupportedOperationException(
+                    "Removing product flavors is not implemented yet.")
         }
 
-        productFlavors.create('main')
 
-        project.tasks.assemble.dependsOn { variants.collect { "assemble${it.name}" } }
+        project.afterEvaluate {
+            createAndroidTasks()
+        }
     }
+
+    private void addBuildType(BuildType buildType) {
+        if (buildType.name.startsWith("test")) {
+            throw new RuntimeException("BuildType names cannot start with 'test'")
+        }
+        if (productFlavors.containsKey(buildType.name)) {
+            throw new RuntimeException("BuildType names cannot collide with ProductFlavor names")
+        }
+
+        def sourceSet = project.sourceSets.add(buildType.name)
+
+        BuildTypeData buildTypeData = new BuildTypeData(buildType, sourceSet, project)
+        project.tasks.assemble.dependsOn buildTypeData.assembleTask
+
+        buildTypes[buildType.name] = buildTypeData
+    }
+
+    private void addProductFlavor(ProductFlavor productFlavor) {
+        if (productFlavor.name.startsWith("test")) {
+            throw new RuntimeException("ProductFlavor names cannot start with 'test'")
+        }
+        if (productFlavors.containsKey(productFlavor.name)) {
+            throw new RuntimeException("ProductFlavor names cannot collide with BuildType names")
+        }
+
+        def mainSourceSet = project.sourceSets.add(productFlavor.name)
+        def testSourceSet = project.sourceSets.add("test${productFlavor.name.capitalize()}")
+
+        ProductFlavorData productFlavorData = new ProductFlavorData(
+                productFlavor, mainSourceSet, testSourceSet, project)
+        project.tasks.assemble.dependsOn productFlavorData.assembleTask
+
+        productFlavors[productFlavor.name] = productFlavorData
+    }
+
+    private void createAndroidTasks() {
+        if (productFlavors.isEmpty()) {
+            createTasksForDefaultBuild()
+        } else {
+            productFlavors.values().each { ProductFlavorData productFlavorData ->
+                createTasksForFlavoredBuild(productFlavorData)
+            }
+        }
+    }
+
+    private createTasksForDefaultBuild() {
+
+        BuildTypeData testData = buildTypes[extension.testBuildType]
+        if (testData == null) {
+            throw new RuntimeException("Test Build Type '$extension.testBuildType' does not exist.")
+        }
+
+        VariantConfiguration testedVariantConfig = null
+        ProductionAppVariant testedVariant = null
+
+        ProductFlavorData defaultConfigData = getDefaultConfigData();
+
+        for (BuildTypeData buildTypeData : buildTypes.values()) {
+
+            def variantConfig = new VariantConfiguration(
+                    defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
+                    buildTypeData.buildType, buildTypeData.androidSourceSet,
+                    VariantConfiguration.Type.DEFAULT)
+
+            ProductionAppVariant productionAppVariant = addVariant(variantConfig,
+                    buildTypeData.assembleTask)
+
+            if (buildTypeData == testData) {
+                testedVariantConfig = variantConfig
+                testedVariant = productionAppVariant
+            }
+        }
+
+        assert testedVariantConfig != null && testedVariant != null
+
+        def variantTestConfig = new VariantConfiguration(
+                defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
+                testData.buildType, null,
+                VariantConfiguration.Type.TEST)
+
+        addTestVariant(variantTestConfig, testedVariantConfig, testedVariant)
+    }
+
+    private createTasksForFlavoredBuild(ProductFlavorData productFlavorData) {
+
+        BuildTypeData testData = buildTypes[extension.testBuildType]
+        if (testData == null) {
+            throw new RuntimeException("Test Build Type '$extension.testBuildType' does not exist.")
+        }
+
+        VariantConfiguration testedVariantConfig = null
+        ProductionAppVariant testedVariant = null
+
+        for (BuildTypeData buildTypeData : buildTypes.values()) {
+
+            def variantConfig = new VariantConfiguration(
+                    extension.defaultConfig, getDefaultConfigData().androidSourceSet,
+                    buildTypeData.buildType, buildTypeData.androidSourceSet,
+                    VariantConfiguration.Type.DEFAULT)
+
+            variantConfig.addProductFlavor(productFlavorData.productFlavor,
+                    productFlavorData.androidSourceSet)
+
+            ProductionAppVariant productionAppVariant = addVariant(variantConfig, null)
+
+            buildTypeData.assembleTask.dependsOn productionAppVariant.assembleTask
+            productFlavorData.assembleTask.dependsOn productionAppVariant.assembleTask
+
+            if (buildTypeData == testData) {
+                testedVariantConfig = variantConfig
+                testedVariant = productionAppVariant
+            }
+        }
+
+        assert testedVariantConfig != null && testedVariant != null
+
+        def variantTestConfig = new VariantConfiguration(
+                extension.defaultConfig, getDefaultConfigData().androidTestSourceSet,
+                testData.buildType, null,
+                VariantConfiguration.Type.TEST)
+        variantTestConfig.addProductFlavor(productFlavorData.productFlavor,
+                productFlavorData.androidTestSourceSet)
+
+        addTestVariant(variantTestConfig, testedVariantConfig, testedVariant)
+    }
+
+
 
     private AndroidManifest getMainManifest() {
         if (mainManifest == null) {
@@ -90,120 +213,25 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         return mainManifest
     }
 
-    private void addBuildType(BuildType buildType) {
-        if (buildType.name.startsWith("test")) {
-            throw new RuntimeException("BuildType names cannot start with 'test'")
-        }
+    /**
+     * Creates build tasks for a given variant.
+     * @param variantConfig
+     * @param assembleTask an optional assembleTask to be used. If null, a new one is created in the
+     *                     returned ProductAppVariant instance.
+     * @return
+     */
+    private ProductionAppVariant addVariant(VariantConfiguration variantConfig, Task assembleTask) {
 
-        def sourceSet = project.sourceSets.add(buildType.name)
-
-        def buildTypeDimension = new BuildTypeDimension(buildType, sourceSet, project.projectDir.absolutePath)
-        buildTypes[buildType.name] = buildTypeDimension
-
-        def assembleBuildType = project.tasks.add(buildTypeDimension.assembleTaskName)
-        assembleBuildType.dependsOn {
-            buildTypeDimension.variants.collect { "assemble$it.name" }
-        }
-        assembleBuildType.description = "Assembles all ${buildType.name} applications"
-        assembleBuildType.group = "Build"
-
-        productFlavors.values().each { flavor ->
-            addVariant(buildTypeDimension, flavor)
-        }
-    }
-
-    private void addProductFlavor(ProductFlavor productFlavor) {
-        if (productFlavor.name.startsWith("test")) {
-            throw new RuntimeException("ProductFlavor names cannot start with 'test'")
-        }
-
-        def mainSourceSet
-        def testSourceSet
-        if (productFlavor.name == 'main') {
-            mainSourceSet = main
-            testSourceSet = test
-        } else {
-            mainSourceSet = project.sourceSets.add(productFlavor.name)
-            testSourceSet = project.sourceSets.add("test${productFlavor.name.capitalize()}")
-        }
-
-        def productFlavorDimension = new ProductFlavorDimension(productFlavor, mainSourceSet, testSourceSet, project.projectDir.absolutePath)
-        productFlavors[productFlavor.name] = productFlavorDimension
-
-        def assembleFlavour = project.tasks.add(productFlavorDimension.assembleTaskName)
-        assembleFlavour.dependsOn {
-            productFlavorDimension.variants.collect { "assemble${it.name}" }
-        }
-        assembleFlavour.description = "Assembles all ${productFlavor.name} applications"
-        assembleFlavour.group = "Build"
-
-        buildTypes.values().each { buildType ->
-            addVariant(buildType, productFlavorDimension)
-        }
-
-        assert productFlavorDimension.debugVariant != null
-
-        def testAppVariant = new TestAppVariant(productFlavorDimension)
-        def flavorName = productFlavor.name.capitalize()
-
-        // Add a task to generate the test app manifest
-        def generateManifestTask = project.tasks.add("generate${flavorName}TestManifest", GenerateTestManifest)
-        generateManifestTask.conventionMapping.outputFile = { project.file("$project.buildDir/manifests/test/$flavorName/AndroidManifest.xml") }
-        generateManifestTask.conventionMapping.packageName = { getMainManifest().packageName + '.test' }
-
-        // Add a task to crunch resource files
-        def crunchTask = project.tasks.add("crunch${flavorName}TestResources", CrunchResources)
-        crunchTask.plugin = this
-        crunchTask.variant = testAppVariant
-        crunchTask.conventionMapping.outputDir = { project.file("$project.buildDir/resources/test/$flavorName") }
-
-        // Add a task to generate resource package
-        def processResources = project.tasks.add("process${flavorName}TestResources", ProcessResources)
-        processResources.dependsOn generateManifestTask, crunchTask
-        processResources.plugin = this
-        processResources.variant = testAppVariant
-        processResources.conventionMapping.manifestFile = { generateManifestTask.outputFile }
-        processResources.conventionMapping.crunchDir = { crunchTask.outputDir }
-        // TODO: unify with generateManifestTask somehow?
-        processResources.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/test/$flavorName") }
-        processResources.conventionMapping.packageFile = { project.file("$project.buildDir/libs/${project.archivesBaseName}-test${flavorName}.ap_") }
-        processResources.aaptOptions = extension.aaptOptions
-
-        // Add a task to compile the test application
-        def testCompile = project.tasks.add("compile${flavorName}Test", Compile)
-        testCompile.dependsOn processResources
-        testCompile.source test.java, productFlavorDimension.testSource.java
-        testCompile.classpath = test.compileClasspath + productFlavorDimension.debugVariant.runtimeClasspath
-        testCompile.conventionMapping.destinationDir = { project.file("$project.buildDir/classes/test/$flavorName") }
-        testCompile.doFirst {
-            testCompile.options.bootClasspath = getRuntimeJars(testAppVariant)
-        }
-
-        testAppVariant.runtimeClasspath = testCompile.outputs.files + testCompile.classpath
-        testAppVariant.resourcePackage = project.files({processResources.packageFile}) { builtBy processResources }
-        testAppVariant.compileTask = testCompile
-        addPackageTasks(testAppVariant)
-
-        project.tasks.check.dependsOn "assemble${testAppVariant.name}"
-    }
-
-    private void addVariant(BuildTypeDimension buildType, ProductFlavorDimension productFlavor) {
-        def variant = new ProductionAppVariant(buildType, productFlavor)
-        variants << variant
-        buildType.variants << variant
-        productFlavor.variants << variant
-        if (buildType.name == BuildType.DEBUG) {
-            productFlavor.debugVariant = variant
-        }
+        def variant = new ProductionAppVariant(variantConfig)
 
         // Add a task to merge the manifest(s)
-        def mergeManifestTask = project.tasks.add("merge${variant.name}Manifest", MergeManifest)
+        def mergeManifestTask = project.tasks.add("process${variant.name}Manifest", MergeManifest)
         mergeManifestTask.plugin = this
         mergeManifestTask.variant = variant
         mergeManifestTask.conventionMapping.mergedManifest = { project.file("$project.buildDir/manifests/$variant.dirName/AndroidManifest.xml") }
 
         // Add a task to crunch resource files
-        def crunchTask = project.tasks.add("crunch${variant.name}Resources", CrunchResources)
+        def crunchTask = project.tasks.add("crunchAndroid${variant.name}Res", CrunchResources)
         crunchTask.plugin = this
         crunchTask.variant = variant
         crunchTask.conventionMapping.outputDir = { project.file("$project.buildDir/resources/$variant.dirName/res") }
@@ -215,7 +243,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         generateBuildConfigTask.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/${variant.dirName}") }
 
         // Add a task to generate resource source files
-        def processResources = project.tasks.add("process${variant.name}Resources", ProcessResources)
+        def processResources = project.tasks.add("processAndroid${variant.name}Res", ProcessResources)
         processResources.dependsOn mergeManifestTask, crunchTask
         processResources.plugin = this
         processResources.variant = variant
@@ -224,7 +252,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         // TODO: unify with generateBuilderConfig somehow?
         processResources.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/$variant.dirName") }
         processResources.conventionMapping.packageFile = { project.file("$project.buildDir/libs/${project.archivesBaseName}-${variant.baseName}.ap_") }
-        if (buildType.buildType.runProguard) {
+        if (variantConfig.buildType.runProguard) {
             processResources.conventionMapping.proguardFile = { project.file("$project.buildDir/proguard/${variant.dirName}/rules.txt") }
         }
         processResources.aaptOptions = extension.aaptOptions
@@ -233,22 +261,106 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def compileTaskName = "compile${variant.name}"
         def compileTask = project.tasks.add(compileTaskName, Compile)
         compileTask.dependsOn processResources, generateBuildConfigTask
-        compileTask.source main.java, buildType.mainSource.java, productFlavor.mainSource.java, { processResources.sourceOutputDir }
-        compileTask.classpath = main.compileClasspath
+        if (variantConfig.hasFlavors()) {
+            compileTask.source(
+                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
+                    ((AndroidSourceSet)variantConfig.buildTypeSourceSet).sourceSet.java,
+                    ((AndroidSourceSet)variantConfig.firstFlavorSourceSet).sourceSet.java,
+                    { processResources.sourceOutputDir })
+        } else {
+            compileTask.source(
+                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
+                    ((AndroidSourceSet)variantConfig.buildTypeSourceSet).sourceSet.java,
+                    { processResources.sourceOutputDir })
+        }
+        // TODO: support classpath per flavor
+        compileTask.classpath = ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.compileClasspath
         compileTask.conventionMapping.destinationDir = { project.file("$project.buildDir/classes/$variant.dirName") }
         compileTask.doFirst {
             compileTask.options.bootClasspath = getRuntimeJars(variant)
         }
 
         // Wire up the outputs
-        variant.runtimeClasspath = project.files(compileTask.outputs, main.compileClasspath)
+        // TODO: remove the classpath once the jar deps are set in the Variantconfig, so that we can pre-dex
+        variant.runtimeClasspath = compileTask.outputs.files + compileTask.classpath
         variant.resourcePackage = project.files({processResources.packageFile}) { builtBy processResources }
         variant.compileTask = compileTask
 
-        addPackageTasks(variant)
+        Task returnTask = addPackageTasks(variant, assembleTask)
+        if (returnTask != null) {
+            variant.assembleTask = returnTask
+        }
+
+        return variant;
     }
 
-    private void addPackageTasks(ApplicationVariant variant) {
+    private void addTestVariant(VariantConfiguration variantConfig,
+                                VariantConfiguration testedVariantConfig,
+                                ProductionAppVariant testedVariant) {
+
+        def variant = new TestAppVariant(variantConfig, testedVariantConfig)
+
+        // Add a task to merge the manifest(s)
+        def mergeManifestTask = project.tasks.add("process${variant.name}Manifest", MergeManifest)
+        mergeManifestTask.plugin = this
+        mergeManifestTask.variant = variant
+        mergeManifestTask.conventionMapping.mergedManifest = { project.file("$project.buildDir/manifests/$variant.dirName/AndroidManifest.xml") }
+
+        // Add a task to crunch resource files
+        def crunchTask = project.tasks.add("crunchAndroid${variant.name}Res", CrunchResources)
+        crunchTask.plugin = this
+        crunchTask.variant = variant
+        crunchTask.conventionMapping.outputDir = { project.file("$project.buildDir/resources/$variant.dirName/res") }
+
+        // Add a task to create the BuildConfig class
+        def generateBuildConfigTask = project.tasks.add("generate${variant.name}BuildConfig", GenerateBuildConfigTask)
+        generateBuildConfigTask.plugin = this
+        generateBuildConfigTask.variant = variant
+        generateBuildConfigTask.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/${variant.dirName}") }
+
+        // Add a task to generate resource source files
+        def processResources = project.tasks.add("processAndroid${variant.name}Res", ProcessResources)
+        processResources.dependsOn mergeManifestTask, crunchTask
+        processResources.plugin = this
+        processResources.variant = variant
+        processResources.conventionMapping.manifestFile = { mergeManifestTask.mergedManifest }
+        processResources.conventionMapping.crunchDir = { crunchTask.outputDir }
+        // TODO: unify with generateBuilderConfig somehow?
+        processResources.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/$variant.dirName") }
+        processResources.conventionMapping.packageFile = { project.file("$project.buildDir/libs/${project.archivesBaseName}-${variant.baseName}.ap_") }
+        processResources.aaptOptions = extension.aaptOptions
+
+        // Add a task to compile the test application
+        def testCompile = project.tasks.add("compile${variant.name}", Compile)
+        testCompile.dependsOn processResources, generateBuildConfigTask
+        if (variantConfig.hasFlavors()) {
+            testCompile.source(
+                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
+                    ((AndroidSourceSet)variantConfig.firstFlavorSourceSet).sourceSet.java,
+                    { processResources.sourceOutputDir })
+        } else {
+            testCompile.source(
+                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
+                    { processResources.sourceOutputDir })
+        }
+
+        testCompile.classpath = ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.compileClasspath + testedVariant.runtimeClasspath
+        testCompile.conventionMapping.destinationDir = { project.file("$project.buildDir/classes/$variant.dirName") }
+        testCompile.doFirst {
+            testCompile.options.bootClasspath = getRuntimeJars(variant)
+        }
+
+        // TODO: remove the classpath once the jar deps are set in the Variantconfig, so that we can pre-dex
+        variant.runtimeClasspath = testCompile.outputs.files + testCompile.classpath
+        variant.resourcePackage = project.files({processResources.packageFile}) { builtBy processResources }
+        variant.compileTask = testCompile
+
+        Task assembleTask = addPackageTasks(variant, null)
+
+        project.tasks.check.dependsOn assembleTask
+    }
+
+    private Task addPackageTasks(ApplicationVariant variant, Task assembleTask) {
         // Add a dex task
         def dexTaskName = "dex${variant.name}"
         def dexTask = project.tasks.add(dexTaskName, Dex)
@@ -277,42 +389,40 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
         def appTask = packageApp
 
-        if (signedApk && variant.zipAlign) {
-            // Add a task to zip align application package
-            def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlign)
-            alignApp.dependsOn packageApp
-            alignApp.conventionMapping.inputFile = { packageApp.outputFile }
-            alignApp.conventionMapping.outputFile = { project.file("$project.buildDir/apk/${project.archivesBaseName}-${variant.baseName}.apk") }
-            alignApp.sdkDir = sdkDir
+        if (signedApk) {
+            if (variant.zipAlign) {
+                // Add a task to zip align application package
+                def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlign)
+                alignApp.dependsOn packageApp
+                alignApp.conventionMapping.inputFile = { packageApp.outputFile }
+                alignApp.conventionMapping.outputFile = { project.file("$project.buildDir/apk/${project.archivesBaseName}-${variant.baseName}.apk") }
+                alignApp.sdkDir = sdkDir
 
-            appTask = alignApp
+                appTask = alignApp
+            }
+
+            // Add a task to install the application package
+            def installApp = project.tasks.add("install${variant.name}", InstallApplication)
+            installApp.dependsOn appTask
+            installApp.conventionMapping.packageFile = { appTask.outputFile }
+            installApp.sdkDir = sdkDir
         }
 
         // Add an assemble task
-        def assembleTask = project.tasks.add("assemble${variant.name}")
+        Task returnTask = null
+        if (assembleTask == null) {
+            assembleTask = project.tasks.add("assemble${variant.name}")
+            assembleTask.description = variant.description
+            assembleTask.group = "Build"
+            returnTask = assembleTask
+        }
         assembleTask.dependsOn appTask
-        assembleTask.description = "Assembles the ${variant.description} application"
-        assembleTask.group = "Build"
 
-        // Add a task to install the application package
-        def installApp = project.tasks.add("install${variant.name}", InstallApplication)
-        installApp.dependsOn appTask
-        installApp.conventionMapping.packageFile = { appTask.outputFile }
-        installApp.sdkDir = sdkDir
+        return returnTask
     }
 
     @Override
     String getTarget() {
         return extension.target;
-    }
-
-    @Override
-    ProductFlavorHolder getMainFlavor() {
-        return productFlavors.get('main')
-    }
-
-    @Override
-    BuildTypeHolder getDebugType() {
-        return buildTypes.get(BuildType.DEBUG)
     }
 }

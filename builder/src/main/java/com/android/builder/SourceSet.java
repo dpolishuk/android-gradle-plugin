@@ -19,11 +19,10 @@ import java.io.File;
 import java.util.Set;
 
 /**
- * Provides paths for configuration (either ProductFlavor or BuildType)
+ * Represent an Android SourceSet for a given configuration.
  */
-public interface PathProvider {
+public interface SourceSet {
 
-    Set<File> getJavaSource();
     Set<File> getJavaResources();
 
     File getAndroidResources();

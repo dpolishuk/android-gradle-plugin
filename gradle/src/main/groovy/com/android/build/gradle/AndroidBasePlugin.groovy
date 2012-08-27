@@ -15,16 +15,17 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.ApplicationVariant
+import com.android.build.gradle.internal.ProductFlavorData
 import com.android.builder.AndroidBuilder
 import com.android.builder.DefaultSdkParser
+import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
 import com.android.utils.ILogger
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.JavaBasePlugin
-import com.android.builder.ProductFlavorHolder
-import com.android.builder.BuildTypeHolder
-import com.android.build.gradle.internal.ApplicationVariant
+import org.gradle.api.tasks.SourceSet
 
 /**
  * Base class for all Android plugins
@@ -38,13 +39,29 @@ abstract class AndroidBasePlugin {
     private DefaultSdkParser androidSdkParser
     private AndroidLogger androidLogger
 
+    private ProductFlavorData defaultConfigData
+    protected SourceSet mainSourceSet
+    protected SourceSet testSourceSet
+
     abstract String getTarget()
-    abstract ProductFlavorHolder getMainFlavor()
-    abstract BuildTypeHolder getDebugType()
 
     protected void apply(Project project) {
         this.project = project
         project.apply plugin: JavaBasePlugin
+
+        mainSourceSet = project.sourceSets.add("main")
+        testSourceSet = project.sourceSets.add("test")
+
+        project.tasks.assemble.description = "Assembles all variants of all applications, and secondary packages."
+    }
+
+    protected setDefaultConfig(ProductFlavor defaultConfig) {
+        defaultConfigData = new ProductFlavorData(defaultConfig, mainSourceSet,
+                testSourceSet, project)
+    }
+
+    ProductFlavorData getDefaultConfigData() {
+        return defaultConfigData
     }
 
     SdkParser getSdkParser() {

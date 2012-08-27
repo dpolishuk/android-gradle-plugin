@@ -17,33 +17,51 @@ package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
-import com.android.builder.ProductFlavorHolder
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
+import com.android.builder.VariantConfiguration
 
 class TestAppVariant implements ApplicationVariant {
     final String name
-    final ProductFlavorHolder productFlavorHolder
+    final VariantConfiguration variant
+    final VariantConfiguration testedVariant
     FileCollection runtimeClasspath
     FileCollection resourcePackage
     Compile compileTask
 
-    TestAppVariant(ProductFlavorHolder productFlavorHolder) {
-        this.name = "${productFlavorHolder.productFlavor.name.capitalize()}Test"
-        this.productFlavorHolder = productFlavorHolder
+    TestAppVariant(VariantConfiguration variant, VariantConfiguration testedVariant) {
+        this.variant = variant
+        this.testedVariant = testedVariant
+        if (variant.hasFlavors()) {
+            this.name = "${variant.firstFlavor.name.capitalize()}Test"
+        } else {
+            this.name = "Test"
+        }
     }
 
     @Override
     String getDescription() {
-        return "$productFlavorHolder.productFlavor.name test"
+        if (variant.hasFlavors()) {
+            return "Assembles the Test build for the ${variant.firstFlavor.name.capitalize()}${variant.buildType.name.capitalize()} build"
+        } else {
+            return "Assembles the Test for the ${variant.buildType.name.capitalize()} build"
+        }
     }
 
     String getDirName() {
-        return "${productFlavorHolder.productFlavor.name}/test"
+        if (variant.hasFlavors()) {
+            return "$variant.firstFlavor.name/test"
+        } else {
+            return "test"
+        }
     }
 
     String getBaseName() {
-        return "$productFlavorHolder.productFlavor.name-test"
+        if (variant.hasFlavors()) {
+            return "$variant.firstFlavor.name-test"
+        } else {
+            return "test"
+        }
     }
 
     @Override
@@ -64,14 +82,7 @@ class TestAppVariant implements ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-
-        androidBuilder.setBuildVariant(androidBasePlugin.mainFlavor,
-                androidBasePlugin.debugType)
-
-        // FIXME: I'm not sure this is what is needed for test apps
-        if (productFlavorHolder != null) {
-            androidBuilder.addProductFlavor(productFlavorHolder)
-        }
+        androidBuilder.setBuildVariant(variant, testedVariant)
 
         return androidBuilder
     }
