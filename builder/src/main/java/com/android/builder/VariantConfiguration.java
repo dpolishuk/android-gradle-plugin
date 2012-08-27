@@ -89,7 +89,8 @@ public class VariantConfiguration {
      *
      * @param sourceSet the configured product flavor
      */
-    public void addProductFlavor(@NonNull ProductFlavor productFlavor, @NonNull SourceSet sourceSet) {
+    public void addProductFlavor(@NonNull ProductFlavor productFlavor,
+                                 @NonNull SourceSet sourceSet) {
         mFlavorConfigs.add(productFlavor);
         mFlavorSourceSets.add(sourceSet);
         mMergedFlavor = productFlavor.mergeOver(mMergedFlavor);
@@ -233,7 +234,7 @@ public class VariantConfiguration {
         String packageName = mMergedFlavor.getPackageName();
         String packageSuffix = mBuildType.getPackageNameSuffix();
 
-        if (packageSuffix != null) {
+        if (packageSuffix != null && packageSuffix.length() > 0) {
             if (packageName == null) {
                 packageName = getPackageFromManifest();
             }
@@ -261,6 +262,13 @@ public class VariantConfiguration {
         }
 
         return testPackage;
+    }
+
+    private final static String DEFAULT_TEST_RUNNER = "android.test.InstrumentationTestRunner";
+
+    public String getInstrumentationRunner() {
+        String runner = mMergedFlavor.getTestInstrumentationRunner();
+        return runner != null ? runner : DEFAULT_TEST_RUNNER;
     }
 
     /**

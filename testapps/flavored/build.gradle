@@ -11,41 +11,34 @@ buildscript {
 }
 apply plugin: 'android'
 
-version='1.0'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    compile 'com.google.guava:guava:11.0.2'
-}
-
 android {
     target = "android-15"
+    testBuildType = "staging"
+    
 
-	defaultConfig {
-		signingStoreLocation = "debug.keystore"
-		signingStorePassword = "android"
-		signingKeyAlias = "androiddebugkey"
-		signingKeyPassword = "android"
-	}
+    defaultConfig {
+        signingStoreLocation = "debug.keystore"
+        signingStorePassword = "android"
+        signingKeyAlias = "androiddebugkey"
+        signingKeyPassword = "android"
+    }
 
-	productFlavors {
-	    foo {
-			packageName = "org.gradle.sample.foo2"
-			signingStoreLocation = "debug.keystore2"
-			signingStorePassword = "android2"
-		}
-	    bloo {
-			packageName = "org.gradle.sample.bloo"
-		}
-	}
-	
-	buildTypes {
-		blah {
-			packageNameSuffix = ".blah"
-			debugSigned = true
-		}
-	}
+    productFlavors {
+        f1 {
+            packageName = "com.android.tests.flavored.f1"
+        }
+        f2 {
+            packageName = "com.android.tests.flavored.f2"
+        }
+    }
+    
+    buildTypes {
+        debug {
+            packageNameSuffix = ".debug"
+        }
+        staging {
+            packageNameSuffix = ".staging"
+            debugSigned = true
+        }
+    }
 }

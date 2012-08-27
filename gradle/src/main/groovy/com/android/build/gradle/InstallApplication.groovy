@@ -30,6 +30,7 @@ class InstallApplication extends DefaultTask {
         project.exec {
             executable = new File(getSdkDir(), "platform-tools/adb")
             args 'install'
+            args '-r'
             args getPackageFile()
         }
     }

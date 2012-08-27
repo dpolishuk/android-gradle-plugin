@@ -42,9 +42,9 @@ class TestAppVariant implements ApplicationVariant {
     @Override
     String getDescription() {
         if (variant.hasFlavors()) {
-            return "Assembles the Test build for the ${variant.firstFlavor.name.capitalize()}${variant.buildType.name.capitalize()} build"
+            return "Test build for the ${variant.firstFlavor.name.capitalize()}${variant.buildType.name.capitalize()} build"
         } else {
-            return "Assembles the Test for the ${variant.buildType.name.capitalize()} build"
+            return "Test for the ${variant.buildType.name.capitalize()} build"
         }
     }
 
@@ -72,6 +72,19 @@ class TestAppVariant implements ApplicationVariant {
     @Override
     boolean isSigned() {
         return true;
+    }
+
+    @Override
+    List<String> getRunCommand() {
+        String[] args = [ "shell", "am", "instrument", "-w",
+                variant.getPackageName(testedVariant) + "/" + testedVariant.instrumentationRunner]
+
+        return Arrays.asList(args)
+    }
+
+    @Override
+    String getPackage() {
+        return variant.getPackageName(testedVariant)
     }
 
     @Override

@@ -41,9 +41,9 @@ class ProductionAppVariant implements ApplicationVariant {
 
     String getDescription() {
         if (variant.hasFlavors()) {
-            return "Assembles the ${variant.buildType.name.capitalize()} build for flavor ${variant.firstFlavor.name.capitalize()}"
+            return "${variant.buildType.name.capitalize()} build for flavor ${variant.firstFlavor.name.capitalize()}"
         } else {
-            return "Assembles the ${variant.buildType.name.capitalize()} build"
+            return "${variant.buildType.name.capitalize()} build"
         }
     }
 
@@ -72,6 +72,15 @@ class ProductionAppVariant implements ApplicationVariant {
     boolean isSigned() {
         return variant.buildType.debugSigned ||
                 variant.mergedFlavor.isSigningReady()
+    }
+
+    @Override
+    List<String> getRunCommand() {
+        throw new UnsupportedOperationException()
+    }
+
+    String getPackage() {
+        return variant.getPackageName(null)
     }
 
     @Override

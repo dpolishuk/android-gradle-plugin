@@ -7,6 +7,6 @@
     </application>
 
     <instrumentation android:name="#TESTRUNNER#"
-                     android:targetPackage="#TESTPACKAGE#"
-                     android:label="Tests for #TESTPACKAGE#"/>
+                     android:targetPackage="#TESTEDPACKAGE#"
+                     android:label="Tests for #TESTEDPACKAGE#"/>
 </manifest>

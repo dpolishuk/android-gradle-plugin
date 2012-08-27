@@ -72,8 +72,9 @@ public class AndroidBuilder {
 
     private IAndroidTarget mTarget;
 
-    // config for the main app. In case of a test app this is used to
+    // config for the main app.
     private VariantConfiguration mVariant;
+    // config for the tested app.
     private VariantConfiguration mTestedVariant;
 
     /**
@@ -183,9 +184,12 @@ public class AndroidBuilder {
             throw new IllegalArgumentException("Target not set.");
         }
 
-        File manifest = mVariant.getDefaultSourceSet().getAndroidManifest();
-
-        String packageName = mVariant.getPackageName(mTestedVariant);
+        String packageName;
+        if (mVariant.getType() == VariantConfiguration.Type.TEST) {
+            packageName = mVariant.getPackageName(mTestedVariant);
+        } else {
+            packageName = mVariant.getPackageFromManifest();
+        }
 
         BuildConfigGenerator generator = new BuildConfigGenerator(
                 sourceOutputDir, packageName, mVariant.getBuildType().isDebuggable());
@@ -223,10 +227,15 @@ public class AndroidBuilder {
             command.add("-v");
         }
 
-        File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
-        if (typeResLocation != null && typeResLocation.isDirectory()) {
-            command.add("-S");
-            command.add(typeResLocation.getAbsolutePath());
+        boolean hasResToCrunch = false;
+
+        if (mVariant.getBuildTypeSourceSet() != null) {
+            File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
+            if (typeResLocation != null && typeResLocation.isDirectory()) {
+                command.add("-S");
+                command.add(typeResLocation.getAbsolutePath());
+                hasResToCrunch = true;
+            }
         }
 
         for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
@@ -234,6 +243,7 @@ public class AndroidBuilder {
             if (flavorResLocation != null && flavorResLocation.isDirectory()) {
                 command.add("-S");
                 command.add(flavorResLocation.getAbsolutePath());
+                hasResToCrunch = true;
             }
         }
 
@@ -241,12 +251,15 @@ public class AndroidBuilder {
         if (mainResLocation != null && mainResLocation.isDirectory()) {
             command.add("-S");
             command.add(mainResLocation.getAbsolutePath());
+            hasResToCrunch = true;
         }
 
         command.add("-C");
         command.add(resOutputDir);
 
-        mCmdLineRunner.runCmdLine(command);
+        if (hasResToCrunch) {
+            mCmdLineRunner.runCmdLine(command);
+        }
     }
 
     /**
@@ -265,9 +278,22 @@ public class AndroidBuilder {
         }
 
         if (mTestedVariant != null) {
-
+            generateTestManifest(outManifestLocation);
         } else {
             mergeManifest(outManifestLocation);
+        }
+    }
+
+    private void generateTestManifest(String outManifestLocation) {
+        TestManifestGenerator generator = new TestManifestGenerator(outManifestLocation,
+                mVariant.getPackageName(mTestedVariant),
+                mTestedVariant.getPackageName(null),
+                mTestedVariant.getInstrumentationRunner());
+
+        try {
+            generator.generate();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -282,7 +308,7 @@ public class AndroidBuilder {
             List<File> flavorManifests = new ArrayList<File>();
             for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
                 File f = sourceSet.getAndroidManifest();
-                if (f != null && f.isDirectory()) {
+                if (f != null && f.isFile()) {
                     flavorManifests.add(f);
                 }
             }
@@ -399,22 +425,26 @@ public class AndroidBuilder {
         // TODO: handle libraries!
         boolean useOverlay =  false;
         if (preprocessResDir != null) {
-            command.add("-S");
-            command.add(preprocessResDir);
-            useOverlay = true;
+            File preprocessResFile = new File(preprocessResDir);
+            if (preprocessResFile.isDirectory()) {
+                command.add("-S");
+                command.add(preprocessResDir);
+                useOverlay = true;
+            }
         }
 
-        File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
-        if (typeResLocation != null && typeResLocation.isDirectory()) {
-            command.add("-S");
-            command.add(typeResLocation.getAbsolutePath());
-            useOverlay = true;
+        if (mVariant.getBuildTypeSourceSet() != null) {
+            File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
+            if (typeResLocation != null && typeResLocation.isDirectory()) {
+                command.add("-S");
+                command.add(typeResLocation.getAbsolutePath());
+                useOverlay = true;
+            }
         }
-
 
         for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
             File flavorResLocation = sourceSet.getAndroidResources();
-            if (flavorResLocation != null && typeResLocation.isDirectory()) {
+            if (flavorResLocation != null && flavorResLocation.isDirectory()) {
                 command.add("-S");
                 command.add(flavorResLocation.getAbsolutePath());
                 useOverlay = true;
@@ -422,8 +452,10 @@ public class AndroidBuilder {
         }
 
         File mainResLocation = mVariant.getDefaultSourceSet().getAndroidResources();
-        command.add("-S");
-        command.add(mainResLocation.getAbsolutePath());
+        if (mainResLocation != null && mainResLocation.isDirectory()) {
+            command.add("-S");
+            command.add(mainResLocation.getAbsolutePath());
+        }
 
         if (useOverlay) {
             command.add("--auto-add-overlay");
@@ -536,6 +568,8 @@ public class AndroidBuilder {
             }
         }
 
+        mLogger.verbose("aapt command: %s", command.toString());
+
         mCmdLineRunner.runCmdLine(command);
     }
 
@@ -643,10 +677,14 @@ public class AndroidBuilder {
             // figure out conflicts!
             JavaResourceProcessor resProcessor = new JavaResourceProcessor(packager);
 
-            Set<File> buildTypeJavaResLocations = mVariant.getBuildTypeSourceSet().getJavaResources();
-            for (File buildTypeJavaResLocation : buildTypeJavaResLocations) {
-                if (buildTypeJavaResLocation != null && buildTypeJavaResLocation.isDirectory()) {
-                    resProcessor.addSourceFolder(buildTypeJavaResLocation.getAbsolutePath());
+            if (mVariant.getBuildTypeSourceSet() != null) {
+                Set<File> buildTypeJavaResLocations =
+                        mVariant.getBuildTypeSourceSet().getJavaResources();
+                for (File buildTypeJavaResLocation : buildTypeJavaResLocations) {
+                    if (buildTypeJavaResLocation != null &&
+                            buildTypeJavaResLocation.isDirectory()) {
+                        resProcessor.addSourceFolder(buildTypeJavaResLocation.getAbsolutePath());
+                    }
                 }
             }
 

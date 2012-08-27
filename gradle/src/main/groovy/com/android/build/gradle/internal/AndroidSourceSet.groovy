@@ -27,9 +27,9 @@ public class AndroidSourceSet implements com.android.builder.SourceSet {
     private final String name
     private final Project project
 
-    public AndroidSourceSet(SourceSet sourceSet, String name, Project project) {
+    public AndroidSourceSet(SourceSet sourceSet, Project project) {
         this.sourceSet = sourceSet
-        this.name = name
+        this.name = sourceSet.name
         this.project = project
     }
 
