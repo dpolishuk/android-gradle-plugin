@@ -555,15 +555,16 @@ public class AndroidBuilder {
         }
 
         // AAPT options
-        if (options.getIgnoreAssetsPattern() != null) {
+        String ignoreAssets = options.getIgnoreAssets();
+        if (ignoreAssets != null) {
             command.add("---ignore-assets");
-            command.add(options.getIgnoreAssetsPattern());
+            command.add(ignoreAssets);
         }
 
-        List<String> noCompressList = options.getNoCompressList();
+        List<String> noCompressList = options.getNoCompress();
         if (noCompressList != null) {
             for (String noCompress : noCompressList) {
-                command.add("0");
+                command.add("-0");
                 command.add(noCompress);
             }
         }

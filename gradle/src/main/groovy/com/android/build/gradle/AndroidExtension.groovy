@@ -15,21 +15,20 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.AaptOptionsImpl
+import com.android.build.gradle.internal.DexOptionsImpl
 import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
-import com.android.builder.AaptOptions
-import com.android.builder.DexOptions
 
 class AndroidExtension extends BaseAndroidExtension {
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
 
     String testBuildType = "debug"
 
-    // FIXME?
-    final AaptOptions aaptOptions = new AaptOptions()
-    final DexOptions dexOptions = new DexOptions()
+    final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
+    final DexOptionsImpl dexOptions = new DexOptionsImpl()
 
     AndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes,
                      NamedDomainObjectContainer<ProductFlavor> productFlavors) {
@@ -39,5 +38,13 @@ class AndroidExtension extends BaseAndroidExtension {
 
     void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavor>> action) {
         action.execute(productFlavors)
+    }
+
+    void aaptOptions(Action<AaptOptionsImpl> action) {
+        action.execute(aaptOptions)
+    }
+
+    void dexOptions(Action<DexOptionsImpl> action) {
+        action.execute(dexOptions)
     }
 }

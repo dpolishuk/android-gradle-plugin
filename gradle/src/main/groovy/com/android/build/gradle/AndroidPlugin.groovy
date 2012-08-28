@@ -168,7 +168,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                     buildTypeData.buildType, buildTypeData.androidSourceSet,
                     VariantConfiguration.Type.DEFAULT)
 
-            boolean isTestedVariant =  buildTypeData == testData
+            boolean isTestedVariant = (buildTypeData == testData)
 
             ProductionAppVariant productionAppVariant = addVariant(variantConfig,
                     buildTypeData.assembleTask, isTestedVariant)
@@ -214,7 +214,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             variantConfig.addProductFlavor(productFlavorData.productFlavor,
                     productFlavorData.androidSourceSet)
 
-            boolean isTestedVariant =  buildTypeData == testData
+            boolean isTestedVariant = (buildTypeData == testData)
 
             ProductionAppVariant productionAppVariant = addVariant(variantConfig, null,
                     isTestedVariant)
