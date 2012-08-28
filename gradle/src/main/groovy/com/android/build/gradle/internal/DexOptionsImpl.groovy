@@ -14,21 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.builder;
+package com.android.build.gradle.internal
 
-import java.util.List;
+import com.android.builder.DexOptions;
 
-/**
- * Options for aapt.
- */
-public interface AaptOptions {
-    /**
-     * Returns the value for the --ignore-assets option, or null
-     */
-    String getIgnoreAssets();
-
-    /**
-     * Returns the list of values for the -0 (disabled compression) option, or null
-     */
-    List<String> getNoCompress();
+public class DexOptionsImpl implements DexOptions, Serializable {
+    private static final long serialVersionUID = 1L
 }

@@ -27,4 +27,8 @@ android {
             packageNameSuffix = ".debug"
         }
     }
+
+    aaptOptions {
+        noCompress "txt"
+    }
 }
