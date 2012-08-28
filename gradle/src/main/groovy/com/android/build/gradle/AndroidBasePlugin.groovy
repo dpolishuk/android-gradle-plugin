@@ -52,7 +52,7 @@ abstract class AndroidBasePlugin {
         mainSourceSet = project.sourceSets.add("main")
         testSourceSet = project.sourceSets.add("test")
 
-        project.tasks.assemble.description = "Assembles all variants of all applications, and secondary packages."
+        project.tasks.assemble.description = "Assembles all variants of all applications and secondary packages."
     }
 
     protected setDefaultConfig(ProductFlavor defaultConfig) {

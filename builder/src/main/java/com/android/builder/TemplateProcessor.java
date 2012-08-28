@@ -65,14 +65,18 @@ class TemplateProcessor {
     private String readEmbeddedTextFile(InputStream templateStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(templateStream));
 
-        String line;
-        StringBuilder total = new StringBuilder(reader.readLine());
-        while ((line = reader.readLine()) != null) {
-            total.append('\n');
-            total.append(line);
-        }
+        try {
+            String line;
+            StringBuilder total = new StringBuilder(reader.readLine());
+            while ((line = reader.readLine()) != null) {
+                total.append('\n');
+                total.append(line);
+            }
 
-        return total.toString();
+            return total.toString();
+        } finally {
+            reader.close();
+        }
     }
 
     private void writeFile(File file, String content) throws IOException {

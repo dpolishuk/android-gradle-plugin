@@ -31,7 +31,7 @@ class BuildTypeData {
     BuildTypeData(BuildType buildType, SourceSet mainSource, Project project) {
         this.buildType = buildType
         this.mainSource = mainSource
-        androidSourceSet = new AndroidSourceSet(mainSource, buildType.name, project)
+        androidSourceSet = new AndroidSourceSet(mainSource, project)
 
         assembleTask = project.tasks.add("assemble${buildType.name.capitalize()}")
         assembleTask.description = "Assembles all ${buildType.name.capitalize()} builds"

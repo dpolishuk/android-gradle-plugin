@@ -36,10 +36,10 @@ class ProductFlavorData {
         this.productFlavor = productFlavor
 
         this.mainSource = mainSource
-        androidSourceSet = new AndroidSourceSet(mainSource, productFlavor.name, project)
+        androidSourceSet = new AndroidSourceSet(mainSource, project)
 
         this.testSource = testSource
-        androidTestSourceSet = new AndroidSourceSet(testSource, productFlavor.name, project)
+        androidTestSourceSet = new AndroidSourceSet(testSource, project)
 
         if (productFlavor.name != "main") {
             assembleTask = project.tasks.add("assemble${productFlavor.name.capitalize()}")

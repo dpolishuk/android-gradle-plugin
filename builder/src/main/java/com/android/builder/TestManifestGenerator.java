@@ -15,6 +15,8 @@
  */
 package com.android.builder;
 
+import com.android.annotations.NonNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,32 +27,30 @@ import java.util.Map;
  */
 public class TestManifestGenerator {
 
-    private final static String TEMPLATE = "BuildConfig.template";
+    private final static String TEMPLATE = "AndroidManifest.template";
     private final static String PH_PACKAGE = "#PACKAGE#";
-    private final static String PH_TEST_PACKAGE = "#TESTPACKAGE#";
+    private final static String PH_TESTED_PACKAGE = "#TESTEDPACKAGE#";
     private final static String PH_TEST_RUNNER = "#TESTRUNNER#";
-
-    private final static String DEFAULT_TEST_RUNNER = "android.test.InstrumentationTestRunner";
 
     private final String mOutputFile;
     private final String mPackageName;
-    private final String mTestPackageName;
+    private final String mTestedPackageName;
     private final String mTestRunnerName;
 
-    TestManifestGenerator(String outputFile,
-                          String packageName,
-                          String testPackageName,
-                          String testRunnerName) {
+    TestManifestGenerator(@NonNull String outputFile,
+                          @NonNull String packageName,
+                          @NonNull String testedPackageName,
+                          @NonNull String testRunnerName) {
         mOutputFile = outputFile;
         mPackageName = packageName;
-        mTestPackageName = testPackageName;
-        mTestRunnerName = testRunnerName != null ? testRunnerName : DEFAULT_TEST_RUNNER;
+        mTestedPackageName = testedPackageName;
+        mTestRunnerName = testRunnerName;
     }
 
     public void generate() throws IOException {
         Map<String, String> map = new HashMap<String, String>();
         map.put(PH_PACKAGE, mPackageName);
-        map.put(PH_TEST_PACKAGE, mTestPackageName);
+        map.put(PH_TESTED_PACKAGE, mTestedPackageName);
         map.put(PH_TEST_RUNNER, mTestRunnerName);
 
         TemplateProcessor processor = new TemplateProcessor(

@@ -34,6 +34,7 @@ class AndroidLogger implements ILogger {
     void error(Throwable throwable, String s, Object... objects) {
         if (throwable == null) {
             logger.log(LogLevel.ERROR, String.format(s, objects))
+
         } else {
             logger.log(LogLevel.ERROR, String.format(s, objects), throwable)
         }
@@ -41,16 +42,16 @@ class AndroidLogger implements ILogger {
 
     @Override
     void warning(String s, Object... objects) {
-        logger.log(LogLevel.WARN, s, objects)
+        logger.log(LogLevel.WARN, String.format(s, objects))
     }
 
     @Override
     void info(String s, Object... objects) {
-        logger.log(LogLevel.INFO, s, objects)
+        logger.log(LogLevel.INFO, String.format(s, objects))
     }
 
     @Override
     void verbose(String s, Object... objects) {
-        logger.log(LogLevel.INFO, s, objects)
+        logger.log(LogLevel.INFO, String.format(s, objects))
     }
 }

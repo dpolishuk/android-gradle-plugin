@@ -42,5 +42,9 @@ public interface ApplicationVariant {
 
     Compile getCompileTask()
 
+    List<String> getRunCommand()
+
+    String getPackage()
+
     AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
 }
