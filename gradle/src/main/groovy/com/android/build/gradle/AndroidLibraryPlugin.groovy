@@ -18,35 +18,65 @@ package com.android.build.gradle
 import com.android.builder.BuildType
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import com.android.build.gradle.internal.BuildTypeData
+import com.android.builder.VariantConfiguration
+import com.android.build.gradle.internal.ProductionAppVariant
+import com.android.build.gradle.internal.ProductFlavorData
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
     AndroidLibraryExtension extension
+    BuildTypeData debugBuildTypeData
+    BuildTypeData releaseBuildTypeData
 
     @Override
     void apply(Project project) {
         super.apply(project)
 
-        def buildTypes = project.container(BuildType)
-
-        extension = project.extensions.create('android', AndroidLibraryExtension, buildTypes)
+        extension = project.extensions.create('android', AndroidLibraryExtension)
         setDefaultConfig(extension.defaultConfig)
 
-        buildTypes.whenObjectAdded { BuildType buildType ->
-            addBuildType(buildType)
-        }
-        buildTypes.whenObjectRemoved {
-            throw new UnsupportedOperationException("Removing build types is not implemented yet.")
-        }
+        // create the source sets for the build type.
+        // the ones for the main product flavors are handled by the base plugin.
+        def debugSourceSet = project.sourceSets.add(BuildType.DEBUG)
+        def releaseSourceSet = project.sourceSets.add(BuildType.RELEASE)
 
-        buildTypes.create(BuildType.DEBUG)
-        buildTypes.create(BuildType.RELEASE)
+        debugBuildTypeData = new BuildTypeData(extension.debug, debugSourceSet, project)
+        releaseBuildTypeData = new BuildTypeData(extension.release, releaseSourceSet, project)
+
+        project.afterEvaluate {
+            createAndroidTasks()
+        }
     }
 
-    void addBuildType(BuildType buildType) {
-        def assemble = project.tasks.add("assemble${buildType.name.capitalize()}")
+    void createAndroidTasks() {
+        createLibraryTasks()
+    }
 
-        project.tasks.assemble.dependsOn assemble
+    void createLibraryTasks() {
+        ProductFlavorData defaultConfigData = getDefaultConfigData();
+
+        def variantConfig = new VariantConfiguration(
+                defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
+                debugBuildTypeData.buildType, debugBuildTypeData.androidSourceSet,
+                VariantConfiguration.Type.LIBRARY)
+
+        ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
+
+        // Add a task to process the manifest(s)
+        ProcessManifest processManifestTask = createProcessManifestTask(variant)
+
+        // Add a task to crunch resource files
+        def crunchTask = createCrunchResTask(variant)
+
+        // Add a task to create the BuildConfig class
+        def generateBuildConfigTask = createBuildConfigTask(variant, null)
+
+        // Add a task to generate resource source files
+        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+
+        // Add a compile task
+        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask)
     }
 
     @Override
