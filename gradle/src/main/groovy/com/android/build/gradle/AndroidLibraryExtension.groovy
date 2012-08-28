@@ -16,11 +16,22 @@
 package com.android.build.gradle
 
 import com.android.builder.BuildType
-import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.Action
 
 class AndroidLibraryExtension extends BaseAndroidExtension {
 
-    AndroidLibraryExtension(NamedDomainObjectContainer<BuildType> buildTypes) {
-        super(buildTypes)
+    final BuildType debug = new BuildType(BuildType.DEBUG)
+    final BuildType release = new BuildType(BuildType.RELEASE)
+
+    AndroidLibraryExtension() {
+        super()
+    }
+
+    void debug(Action<BuildType> action) {
+        action.execute(debug);
+    }
+
+    void release(Action<BuildType> action) {
+        action.execute(release);
     }
 }

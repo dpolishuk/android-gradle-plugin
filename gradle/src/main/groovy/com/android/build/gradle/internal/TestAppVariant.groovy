@@ -23,17 +23,17 @@ import com.android.builder.VariantConfiguration
 
 class TestAppVariant implements ApplicationVariant {
     final String name
-    final VariantConfiguration variant
-    final VariantConfiguration testedVariant
+    final VariantConfiguration config
+    final VariantConfiguration testedConfig
     FileCollection runtimeClasspath
     FileCollection resourcePackage
     Compile compileTask
 
-    TestAppVariant(VariantConfiguration variant, VariantConfiguration testedVariant) {
-        this.variant = variant
-        this.testedVariant = testedVariant
-        if (variant.hasFlavors()) {
-            this.name = "${variant.firstFlavor.name.capitalize()}Test"
+    TestAppVariant(VariantConfiguration config, VariantConfiguration testedConfig) {
+        this.config = config
+        this.testedConfig = testedConfig
+        if (config.hasFlavors()) {
+            this.name = "${config.firstFlavor.name.capitalize()}Test"
         } else {
             this.name = "Test"
         }
@@ -41,24 +41,24 @@ class TestAppVariant implements ApplicationVariant {
 
     @Override
     String getDescription() {
-        if (variant.hasFlavors()) {
-            return "Test build for the ${variant.firstFlavor.name.capitalize()}${variant.buildType.name.capitalize()} build"
+        if (config.hasFlavors()) {
+            return "Test build for the ${config.firstFlavor.name.capitalize()}${config.buildType.name.capitalize()} build"
         } else {
-            return "Test for the ${variant.buildType.name.capitalize()} build"
+            return "Test for the ${config.buildType.name.capitalize()} build"
         }
     }
 
     String getDirName() {
-        if (variant.hasFlavors()) {
-            return "$variant.firstFlavor.name/test"
+        if (config.hasFlavors()) {
+            return "$config.firstFlavor.name/test"
         } else {
             return "test"
         }
     }
 
     String getBaseName() {
-        if (variant.hasFlavors()) {
-            return "$variant.firstFlavor.name-test"
+        if (config.hasFlavors()) {
+            return "$config.firstFlavor.name-test"
         } else {
             return "test"
         }
@@ -75,16 +75,21 @@ class TestAppVariant implements ApplicationVariant {
     }
 
     @Override
+    boolean getRunProguard() {
+        return false
+    }
+
+    @Override
     List<String> getRunCommand() {
         String[] args = [ "shell", "am", "instrument", "-w",
-                variant.getPackageName(testedVariant) + "/" + testedVariant.instrumentationRunner]
+                config.getPackageName(testedConfig) + "/" + testedConfig.instrumentationRunner]
 
         return Arrays.asList(args)
     }
 
     @Override
     String getPackage() {
-        return variant.getPackageName(testedVariant)
+        return config.getPackageName(testedConfig)
     }
 
     @Override
@@ -95,9 +100,8 @@ class TestAppVariant implements ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-        androidBuilder.setBuildVariant(variant, testedVariant)
+        androidBuilder.setBuildVariant(config, testedConfig)
 
         return androidBuilder
     }
-
 }

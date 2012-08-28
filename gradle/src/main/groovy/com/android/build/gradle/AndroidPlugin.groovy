@@ -15,7 +15,6 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.AndroidSourceSet
 import com.android.build.gradle.internal.ApplicationVariant
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.ProductFlavorData
@@ -27,7 +26,6 @@ import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.tasks.compile.Compile
 import org.gradle.internal.reflect.Instantiator
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
@@ -254,66 +252,19 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def variant = new ProductionAppVariant(variantConfig)
 
         // Add a task to process the manifest(s)
-        def processManifestTask = project.tasks.add("process${variant.name}Manifest", ProcessManifest)
-        processManifestTask.plugin = this
-        processManifestTask.variant = variant
-        processManifestTask.conventionMapping.mergedManifest = { project.file("$project.buildDir/manifests/$variant.dirName/AndroidManifest.xml") }
+        ProcessManifest processManifestTask = createProcessManifestTask(variant)
 
         // Add a task to crunch resource files
-        def crunchTask = project.tasks.add("crunchAndroid${variant.name}Res", CrunchResources)
-        crunchTask.plugin = this
-        crunchTask.variant = variant
-        crunchTask.conventionMapping.outputDir = { project.file("$project.buildDir/resources/$variant.dirName/res") }
+        def crunchTask = createCrunchResTask(variant)
 
         // Add a task to create the BuildConfig class
-        def generateBuildConfigTask = project.tasks.add("generate${variant.name}BuildConfig", GenerateBuildConfigTask)
-        generateBuildConfigTask.plugin = this
-        generateBuildConfigTask.variant = variant
-        generateBuildConfigTask.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/${variant.dirName}") }
+        def generateBuildConfigTask = createBuildConfigTask(variant, null)
 
         // Add a task to generate resource source files
-        def processResources = project.tasks.add("processAndroid${variant.name}Res", ProcessResources)
-        processResources.dependsOn processManifestTask, crunchTask
-        processResources.plugin = this
-        processResources.variant = variant
-        processResources.conventionMapping.manifestFile = { processManifestTask.mergedManifest }
-        processResources.conventionMapping.crunchDir = { crunchTask.outputDir }
-        // TODO: unify with generateBuilderConfig somehow?
-        processResources.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/$variant.dirName") }
-        processResources.conventionMapping.packageFile = { project.file("$project.buildDir/libs/${project.archivesBaseName}-${variant.baseName}.ap_") }
-        if (variantConfig.buildType.runProguard) {
-            processResources.conventionMapping.proguardFile = { project.file("$project.buildDir/proguard/${variant.dirName}/rules.txt") }
-        }
-        processResources.aaptOptions = extension.aaptOptions
+        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
 
         // Add a compile task
-        def compileTaskName = "compile${variant.name}"
-        def compileTask = project.tasks.add(compileTaskName, Compile)
-        compileTask.dependsOn processResources, generateBuildConfigTask
-        if (variantConfig.hasFlavors()) {
-            compileTask.source(
-                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
-                    ((AndroidSourceSet)variantConfig.buildTypeSourceSet).sourceSet.java,
-                    ((AndroidSourceSet)variantConfig.firstFlavorSourceSet).sourceSet.java,
-                    { processResources.sourceOutputDir })
-        } else {
-            compileTask.source(
-                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
-                    ((AndroidSourceSet)variantConfig.buildTypeSourceSet).sourceSet.java,
-                    { processResources.sourceOutputDir })
-        }
-        // TODO: support classpath per flavor
-        compileTask.classpath = ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.compileClasspath
-        compileTask.conventionMapping.destinationDir = { project.file("$project.buildDir/classes/$variant.dirName") }
-        compileTask.doFirst {
-            compileTask.options.bootClasspath = getRuntimeJars(variant)
-        }
-
-        // Wire up the outputs
-        // TODO: remove the classpath once the jar deps are set in the Variantconfig, so that we can pre-dex
-        variant.runtimeClasspath = compileTask.outputs.files + compileTask.classpath
-        variant.resourcePackage = project.files({processResources.packageFile}) { builtBy processResources }
-        variant.compileTask = compileTask
+        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask)
 
         Task returnTask = addPackageTasks(variant, assembleTask, isTestApk)
         if (returnTask != null) {
@@ -330,60 +281,19 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def variant = new TestAppVariant(variantConfig, testedVariantConfig)
 
         // Add a task to process the manifest
-        def processManifestTask = project.tasks.add("process${variant.name}Manifest", ProcessManifest)
-        processManifestTask.plugin = this
-        processManifestTask.variant = variant
-        processManifestTask.conventionMapping.mergedManifest = { project.file("$project.buildDir/manifests/$variant.dirName/AndroidManifest.xml") }
+        def processManifestTask = createProcessManifestTask(variant)
 
         // Add a task to crunch resource files
-        def crunchTask = project.tasks.add("crunchAndroid${variant.name}Res", CrunchResources)
-        crunchTask.plugin = this
-        crunchTask.variant = variant
-        crunchTask.conventionMapping.outputDir = { project.file("$project.buildDir/resources/$variant.dirName/res") }
+        def crunchTask = createCrunchResTask(variant)
 
         // Add a task to create the BuildConfig class
-        def generateBuildConfigTask = project.tasks.add("generate${variant.name}BuildConfig", GenerateBuildConfigTask)
-        generateBuildConfigTask.dependsOn processManifestTask // this is because the manifest can be generated.
-        generateBuildConfigTask.plugin = this
-        generateBuildConfigTask.variant = variant
-        generateBuildConfigTask.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/${variant.dirName}") }
+        def generateBuildConfigTask = createBuildConfigTask(variant, processManifestTask)
 
         // Add a task to generate resource source files
-        def processResources = project.tasks.add("processAndroid${variant.name}Res", ProcessResources)
-        processResources.dependsOn processManifestTask, crunchTask
-        processResources.plugin = this
-        processResources.variant = variant
-        processResources.conventionMapping.manifestFile = { processManifestTask.mergedManifest }
-        processResources.conventionMapping.crunchDir = { crunchTask.outputDir }
-        // TODO: unify with generateBuilderConfig somehow?
-        processResources.conventionMapping.sourceOutputDir = { project.file("$project.buildDir/source/$variant.dirName") }
-        processResources.conventionMapping.packageFile = { project.file("$project.buildDir/libs/${project.archivesBaseName}-${variant.baseName}.ap_") }
-        processResources.aaptOptions = extension.aaptOptions
+        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
 
         // Add a task to compile the test application
-        def testCompile = project.tasks.add("compile${variant.name}", Compile)
-        testCompile.dependsOn processResources, generateBuildConfigTask
-        if (variantConfig.hasFlavors()) {
-            testCompile.source(
-                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
-                    ((AndroidSourceSet)variantConfig.firstFlavorSourceSet).sourceSet.java,
-                    { processResources.sourceOutputDir })
-        } else {
-            testCompile.source(
-                    ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.java,
-                    { processResources.sourceOutputDir })
-        }
-
-        testCompile.classpath = ((AndroidSourceSet)variantConfig.defaultSourceSet).sourceSet.compileClasspath + testedVariant.runtimeClasspath
-
-        testCompile.conventionMapping.destinationDir = { project.file("$project.buildDir/classes/$variant.dirName") }
-        testCompile.doFirst {
-            testCompile.options.bootClasspath = getRuntimeJars(variant)
-        }
-
-        variant.runtimeClasspath = testCompile.outputs.files
-        variant.resourcePackage = project.files({processResources.packageFile}) { builtBy processResources }
-        variant.compileTask = testCompile
+        createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask)
 
         Task assembleTask = addPackageTasks(variant, null, true /*isTestApk*/)
 

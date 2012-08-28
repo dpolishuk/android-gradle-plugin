@@ -24,6 +24,8 @@ import org.gradle.api.NamedDomainObjectContainer
 
 class AndroidExtension extends BaseAndroidExtension {
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
+    final NamedDomainObjectContainer<BuildType> buildTypes
+
 
     String testBuildType = "debug"
 
@@ -32,8 +34,13 @@ class AndroidExtension extends BaseAndroidExtension {
 
     AndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes,
                      NamedDomainObjectContainer<ProductFlavor> productFlavors) {
-        super(buildTypes)
+        super()
+        this.buildTypes = buildTypes
         this.productFlavors = productFlavors
+    }
+
+    void buildTypes(Action<? super NamedDomainObjectContainer<BuildType>> action) {
+        action.execute(buildTypes)
     }
 
     void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavor>> action) {

@@ -24,54 +24,59 @@ import org.gradle.api.tasks.compile.Compile
 
 class ProductionAppVariant implements ApplicationVariant {
     final String name
-    final VariantConfiguration variant
+    final VariantConfiguration config
     FileCollection runtimeClasspath
     FileCollection resourcePackage
     Compile compileTask
     Task assembleTask
 
-    ProductionAppVariant(VariantConfiguration variant) {
-        this.variant = variant
-        if (variant.hasFlavors()) {
-            this.name = "${variant.firstFlavor.name.capitalize()}${variant.buildType.name.capitalize()}"
+    ProductionAppVariant(VariantConfiguration config) {
+        this.config = config
+        if (config.hasFlavors()) {
+            this.name = "${config.firstFlavor.name.capitalize()}${config.buildType.name.capitalize()}"
         } else {
-            this.name = "${variant.buildType.name.capitalize()}"
+            this.name = "${config.buildType.name.capitalize()}"
         }
     }
 
     String getDescription() {
-        if (variant.hasFlavors()) {
-            return "${variant.buildType.name.capitalize()} build for flavor ${variant.firstFlavor.name.capitalize()}"
+        if (config.hasFlavors()) {
+            return "${config.buildType.name.capitalize()} build for flavor ${config.firstFlavor.name.capitalize()}"
         } else {
-            return "${variant.buildType.name.capitalize()} build"
+            return "${config.buildType.name.capitalize()} build"
         }
     }
 
     String getDirName() {
-        if (variant.hasFlavors()) {
-            return "$variant.firstFlavor.name/$variant.buildType.name"
+        if (config.hasFlavors()) {
+            return "$config.firstFlavor.name/$config.buildType.name"
         } else {
-            return "$variant.buildType.name"
+            return "$config.buildType.name"
         }
     }
 
     String getBaseName() {
-        if (variant.hasFlavors()) {
-            return "$variant.firstFlavor.name-$variant.buildType.name"
+        if (config.hasFlavors()) {
+            return "$config.firstFlavor.name-$config.buildType.name"
         } else {
-            return "$variant.buildType.name"
+            return "$config.buildType.name"
         }
     }
 
     @Override
     boolean getZipAlign() {
-        return variant.buildType.zipAlign
+        return config.buildType.zipAlign
     }
 
     @Override
     boolean isSigned() {
-        return variant.buildType.debugSigned ||
-                variant.mergedFlavor.isSigningReady()
+        return config.buildType.debugSigned ||
+                config.mergedFlavor.isSigningReady()
+    }
+
+    @Override
+    boolean getRunProguard() {
+        return config.buildType.runProguard
     }
 
     @Override
@@ -80,7 +85,7 @@ class ProductionAppVariant implements ApplicationVariant {
     }
 
     String getPackage() {
-        return variant.getPackageName(null)
+        return config.getPackageName(null)
     }
 
     @Override
@@ -91,7 +96,7 @@ class ProductionAppVariant implements ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-        androidBuilder.setBuildVariant(variant, null /*testedVariant*/)
+        androidBuilder.setBuildVariant(config, null /*testedConfig*/)
 
         return androidBuilder
     }
