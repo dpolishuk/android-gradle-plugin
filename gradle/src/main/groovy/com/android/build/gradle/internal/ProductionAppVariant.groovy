@@ -85,7 +85,7 @@ class ProductionAppVariant implements ApplicationVariant {
     }
 
     String getPackage() {
-        return config.getPackageName(null)
+        return config.getPackageName()
     }
 
     @Override
@@ -96,7 +96,7 @@ class ProductionAppVariant implements ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-        androidBuilder.setBuildVariant(config, null /*testedConfig*/)
+        androidBuilder.setVariantConfig(config)
 
         return androidBuilder
     }
