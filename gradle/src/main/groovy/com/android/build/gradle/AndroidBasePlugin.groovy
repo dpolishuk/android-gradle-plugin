@@ -29,6 +29,10 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.Compile
+import org.gradle.api.Task
+import org.gradle.api.plugins.BasePlugin
+import com.android.build.gradle.internal.TestAppVariant
+import com.android.build.gradle.internal.ProductionAppVariant
 
 /**
  * Base class for all Android plugins
@@ -48,6 +52,11 @@ abstract class AndroidBasePlugin {
     protected SourceSet mainSourceSet
     protected SourceSet testSourceSet
 
+    protected Task installAllForTests
+    protected Task runAllTests
+    protected Task uninstallAll
+    protected Task assembleTest
+
     abstract String getTarget()
 
     protected void apply(Project project) {
@@ -61,6 +70,20 @@ abstract class AndroidBasePlugin {
             "Assembles all variants of all applications and secondary packages."
 
         findSdk(project)
+
+        installAllForTests = project.tasks.add("installAllForTests")
+        installAllForTests.group = "Verification"
+        installAllForTests.description = "Installs all applications needed to run tests."
+
+        runAllTests = project.tasks.add("runAllTests")
+        runAllTests.group = "Verification"
+        runAllTests.description = "Runs all tests."
+
+        uninstallAll = project.tasks.add("uninstallAll")
+        uninstallAll.description = "Uninstall all applications."
+        uninstallAll.group = "Install"
+
+        project.tasks.check.dependsOn installAllForTests, runAllTests
     }
 
     protected setDefaultConfig(ProductFlavor defaultConfig) {
@@ -250,4 +273,119 @@ abstract class AndroidBasePlugin {
         }
         variant.compileTask = compileTask
     }
+
+    protected void createTestTasks(TestAppVariant variant, ProductionAppVariant testedVariant) {
+        // Add a task to process the manifest
+        def processManifestTask = createProcessManifestTask(variant)
+
+        // Add a task to crunch resource files
+        def crunchTask = createCrunchResTask(variant)
+
+        // Add a task to create the BuildConfig class
+        def generateBuildConfigTask = createBuildConfigTask(variant, processManifestTask)
+
+        // Add a task to generate resource source files
+        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+
+        // Add a task to compile the test application
+        createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask)
+
+        Task assembleTask = addPackageTasks(variant, null, true /*isTestApk*/)
+
+        if (assembleTest != null) {
+            assembleTest.dependsOn assembleTask
+        }
+
+        def runTestsTask = project.tasks.add("Run${variant.name}Tests", RunTestsTask)
+        runTestsTask.sdkDir = sdkDir
+        runTestsTask.variant = variant
+
+        runAllTests.dependsOn runTestsTask
+    }
+
+    protected Task addPackageTasks(ApplicationVariant variant, Task assembleTask,
+                                   boolean isTestApk) {
+        // Add a dex task
+        def dexTaskName = "dex${variant.name}"
+        def dexTask = project.tasks.add(dexTaskName, Dex)
+        dexTask.dependsOn variant.compileTask
+        dexTask.plugin = this
+        dexTask.variant = variant
+        dexTask.conventionMapping.sourceFiles = { variant.runtimeClasspath }
+        dexTask.conventionMapping.outputFile = {
+            project.file(
+                    "${project.buildDir}/libs/${project.archivesBaseName}-${variant.baseName}.dex")
+        }
+        dexTask.dexOptions = extension.dexOptions
+
+        // Add a task to generate application package
+        def packageApp = project.tasks.add("package${variant.name}", PackageApplication)
+        packageApp.dependsOn variant.resourcePackage, dexTask
+        packageApp.plugin = this
+        packageApp.variant = variant
+
+        def signedApk = variant.isSigned()
+
+        def apkName = signedApk ?
+            "${project.archivesBaseName}-${variant.baseName}-unaligned.apk" :
+            "${project.archivesBaseName}-${variant.baseName}-unsigned.apk"
+
+        packageApp.conventionMapping.outputFile = {
+            project.file("$project.buildDir/apk/${apkName}")
+        }
+        packageApp.conventionMapping.resourceFile = { variant.resourcePackage.singleFile }
+        packageApp.conventionMapping.dexFile = { dexTask.outputFile }
+
+        def appTask = packageApp
+
+        if (signedApk) {
+            if (variant.zipAlign) {
+                // Add a task to zip align application package
+                def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlign)
+                alignApp.dependsOn packageApp
+                alignApp.conventionMapping.inputFile = { packageApp.outputFile }
+                alignApp.conventionMapping.outputFile = {
+                    project.file(
+                            "$project.buildDir/apk/${project.archivesBaseName}-${variant.baseName}.apk")
+                }
+                alignApp.sdkDir = sdkDir
+
+                appTask = alignApp
+            }
+
+            // Add a task to install the application package
+            def installApp = project.tasks.add("install${variant.name}", InstallApplication)
+            installApp.description = "Installs the " + variant.description
+            installApp.group = "Install"
+            installApp.dependsOn appTask
+            installApp.conventionMapping.packageFile = { appTask.outputFile }
+            installApp.sdkDir = sdkDir
+
+            if (isTestApk) {
+                installAllForTests.dependsOn installApp
+            }
+        }
+
+        // Add an assemble task
+        Task returnTask = null
+        if (assembleTask == null) {
+            assembleTask = project.tasks.add("assemble${variant.name}")
+            assembleTask.description = "Assembles the " + variant.description
+            assembleTask.group = BasePlugin.BUILD_GROUP
+            returnTask = assembleTask
+        }
+        assembleTask.dependsOn appTask
+
+        // add an uninstall task
+        def uninstallApp = project.tasks.add("uninstall${variant.name}", UninstallApplication)
+        uninstallApp.description = "Uninstalls the " + variant.description
+        uninstallApp.group = AndroidBasePlugin.INSTALL_GROUP
+        uninstallApp.variant = variant
+        uninstallApp.sdkDir = sdkDir
+
+        uninstallAll.dependsOn uninstallApp
+
+        return returnTask
+    }
+
 }
