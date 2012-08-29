@@ -180,6 +180,9 @@ abstract class AndroidBasePlugin {
         def crunchTask = project.tasks.add("crunch${variant.name}Res", CrunchResources)
         crunchTask.plugin = this
         crunchTask.variant = variant
+        crunchTask.conventionMapping.resDirectories = {
+            crunchTask.getBuilder().getResourceInputs()
+        }
         crunchTask.conventionMapping.outputDir = {
             project.file("$project.buildDir/res/$variant.dirName")
         }
@@ -206,11 +209,10 @@ abstract class AndroidBasePlugin {
                                                     ProcessManifest processManifestTask,
                                                     CrunchResources crunchTask) {
         def processResources = project.tasks.add("process${variant.name}Res", ProcessResources)
-        processResources.dependsOn processManifestTask, crunchTask
+        processResources.dependsOn processManifestTask
         processResources.plugin = this
         processResources.variant = variant
         processResources.conventionMapping.manifestFile = { processManifestTask.mergedManifest }
-        processResources.conventionMapping.crunchDir = { crunchTask.outputDir }
         // TODO: unify with generateBuilderConfig somehow?
         processResources.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/$variant.dirName")
@@ -224,6 +226,13 @@ abstract class AndroidBasePlugin {
                 project.file("$project.buildDir/proguard/${variant.dirName}/rules.txt")
             }
         }
+
+        if (crunchTask != null) {
+            processResources.dependsOn crunchTask
+            processResources.conventionMapping.crunchDir = { crunchTask.outputDir }
+        }
+
+
         processResources.aaptOptions = extension.aaptOptions
         return processResources
     }

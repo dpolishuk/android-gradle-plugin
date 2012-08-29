@@ -74,14 +74,12 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         // Add a task to process the manifest(s)
         ProcessManifest processManifestTask = createProcessManifestTask(variant)
 
-        // Add a task to crunch resource files
-        def crunchTask = createCrunchResTask(variant)
-
         // Add a task to create the BuildConfig class
         def generateBuildConfigTask = createBuildConfigTask(variant, null)
 
         // Add a task to generate resource source files
-        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+        def processResources = createProcessResTask(variant, processManifestTask,
+                null /*crunchTask*/)
 
         // Add a compile task
         createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask)
@@ -98,7 +96,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         // mergeRes from 3 sources. the order is important to make sure the override works well.
         // TODO: fix the case of values -- need to merge the XML!
         mergeRes.from(defaultConfigData.androidSourceSet.androidResources,
-                buildTypeData.androidSourceSet.androidResources, crunchTask.outputDir)
+                buildTypeData.androidSourceSet.androidResources)
         mergeRes.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/res"))
 
         Zip bundle = project.tasks.add("bundle${variant.name}", Zip)
@@ -124,7 +122,6 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
 
         def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
         createTestTasks(testVariant, testedVariant)
-
     }
 
     @Override

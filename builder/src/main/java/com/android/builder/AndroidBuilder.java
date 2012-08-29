@@ -200,9 +200,42 @@ public class AndroidBuilder {
     }
 
     /**
+     * Returns the dynamic list of resource folders.
+     * @return a list of input resource folders, guaranteed to exist.
+     */
+    public List<File> getResourceInputs() {
+        List<File> inputs = new ArrayList<File>();
+
+        if (mVariant.getBuildTypeSourceSet() != null) {
+            File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
+            if (typeResLocation != null && typeResLocation.isDirectory()) {
+                inputs.add(typeResLocation);
+            }
+        }
+
+        for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
+            File flavorResLocation = sourceSet.getAndroidResources();
+            if (flavorResLocation != null && flavorResLocation.isDirectory()) {
+                inputs.add(flavorResLocation);
+            }
+        }
+
+        File mainResLocation = mVariant.getDefaultSourceSet().getAndroidResources();
+        if (mainResLocation != null && mainResLocation.isDirectory()) {
+            inputs.add(mainResLocation);
+        }
+
+        return inputs;
+    }
+
+    /**
      * Pre-process resources. This crunches images and process 9-patches before they can
      * be packaged.
      * This is incremental.
+     *
+     * Call this directly if you don't care about checking whether the inputs have changed.
+     * Otherwise, get the input first to check with {@link #getResourceInputs()}, and then call
+     * (or not), {@link #preprocessResources(String, java.util.List)}.
      *
      * @param resOutputDir where the processed resources are stored.
      * @throws IOException
@@ -210,11 +243,31 @@ public class AndroidBuilder {
      */
     public void preprocessResources(@NonNull String resOutputDir)
             throws IOException, InterruptedException {
+        List<File> inputs = getResourceInputs();
+
+        preprocessResources(resOutputDir, inputs);
+    }
+    /**
+     * Pre-process resources. This crunches images and process 9-patches before they can
+     * be packaged.
+     * This is incremental.
+     *
+     * @param resOutputDir where the processed resources are stored.
+     * @param inputs the input res folders
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void preprocessResources(@NonNull String resOutputDir, @NonNull List<File> inputs)
+            throws IOException, InterruptedException {
         if (mVariant == null) {
             throw new IllegalArgumentException("No Variant Configuration has been set.");
         }
         if (mTarget == null) {
             throw new IllegalArgumentException("Target not set.");
+        }
+
+        if (inputs == null || inputs.isEmpty()) {
+            return;
         }
 
         // launch aapt: create the command line
@@ -230,39 +283,15 @@ public class AndroidBuilder {
             command.add("-v");
         }
 
-        boolean hasResToCrunch = false;
-
-        if (mVariant.getBuildTypeSourceSet() != null) {
-            File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
-            if (typeResLocation != null && typeResLocation.isDirectory()) {
-                command.add("-S");
-                command.add(typeResLocation.getAbsolutePath());
-                hasResToCrunch = true;
-            }
-        }
-
-        for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
-            File flavorResLocation = sourceSet.getAndroidResources();
-            if (flavorResLocation != null && flavorResLocation.isDirectory()) {
-                command.add("-S");
-                command.add(flavorResLocation.getAbsolutePath());
-                hasResToCrunch = true;
-            }
-        }
-
-        File mainResLocation = mVariant.getDefaultSourceSet().getAndroidResources();
-        if (mainResLocation != null && mainResLocation.isDirectory()) {
+        for (File input : inputs) {
             command.add("-S");
-            command.add(mainResLocation.getAbsolutePath());
-            hasResToCrunch = true;
+            command.add(input.getAbsolutePath());
         }
 
         command.add("-C");
         command.add(resOutputDir);
 
-        if (hasResToCrunch) {
-            mCmdLineRunner.runCmdLine(command);
-        }
+        mCmdLineRunner.runCmdLine(command);
     }
 
     /**

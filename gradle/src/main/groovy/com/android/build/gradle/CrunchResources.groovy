@@ -15,6 +15,7 @@
  */
 package com.android.build.gradle
 
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -22,8 +23,11 @@ class CrunchResources extends BaseAndroidTask {
     @OutputDirectory
     File outputDir
 
+    @InputFiles
+    Iterable<File> resDirectories
+
     @TaskAction
     void generate() {
-        getBuilder().preprocessResources(getOutputDir().absolutePath)
+        getBuilder().preprocessResources(getOutputDir().absolutePath, getResDirectories())
     }
 }
