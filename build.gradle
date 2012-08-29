@@ -1,1 +1,5 @@
-allprojects { apply plugin: 'idea' }
+allprojects {
+    apply plugin: 'idea'
+
+    version = '0.1-SNAPSHOT'
+}
