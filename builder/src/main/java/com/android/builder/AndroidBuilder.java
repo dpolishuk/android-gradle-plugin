@@ -118,6 +118,9 @@ public class AndroidBuilder {
      * @see IAndroidTarget#hashString()
      */
     public void setTarget(@NonNull String target) {
+        if (target == null) {
+            throw new RuntimeException("Compilation target not set!");
+        }
         mTarget = mSdkParser.resolveTarget(target, mLogger);
 
         if (mTarget == null) {
@@ -486,7 +489,7 @@ public class AndroidBuilder {
             command.add(sourceOutputDir);
         }
 
-        if (resPackageOutput != null) {
+        if (mVariant.getType() != VariantConfiguration.Type.LIBRARY && resPackageOutput != null) {
             command.add("-F");
             command.add(resPackageOutput);
 

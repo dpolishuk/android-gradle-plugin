@@ -15,15 +15,20 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.BuildTypeData
+import com.android.build.gradle.internal.ProductFlavorData
+import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.builder.BuildType
+import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import com.android.build.gradle.internal.BuildTypeData
-import com.android.builder.VariantConfiguration
-import com.android.build.gradle.internal.ProductionAppVariant
-import com.android.build.gradle.internal.ProductFlavorData
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.bundling.Zip
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
+
+    private final static String DIR_BUNDLES = "bundles";
 
     AndroidLibraryExtension extension
     BuildTypeData debugBuildTypeData
@@ -50,15 +55,16 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
     }
 
     void createAndroidTasks() {
-        createLibraryTasks()
+        createLibraryTasks(debugBuildTypeData)
+        createLibraryTasks(releaseBuildTypeData)
     }
 
-    void createLibraryTasks() {
+    void createLibraryTasks(BuildTypeData buildTypeData) {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         def variantConfig = new VariantConfiguration(
                 defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
-                debugBuildTypeData.buildType, debugBuildTypeData.androidSourceSet,
+                buildTypeData.buildType, buildTypeData.androidSourceSet,
                 VariantConfiguration.Type.LIBRARY)
 
         ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
@@ -77,10 +83,39 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
 
         // Add a compile task
         createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask)
+
+        // jar the classes.
+        Jar jar = project.tasks.add("${buildTypeData.buildType.name}Jar", Jar);
+        jar.from(variant.compileTask.outputs);
+        jar.destinationDir = project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")
+        jar.baseName = "classes"
+
+        // merge the resources into the bundle folder
+        Copy mergeRes = project.tasks.add("merge${variant.name}Res",
+                Copy)
+        // mergeRes from 3 sources. the order is important to make sure the override works well.
+        // TODO: fix the case of values -- need to merge the XML!
+        mergeRes.from(defaultConfigData.androidSourceSet.androidResources,
+                buildTypeData.androidSourceSet.androidResources, crunchTask.outputDir)
+        mergeRes.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/res"))
+
+        Zip bundle = project.tasks.add("bundle${variant.name}", Zip)
+        bundle.dependsOn jar, mergeRes
+        bundle.setDescription("Assembles a bundle containing the library in ${variant.name}.");
+        bundle.destinationDir = project.file("$project.buildDir/libs")
+        bundle.extension = "alb"
+        bundle.baseName = variant.baseName
+        bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
+
+        buildTypeData.assembleTask.dependsOn bundle
     }
 
     @Override
     String getTarget() {
         return extension.target
+    }
+
+    protected String getManifestOutDir() {
+        return DIR_BUNDLES
     }
 }

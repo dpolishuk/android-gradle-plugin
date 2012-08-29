@@ -35,6 +35,8 @@ import org.gradle.api.tasks.compile.Compile
  */
 abstract class AndroidBasePlugin {
 
+    public final static String INSTALL_GROUP = "Install"
+
     private final Map<Object, AndroidBuilder> builders = [:]
 
     protected Project project
@@ -57,6 +59,8 @@ abstract class AndroidBasePlugin {
 
         project.tasks.assemble.description =
             "Assembles all variants of all applications and secondary packages."
+
+        findSdk(project)
     }
 
     protected setDefaultConfig(ProductFlavor defaultConfig) {
@@ -96,7 +100,7 @@ abstract class AndroidBasePlugin {
         builders.put(key, androidBuilder)
     }
 
-    protected void findSdk(Project project) {
+    private void findSdk(Project project) {
         def localProperties = project.file("local.properties")
         if (localProperties.exists()) {
             Properties properties = new Properties()
@@ -132,13 +136,19 @@ abstract class AndroidBasePlugin {
         return androidBuilder.runtimeClasspath.join(":")
     }
 
+    /**
+     * Returns the folder directly under build/ into which the generated manifest is saved.
+     */
+    protected abstract String getManifestOutDir();
+
     protected ProcessManifest createProcessManifestTask(ApplicationVariant variant) {
         def processManifestTask = project.tasks.add("process${variant.name}Manifest",
                 ProcessManifest)
         processManifestTask.plugin = this
         processManifestTask.variant = variant
         processManifestTask.conventionMapping.mergedManifest = {
-            project.file("$project.buildDir/manifests/$variant.dirName/AndroidManifest.xml")
+            project.file(
+                    "$project.buildDir/${getManifestOutDir()}/$variant.dirName/AndroidManifest.xml")
         }
         return processManifestTask
     }

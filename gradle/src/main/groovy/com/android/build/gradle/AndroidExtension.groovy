@@ -15,8 +15,6 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.AaptOptionsImpl
-import com.android.build.gradle.internal.DexOptionsImpl
 import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Action
@@ -29,12 +27,8 @@ class AndroidExtension extends BaseAndroidExtension {
 
     String testBuildType = "debug"
 
-    final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
-    final DexOptionsImpl dexOptions = new DexOptionsImpl()
-
     AndroidExtension(NamedDomainObjectContainer<BuildType> buildTypes,
                      NamedDomainObjectContainer<ProductFlavor> productFlavors) {
-        super()
         this.buildTypes = buildTypes
         this.productFlavors = productFlavors
     }
@@ -45,13 +39,5 @@ class AndroidExtension extends BaseAndroidExtension {
 
     void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavor>> action) {
         action.execute(productFlavors)
-    }
-
-    void aaptOptions(Action<AaptOptionsImpl> action) {
-        action.execute(aaptOptions)
-    }
-
-    void dexOptions(Action<DexOptionsImpl> action) {
-        action.execute(dexOptions)
     }
 }
