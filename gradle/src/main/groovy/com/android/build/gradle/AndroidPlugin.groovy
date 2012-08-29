@@ -15,7 +15,6 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.ApplicationVariant
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
@@ -26,19 +25,14 @@ import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.internal.reflect.Instantiator
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.internal.reflect.Instantiator
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     private final Map<String, BuildTypeData> buildTypes = [:]
     private final Map<String, ProductFlavorData> productFlavors = [:]
 
     private AndroidExtension extension
-
-    private Task installAllForTests
-    private Task runAllTests
-    private Task uninstallAll
-    private Task assembleTest
 
     @Override
     void apply(Project project) {
@@ -72,20 +66,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             throw new UnsupportedOperationException(
                     "Removing product flavors is not implemented yet.")
         }
-
-        installAllForTests = project.tasks.add("installAllForTests")
-        installAllForTests.group = "Verification"
-        installAllForTests.description = "Installs all applications needed to run tests."
-
-        runAllTests = project.tasks.add("runAllTests")
-        runAllTests.group = "Verification"
-        runAllTests.description = "Runs all tests."
-
-        uninstallAll = project.tasks.add("uninstallAll")
-        uninstallAll.description = "Uninstall all applications."
-        uninstallAll.group = "Install"
-
-        project.tasks.check.dependsOn installAllForTests, runAllTests
 
         project.afterEvaluate {
             createAndroidTasks()
@@ -153,7 +133,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             throw new RuntimeException("Test Build Type '$extension.testBuildType' does not exist.")
         }
 
-        VariantConfiguration testedVariantConfig = null
         ProductionAppVariant testedVariant = null
 
         ProductFlavorData defaultConfigData = getDefaultConfigData();
@@ -171,19 +150,19 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                     buildTypeData.assembleTask, isTestedVariant)
 
             if (isTestedVariant) {
-                testedVariantConfig = variantConfig
                 testedVariant = productionAppVariant
             }
         }
 
-        assert testedVariantConfig != null && testedVariant != null
+        assert testedVariant != null
 
-        def variantTestConfig = new VariantConfiguration(
+        def testVariantConfig = new VariantConfiguration(
                 defaultConfigData.productFlavor, defaultConfigData.androidTestSourceSet,
                 testData.buildType, null,
                 VariantConfiguration.Type.TEST)
 
-        addTestVariant(variantTestConfig, testedVariantConfig, testedVariant)
+        def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
+        createTestTasks(testVariant, testedVariant)
     }
 
     /**
@@ -198,7 +177,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             throw new RuntimeException("Test Build Type '$extension.testBuildType' does not exist.")
         }
 
-        VariantConfiguration testedVariantConfig = null
         ProductionAppVariant testedVariant = null
 
         for (BuildTypeData buildTypeData : buildTypes.values()) {
@@ -220,21 +198,21 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             productFlavorData.assembleTask.dependsOn productionAppVariant.assembleTask
 
             if (isTestedVariant) {
-                testedVariantConfig = variantConfig
                 testedVariant = productionAppVariant
             }
         }
 
-        assert testedVariantConfig != null && testedVariant != null
+        assert testedVariant != null
 
-        def variantTestConfig = new VariantConfiguration(
+        def testVariantConfig = new VariantConfiguration(
                 extension.defaultConfig, getDefaultConfigData().androidTestSourceSet,
                 testData.buildType, null,
                 VariantConfiguration.Type.TEST)
-        variantTestConfig.addProductFlavor(productFlavorData.productFlavor,
+        testVariantConfig.addProductFlavor(productFlavorData.productFlavor,
                 productFlavorData.androidTestSourceSet)
 
-        addTestVariant(variantTestConfig, testedVariantConfig, testedVariant)
+        def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
+        createTestTasks(testVariant, testedVariant)
     }
 
     /**
@@ -271,116 +249,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         }
 
         return variant;
-    }
-
-    private void addTestVariant(VariantConfiguration variantConfig,
-                                VariantConfiguration testedVariantConfig,
-                                ProductionAppVariant testedVariant) {
-
-        def variant = new TestAppVariant(variantConfig, testedVariantConfig)
-
-        // Add a task to process the manifest
-        def processManifestTask = createProcessManifestTask(variant)
-
-        // Add a task to crunch resource files
-        def crunchTask = createCrunchResTask(variant)
-
-        // Add a task to create the BuildConfig class
-        def generateBuildConfigTask = createBuildConfigTask(variant, processManifestTask)
-
-        // Add a task to generate resource source files
-        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
-
-        // Add a task to compile the test application
-        createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask)
-
-        Task assembleTask = addPackageTasks(variant, null, true /*isTestApk*/)
-
-        if (assembleTest != null) {
-            assembleTest.dependsOn assembleTask
-        }
-
-        def runTestsTask = project.tasks.add("Run${variant.name}Tests", RunTestsTask)
-        runTestsTask.sdkDir = sdkDir
-        runTestsTask.variant = variant
-
-        runAllTests.dependsOn runTestsTask
-    }
-
-    private Task addPackageTasks(ApplicationVariant variant, Task assembleTask, boolean isTestApk) {
-        // Add a dex task
-        def dexTaskName = "dex${variant.name}"
-        def dexTask = project.tasks.add(dexTaskName, Dex)
-        dexTask.dependsOn variant.compileTask
-        dexTask.plugin = this
-        dexTask.variant = variant
-        dexTask.conventionMapping.sourceFiles = { variant.runtimeClasspath }
-        dexTask.conventionMapping.outputFile = { project.file("${project.buildDir}/libs/${project.archivesBaseName}-${variant.baseName}.dex") }
-        dexTask.dexOptions = extension.dexOptions
-
-        // Add a task to generate application package
-        def packageApp = project.tasks.add("package${variant.name}", PackageApplication)
-        packageApp.dependsOn variant.resourcePackage, dexTask
-        packageApp.plugin = this
-        packageApp.variant = variant
-
-        def signedApk = variant.isSigned()
-
-        def apkName = signedApk ?
-            "${project.archivesBaseName}-${variant.baseName}-unaligned.apk" :
-            "${project.archivesBaseName}-${variant.baseName}-unsigned.apk"
-
-        packageApp.conventionMapping.outputFile = { project.file("$project.buildDir/apk/${apkName}") }
-        packageApp.conventionMapping.resourceFile = { variant.resourcePackage.singleFile }
-        packageApp.conventionMapping.dexFile = { dexTask.outputFile }
-
-        def appTask = packageApp
-
-        if (signedApk) {
-            if (variant.zipAlign) {
-                // Add a task to zip align application package
-                def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlign)
-                alignApp.dependsOn packageApp
-                alignApp.conventionMapping.inputFile = { packageApp.outputFile }
-                alignApp.conventionMapping.outputFile = { project.file("$project.buildDir/apk/${project.archivesBaseName}-${variant.baseName}.apk") }
-                alignApp.sdkDir = sdkDir
-
-                appTask = alignApp
-            }
-
-            // Add a task to install the application package
-            def installApp = project.tasks.add("install${variant.name}", InstallApplication)
-            installApp.description = "Installs the " + variant.description
-            installApp.group = "Install"
-            installApp.dependsOn appTask
-            installApp.conventionMapping.packageFile = { appTask.outputFile }
-            installApp.sdkDir = sdkDir
-
-            if (isTestApk) {
-                installAllForTests.dependsOn installApp
-            }
-        }
-
-        // Add an assemble task
-        Task returnTask = null
-        if (assembleTask == null) {
-            assembleTask = project.tasks.add("assemble${variant.name}")
-            assembleTask.description = "Assembles the " + variant.description
-            assembleTask.group = BasePlugin.BUILD_GROUP
-            returnTask = assembleTask
-        }
-        assembleTask.dependsOn appTask
-
-        // add an uninstall task
-        def uninstallApp = project.tasks.add("uninstall${variant.name}", UninstallApplication)
-        uninstallApp.description = "Uninstalls the " + variant.description
-        uninstallApp.group = AndroidBasePlugin.INSTALL_GROUP
-        uninstallApp.variant = variant
-        uninstallApp.sdkDir = sdkDir
-
-        uninstallAll.dependsOn uninstallApp
-
-        return returnTask
     }
 
     @Override

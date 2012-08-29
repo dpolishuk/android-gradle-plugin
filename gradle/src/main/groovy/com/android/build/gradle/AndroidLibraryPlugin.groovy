@@ -25,6 +25,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
+import com.android.build.gradle.internal.TestAppVariant
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
@@ -55,11 +56,12 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
     }
 
     void createAndroidTasks() {
-        createLibraryTasks(debugBuildTypeData)
+        ProductionAppVariant testedVariant = createLibraryTasks(debugBuildTypeData)
         createLibraryTasks(releaseBuildTypeData)
+        createTestTasks(testedVariant)
     }
 
-    void createLibraryTasks(BuildTypeData buildTypeData) {
+    ProductionAppVariant createLibraryTasks(BuildTypeData buildTypeData) {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         def variantConfig = new VariantConfiguration(
@@ -108,6 +110,21 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
 
         buildTypeData.assembleTask.dependsOn bundle
+
+        return variant
+    }
+
+    void createTestTasks(ProductionAppVariant testedVariant) {
+        ProductFlavorData defaultConfigData = getDefaultConfigData();
+
+        def testVariantConfig = new VariantConfiguration(
+                defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
+                debugBuildTypeData.buildType, null,
+                VariantConfiguration.Type.TEST)
+
+        def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
+        createTestTasks(testVariant, testedVariant)
+
     }
 
     @Override
