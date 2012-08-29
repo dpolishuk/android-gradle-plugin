@@ -7,5 +7,6 @@ local.properties
 gradle/build
 testapps/*/build
 testapps/multiproject/*/build
+testapps/tictactoe/*/build
 /repo
 /out

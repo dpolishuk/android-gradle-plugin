@@ -27,6 +27,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.internal.reflect.Instantiator
+import org.gradle.api.plugins.BasePlugin
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     private final Map<String, BuildTypeData> buildTypes = [:]
@@ -52,8 +53,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         extension = project.extensions.create('android', AndroidExtension,
                 buildTypes, productFlavors)
         setDefaultConfig(extension.defaultConfig)
-
-        findSdk(project)
 
         buildTypes.whenObjectAdded { BuildType buildType ->
             addBuildType(buildType)
@@ -133,7 +132,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         } else {
             // there'll be more than one test app, so we need a top level assembleTest
             assembleTest = project.tasks.add("assembleTest")
-            assembleTest.group = "Build"
+            assembleTest.group = BasePlugin.BUILD_GROUP
             assembleTest.description = "Assembles all the Test applications"
 
             productFlavors.values().each { ProductFlavorData productFlavorData ->
@@ -367,7 +366,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         if (assembleTask == null) {
             assembleTask = project.tasks.add("assemble${variant.name}")
             assembleTask.description = "Assembles the " + variant.description
-            assembleTask.group = "Build"
+            assembleTask.group = BasePlugin.BUILD_GROUP
             returnTask = assembleTask
         }
         assembleTask.dependsOn appTask
@@ -375,7 +374,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         // add an uninstall task
         def uninstallApp = project.tasks.add("uninstall${variant.name}", UninstallApplication)
         uninstallApp.description = "Uninstalls the " + variant.description
-        uninstallApp.group = "Install"
+        uninstallApp.group = AndroidBasePlugin.INSTALL_GROUP
         uninstallApp.variant = variant
         uninstallApp.sdkDir = sdkDir
 
@@ -388,4 +387,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     String getTarget() {
         return extension.target;
     }
+
+    protected String getManifestOutDir() {
+        return "manifests"
+    }
+
 }
