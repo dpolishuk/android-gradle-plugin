@@ -141,8 +141,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
             def variantConfig = new VariantConfiguration(
                     defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
-                    buildTypeData.buildType, buildTypeData.androidSourceSet,
-                    VariantConfiguration.Type.DEFAULT)
+                    buildTypeData.buildType, buildTypeData.androidSourceSet)
 
             boolean isTestedVariant = (buildTypeData == testData)
 
@@ -159,9 +158,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def testVariantConfig = new VariantConfiguration(
                 defaultConfigData.productFlavor, defaultConfigData.androidTestSourceSet,
                 testData.buildType, null,
-                VariantConfiguration.Type.TEST)
+                VariantConfiguration.Type.TEST, testedVariant.config)
 
-        def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
+        def testVariant = new TestAppVariant(testVariantConfig)
         createTestTasks(testVariant, testedVariant)
     }
 
@@ -183,8 +182,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
             def variantConfig = new VariantConfiguration(
                     extension.defaultConfig, getDefaultConfigData().androidSourceSet,
-                    buildTypeData.buildType, buildTypeData.androidSourceSet,
-                    VariantConfiguration.Type.DEFAULT)
+                    buildTypeData.buildType, buildTypeData.androidSourceSet)
 
             variantConfig.addProductFlavor(productFlavorData.productFlavor,
                     productFlavorData.androidSourceSet)
@@ -207,11 +205,11 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def testVariantConfig = new VariantConfiguration(
                 extension.defaultConfig, getDefaultConfigData().androidTestSourceSet,
                 testData.buildType, null,
-                VariantConfiguration.Type.TEST)
+                VariantConfiguration.Type.TEST, testedVariant.config)
         testVariantConfig.addProductFlavor(productFlavorData.productFlavor,
                 productFlavorData.androidTestSourceSet)
 
-        def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
+        def testVariant = new TestAppVariant(testVariantConfig)
         createTestTasks(testVariant, testedVariant)
     }
 

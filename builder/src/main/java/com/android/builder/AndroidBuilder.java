@@ -51,7 +51,7 @@ import java.util.Set;
  * To use:
  * create a builder with {@link #AndroidBuilder(SdkParser, ILogger, boolean)},
  * configure compile target with {@link #setTarget(String)}
- * configure build variant with {@link #setBuildVariant(VariantConfiguration, VariantConfiguration)}
+ * configure build variant with {@link #setVariantConfig(VariantConfiguration)}
  *
  * then build steps can be done with
  * {@link #generateBuildConfig(String, java.util.List)}
@@ -74,8 +74,6 @@ public class AndroidBuilder {
 
     // config for the main app.
     private VariantConfiguration mVariant;
-    // config for the tested app.
-    private VariantConfiguration mTestedVariant;
 
     /**
      * Creates an AndroidBuilder
@@ -129,17 +127,13 @@ public class AndroidBuilder {
     }
 
     /**
-     * Sets the build variant.
+     * Sets the build variant configuration
      *
      * @param variant the configuration of the variant
-     * @param testedVariant the configuration of the tested variant. only applicable if
-     *                      the main config is a test variant.
      *
      */
-    public void setBuildVariant(@NonNull VariantConfiguration variant,
-                                @Nullable VariantConfiguration testedVariant) {
+    public void setVariantConfig(@NonNull VariantConfiguration variant) {
         mVariant = variant;
-        mTestedVariant = testedVariant;
     }
 
     /**
@@ -189,7 +183,7 @@ public class AndroidBuilder {
 
         String packageName;
         if (mVariant.getType() == VariantConfiguration.Type.TEST) {
-            packageName = mVariant.getPackageName(mTestedVariant);
+            packageName = mVariant.getPackageName();
         } else {
             packageName = mVariant.getPackageFromManifest();
         }
@@ -309,7 +303,7 @@ public class AndroidBuilder {
             throw new IllegalArgumentException("Target not set.");
         }
 
-        if (mTestedVariant != null) {
+        if (mVariant.getType() == VariantConfiguration.Type.TEST) {
             generateTestManifest(outManifestLocation);
         } else {
             mergeManifest(outManifestLocation);
@@ -318,9 +312,9 @@ public class AndroidBuilder {
 
     private void generateTestManifest(String outManifestLocation) {
         TestManifestGenerator generator = new TestManifestGenerator(outManifestLocation,
-                mVariant.getPackageName(mTestedVariant),
-                mTestedVariant.getPackageName(null),
-                mTestedVariant.getInstrumentationRunner());
+                mVariant.getPackageName(),
+                mVariant.getTestedPackageName(),
+                mVariant.getInstrumentationRunner());
 
         try {
             generator.generate();

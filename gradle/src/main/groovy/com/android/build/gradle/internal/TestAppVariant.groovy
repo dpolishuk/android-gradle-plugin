@@ -24,14 +24,12 @@ import com.android.builder.VariantConfiguration
 class TestAppVariant implements ApplicationVariant {
     final String name
     final VariantConfiguration config
-    final VariantConfiguration testedConfig
     FileCollection runtimeClasspath
     FileCollection resourcePackage
     Compile compileTask
 
-    TestAppVariant(VariantConfiguration config, VariantConfiguration testedConfig) {
+    TestAppVariant(VariantConfiguration config) {
         this.config = config
-        this.testedConfig = testedConfig
         if (config.hasFlavors()) {
             this.name = "${config.firstFlavor.name.capitalize()}Test"
         } else {
@@ -82,14 +80,14 @@ class TestAppVariant implements ApplicationVariant {
     @Override
     List<String> getRunCommand() {
         String[] args = [ "shell", "am", "instrument", "-w",
-                config.getPackageName(testedConfig) + "/" + testedConfig.instrumentationRunner]
+                config.getPackageName() + "/" + config.instrumentationRunner]
 
         return Arrays.asList(args)
     }
 
     @Override
     String getPackage() {
-        return config.getPackageName(testedConfig)
+        return config.getPackageName()
     }
 
     @Override
@@ -100,7 +98,7 @@ class TestAppVariant implements ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-        androidBuilder.setBuildVariant(config, testedConfig)
+        androidBuilder.setVariantConfig(config)
 
         return androidBuilder
     }

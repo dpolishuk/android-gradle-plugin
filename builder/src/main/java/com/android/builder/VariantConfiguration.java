@@ -17,6 +17,7 @@
 package com.android.builder;
 
 import com.android.annotations.NonNull;
+import com.android.annotations.Nullable;
 import com.android.annotations.VisibleForTesting;
 
 import java.io.File;
@@ -40,6 +41,8 @@ public class VariantConfiguration {
     private final List<SourceSet> mFlavorSourceSets = new ArrayList<SourceSet>();
 
     private final Type mType;
+    private final VariantConfiguration mTestedConfig;
+
     private ProductFlavor mMergedFlavor;
 
     private List<JarDependency> mJars;
@@ -58,7 +61,26 @@ public class VariantConfiguration {
     }
 
     /**
-     * Creates the configuration with the base source set, and whether it is a library.
+     * Creates the configuration with the base source set.
+     *
+     * This creates a config with a {@link Type#DEFAULT} type.
+     *
+     * @param defaultConfig
+     * @param defaultSourceSet
+     * @param buildType
+     * @param buildTypeSourceSet
+     */
+    public VariantConfiguration(
+            @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
+            @NonNull BuildType buildType, @NonNull SourceSet buildTypeSourceSet) {
+        this(defaultConfig, defaultSourceSet,
+                buildType, buildTypeSourceSet,
+                Type.DEFAULT, null /*testedConfig*/);
+    }
+
+    /**
+     * Creates the configuration with the base source set for a given {@link Type}.
+     *
      * @param defaultConfig
      * @param defaultSourceSet
      * @param buildType
@@ -69,11 +91,32 @@ public class VariantConfiguration {
             @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
             @NonNull BuildType buildType, @NonNull SourceSet buildTypeSourceSet,
             @NonNull Type type) {
+        this(defaultConfig, defaultSourceSet,
+                buildType, buildTypeSourceSet,
+                type, null /*testedConfig*/);
+    }
+
+    /**
+     * Creates the configuration with the base source set, and whether it is a library.
+     * @param defaultConfig
+     * @param defaultSourceSet
+     * @param buildType
+     * @param buildTypeSourceSet
+     * @param type
+     * @param testedConfig
+     */
+    public VariantConfiguration(
+            @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
+            @NonNull BuildType buildType, @NonNull SourceSet buildTypeSourceSet,
+            @NonNull Type type, @Nullable VariantConfiguration testedConfig) {
         mDefaultConfig = defaultConfig;
         mDefaultSourceSet = defaultSourceSet;
         mBuildType = buildType;
         mBuildTypeSourceSet = buildTypeSourceSet;
         mType = type;
+        mTestedConfig = testedConfig;
+
+        assert mType != Type.TEST || mTestedConfig != null;
 
         mMergedFlavor = mDefaultConfig;
 
@@ -205,15 +248,18 @@ public class VariantConfiguration {
     /**
      * Returns the package name for this variant. This could be coming from the manifest or
      * could be overridden through the product flavors.
-     * @param testedVariant the tested variant. This is needed if this variant is of type
-     *                      {@link Type#TEST}
      * @return the package
      */
-    public String getPackageName(VariantConfiguration testedVariant) {
+    public String getPackageName() {
         String packageName;
 
         if (mType == Type.TEST) {
-            packageName = getTestPackage(testedVariant);
+            packageName = mMergedFlavor.getTestPackageName();
+            if (packageName == null) {
+                String testedPackage = mTestedConfig.getPackageName();
+
+                packageName = testedPackage + ".test";
+            }
         } else {
             packageName = getPackageOverride();
             if (packageName == null) {
@@ -222,6 +268,14 @@ public class VariantConfiguration {
         }
 
         return packageName;
+    }
+
+    public String getTestedPackageName() {
+        if (mType == Type.TEST) {
+            return mTestedConfig.getPackageName();
+        }
+
+        return null;
     }
 
     /**
@@ -247,21 +301,6 @@ public class VariantConfiguration {
         }
 
         return packageName;
-    }
-
-    /**
-     * Returns the package name of the test app.
-     * @return the package name for the test app.
-     */
-    public String getTestPackage(VariantConfiguration testedVariant) {
-        String testPackage = mMergedFlavor.getTestPackageName();
-        if (testPackage == null) {
-            String testedPackage = testedVariant.getPackageName(null);
-
-            testPackage = testedPackage + ".test";
-        }
-
-        return testPackage;
     }
 
     private final static String DEFAULT_TEST_RUNNER = "android.test.InstrumentationTestRunner";
