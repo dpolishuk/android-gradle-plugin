@@ -16,10 +16,11 @@
 
 package com.android.builder;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
+
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -63,38 +64,17 @@ class TemplateProcessor {
      * @throws java.io.IOException
      */
     private String readEmbeddedTextFile(InputStream templateStream) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(templateStream));
+        InputStreamReader reader = new InputStreamReader(templateStream, Charsets.UTF_8);
 
         try {
-            String line;
-            StringBuilder total = new StringBuilder(reader.readLine());
-            while ((line = reader.readLine()) != null) {
-                total.append('\n');
-                total.append(line);
-            }
-
-            return total.toString();
+            return CharStreams.toString(reader);
         } finally {
             reader.close();
         }
     }
 
     private void writeFile(File file, String content) throws IOException {
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file);
-            InputStream source = new ByteArrayInputStream(content.getBytes("UTF-8"));
-
-            byte[] buffer = new byte[1024];
-            int count = 0;
-            while ((count = source.read(buffer)) != -1) {
-                fos.write(buffer, 0, count);
-            }
-        } finally {
-            if (fos != null) {
-                fos.close();
-            }
-        }
+        Files.write(content, file, Charsets.UTF_8);
     }
 
     /**
