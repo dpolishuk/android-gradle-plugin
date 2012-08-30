@@ -25,6 +25,8 @@ public interface SourceSet {
 
     Set<File> getJavaResources();
 
+    Iterable<File> getCompileClasspath();
+
     File getAndroidResources();
     File getAndroidAssets();
     File getAndroidManifest();

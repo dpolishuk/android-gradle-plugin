@@ -23,6 +23,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.InputFiles
 
 class ProcessResources extends BaseAndroidTask {
 
@@ -31,6 +32,9 @@ class ProcessResources extends BaseAndroidTask {
 
     @InputDirectory @Optional
     File crunchDir
+
+    @InputFiles
+    Iterable<File> resDirectories
 
     @OutputDirectory @Optional
     File sourceOutputDir
@@ -50,6 +54,7 @@ class ProcessResources extends BaseAndroidTask {
         getBuilder().processResources(
                 getManifestFile().absolutePath,
                 getCrunchDir()?.absolutePath,
+                getResDirectories(),
                 getSourceOutputDir()?.absolutePath,
                 getPackageFile()?.absolutePath,
                 getProguardFile()?.absolutePath,

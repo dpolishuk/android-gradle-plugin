@@ -8,5 +8,6 @@ gradle/build
 testapps/*/build
 testapps/multiproject/*/build
 testapps/tictactoe/*/build
+testapps/applibtest/*/build
 /repo
 /out

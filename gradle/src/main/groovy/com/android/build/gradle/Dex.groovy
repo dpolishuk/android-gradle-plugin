@@ -28,6 +28,9 @@ class Dex extends BaseAndroidTask {
     @InputFiles
     Iterable<File> sourceFiles
 
+    @InputFiles
+    Iterable<File> libraries
+
     @Input
     DexOptions dexOptions
 
@@ -40,6 +43,13 @@ class Dex extends BaseAndroidTask {
             }
         }
 
-        getBuilder().convertBytecode(files, getOutputFile().absolutePath, dexOptions)
+        List<String> libs = new ArrayList<String>();
+        for (File f : getLibraries()) {
+            if (f != null && f.exists()) {
+                libs.add(f.absolutePath)
+            }
+        }
+
+        getBuilder().convertBytecode(files, libs, getOutputFile().absolutePath, getDexOptions())
     }
 }

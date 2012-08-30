@@ -17,19 +17,13 @@ package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
 import com.android.builder.VariantConfiguration
 
-class TestAppVariant implements ApplicationVariant {
+class TestAppVariant extends ApplicationVariant {
     final String name
-    final VariantConfiguration config
-    FileCollection runtimeClasspath
-    FileCollection resourcePackage
-    Compile compileTask
 
     TestAppVariant(VariantConfiguration config) {
-        this.config = config
+        super(config)
         if (config.hasFlavors()) {
             this.name = "${config.firstFlavor.name.capitalize()}Test"
         } else {
