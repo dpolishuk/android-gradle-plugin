@@ -19,19 +19,13 @@ import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Task
-import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
 
-class ProductionAppVariant implements ApplicationVariant {
+class ProductionAppVariant extends ApplicationVariant {
     final String name
-    final VariantConfiguration config
-    FileCollection runtimeClasspath
-    FileCollection resourcePackage
-    Compile compileTask
     Task assembleTask
 
     ProductionAppVariant(VariantConfiguration config) {
-        this.config = config
+        super(config)
         if (config.hasFlavors()) {
             this.name = "${config.firstFlavor.name.capitalize()}${config.buildType.name.capitalize()}"
         } else {

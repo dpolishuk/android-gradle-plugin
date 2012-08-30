@@ -26,6 +26,7 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
 import com.android.build.gradle.internal.TestAppVariant
+import com.android.builder.AndroidDependency
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
@@ -49,6 +50,8 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
 
         debugBuildTypeData = new BuildTypeData(extension.debug, debugSourceSet, project)
         releaseBuildTypeData = new BuildTypeData(extension.release, releaseSourceSet, project)
+        project.tasks.assemble.dependsOn debugBuildTypeData.assembleTask
+        project.tasks.assemble.dependsOn releaseBuildTypeData.assembleTask
 
         project.afterEvaluate {
             createAndroidTasks()
@@ -68,11 +71,13 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
                 defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
                 buildTypeData.buildType, buildTypeData.androidSourceSet,
                 VariantConfiguration.Type.LIBRARY)
+        // TODO: add actual dependencies
+        variantConfig.setAndroidDependencies(null)
 
         ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
 
         // Add a task to process the manifest(s)
-        ProcessManifest processManifestTask = createProcessManifestTask(variant)
+        ProcessManifest processManifestTask = createProcessManifestTask(variant, DIR_BUNDLES)
 
         // Add a task to create the BuildConfig class
         def generateBuildConfigTask = createBuildConfigTask(variant, null)
@@ -89,6 +94,11 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         jar.from(variant.compileTask.outputs);
         jar.destinationDir = project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")
         jar.baseName = "classes"
+        String packageName = variantConfig.getPackageFromManifest().replace('.', '/');
+        jar.exclude(packageName + "/R.class")
+        jar.exclude(packageName + "/R\$*.class")
+        jar.exclude(packageName + "/Manifest.class")
+        jar.exclude(packageName + "/Manifest\$*.class")
 
         // merge the resources into the bundle folder
         Copy mergeRes = project.tasks.add("merge${variant.name}Res",
@@ -104,10 +114,55 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         bundle.setDescription("Assembles a bundle containing the library in ${variant.name}.");
         bundle.destinationDir = project.file("$project.buildDir/libs")
         bundle.extension = "alb"
-        bundle.baseName = variant.baseName
+        bundle.baseName = "${project.archivesBaseName}-${variant.baseName}"
         bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
 
         buildTypeData.assembleTask.dependsOn bundle
+        variant.assembleTask = bundle
+
+        // configure the variant to be testable.
+        variantConfig.output = new AndroidDependency() {
+
+            @Override
+            List<AndroidDependency> getDependencies() {
+                return null;
+            }
+
+            @Override
+            File getJarFile() {
+                return jar.archivePath
+            }
+
+            @Override
+            File getManifest() {
+                return processManifestTask.processedManifest
+            }
+
+            @Override
+            File getResFolder() {
+                return mergeRes.destinationDir
+            }
+
+            @Override
+            File getAssetsFolder() {
+                return null
+            }
+
+            @Override
+            File getJniFolder() {
+                return null
+            }
+
+            @Override
+            File getProguardRules() {
+                return null
+            }
+
+            @Override
+            File getLintJar() {
+                return null
+            }
+        };
 
         return variant
     }
@@ -116,11 +171,13 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         def testVariantConfig = new VariantConfiguration(
-                defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
+                defaultConfigData.productFlavor, defaultConfigData.androidTestSourceSet,
                 debugBuildTypeData.buildType, null,
-                VariantConfiguration.Type.TEST)
+                VariantConfiguration.Type.TEST, testedVariant.config)
+        // TODO: add actual dependencies
+        testVariantConfig.setAndroidDependencies(null)
 
-        def testVariant = new TestAppVariant(testVariantConfig, testedVariant.config)
+        def testVariant = new TestAppVariant(testVariantConfig,)
         createTestTasks(testVariant, testedVariant)
     }
 

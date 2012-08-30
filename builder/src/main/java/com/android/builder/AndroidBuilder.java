@@ -72,7 +72,7 @@ public class AndroidBuilder {
 
     private IAndroidTarget mTarget;
 
-    // config for the main app.
+    // config
     private VariantConfiguration mVariant;
 
     /**
@@ -194,42 +194,13 @@ public class AndroidBuilder {
     }
 
     /**
-     * Returns the dynamic list of resource folders.
-     * @return a list of input resource folders, guaranteed to exist.
-     */
-    public List<File> getResourceInputs() {
-        List<File> inputs = new ArrayList<File>();
-
-        if (mVariant.getBuildTypeSourceSet() != null) {
-            File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
-            if (typeResLocation != null && typeResLocation.isDirectory()) {
-                inputs.add(typeResLocation);
-            }
-        }
-
-        for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
-            File flavorResLocation = sourceSet.getAndroidResources();
-            if (flavorResLocation != null && flavorResLocation.isDirectory()) {
-                inputs.add(flavorResLocation);
-            }
-        }
-
-        File mainResLocation = mVariant.getDefaultSourceSet().getAndroidResources();
-        if (mainResLocation != null && mainResLocation.isDirectory()) {
-            inputs.add(mainResLocation);
-        }
-
-        return inputs;
-    }
-
-    /**
      * Pre-process resources. This crunches images and process 9-patches before they can
      * be packaged.
      * This is incremental.
      *
      * Call this directly if you don't care about checking whether the inputs have changed.
-     * Otherwise, get the input first to check with {@link #getResourceInputs()}, and then call
-     * (or not), {@link #preprocessResources(String, java.util.List)}.
+     * Otherwise, get the input first to check with {@link VariantConfiguration#getResourceInputs()}
+     * and then call (or not), {@link #preprocessResources(String, java.util.List)}.
      *
      * @param resOutputDir where the processed resources are stored.
      * @throws IOException
@@ -237,7 +208,7 @@ public class AndroidBuilder {
      */
     public void preprocessResources(@NonNull String resOutputDir)
             throws IOException, InterruptedException {
-        List<File> inputs = getResourceInputs();
+        List<File> inputs = mVariant.getResourceInputs();
 
         preprocessResources(resOutputDir, inputs);
     }
@@ -277,13 +248,23 @@ public class AndroidBuilder {
             command.add("-v");
         }
 
+        boolean runCommand = false;
         for (File input : inputs) {
-            command.add("-S");
-            command.add(input.getAbsolutePath());
+            if (input.isDirectory()) {
+                command.add("-S");
+                command.add(input.getAbsolutePath());
+                runCommand = true;
+            }
+        }
+
+        if (!runCommand) {
+            return;
         }
 
         command.add("-C");
         command.add(resOutputDir);
+
+        mLogger.info("crunch command: %s", command.toString());
 
         mCmdLineRunner.runCmdLine(command);
     }
@@ -304,9 +285,26 @@ public class AndroidBuilder {
         }
 
         if (mVariant.getType() == VariantConfiguration.Type.TEST) {
-            generateTestManifest(outManifestLocation);
+            VariantConfiguration testedConfig = mVariant.getTestedConfig();
+            if (testedConfig.getType() == VariantConfiguration.Type.LIBRARY) {
+                try {
+                    // create the test manifest, merge the libraries in it
+                    File generatedTestManifest = File.createTempFile("manifestMerge", ".xml");
+
+                    generateTestManifest(generatedTestManifest.getAbsolutePath());
+
+                    mergeLibraryManifests(
+                            generatedTestManifest,
+                            mVariant.getFullDirectDependencies(),
+                            new File(outManifestLocation));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                generateTestManifest(outManifestLocation);
+            }
         } else {
-            mergeManifest(outManifestLocation);
+            mergeManifest(mVariant, outManifestLocation);
         }
     }
 
@@ -323,16 +321,16 @@ public class AndroidBuilder {
         }
     }
 
-    private void mergeManifest(String outManifestLocation) {
+    private void mergeManifest(VariantConfiguration config, String outManifestLocation) {
         try {
-            File mainLocation = mVariant.getDefaultSourceSet().getAndroidManifest();
-            File typeLocation = mVariant.getBuildTypeSourceSet().getAndroidManifest();
+            File mainLocation = config.getDefaultSourceSet().getAndroidManifest();
+            File typeLocation = config.getBuildTypeSourceSet().getAndroidManifest();
             if (typeLocation != null && typeLocation.isDirectory() == false) {
                 typeLocation = null;
             }
 
             List<File> flavorManifests = new ArrayList<File>();
-            for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
+            for (SourceSet sourceSet : config.getFlavorSourceSets()) {
                 File f = sourceSet.getAndroidManifest();
                 if (f != null && f.isFile()) {
                     flavorManifests.add(f);
@@ -340,10 +338,10 @@ public class AndroidBuilder {
             }
 
             // if no manifest to merge, just copy to location
-            if (typeLocation == null && flavorManifests.isEmpty() && !mVariant.hasLibraries()) {
+            if (typeLocation == null && flavorManifests.isEmpty() && !config.hasLibraries()) {
                 new FileOp().copyFile(mainLocation, new File(outManifestLocation));
             } else {
-                if (!mVariant.hasLibraries()) {
+                if (!config.hasLibraries()) {
 
                     File appMergeOut = new File(outManifestLocation);
 
@@ -367,7 +365,7 @@ public class AndroidBuilder {
 
                     // recursively merge all manifests starting with the leaves and up toward the
                     // root (the app)
-                    mergeLibraryManifests(appMergeOut, mVariant.getDirectLibraries(),
+                    mergeLibraryManifests(appMergeOut, config.getDirectLibraries(),
                             new File(outManifestLocation));
                     }
             }
@@ -385,13 +383,13 @@ public class AndroidBuilder {
         for (AndroidDependency library : directLibraries) {
             List<AndroidDependency> subLibraries = library.getDependencies();
             if (subLibraries == null || subLibraries.size() == 0) {
-                manifests.add(new File(library.getManifest()));
+                manifests.add(library.getManifest());
             } else {
                 File mergeLibManifest = File.createTempFile("manifestMerge", ".xml");
                 mergeLibManifest.deleteOnExit();
 
                 mergeLibraryManifests(
-                        new File(library.getManifest()), subLibraries, mergeLibManifest);
+                        library.getManifest(), subLibraries, mergeLibManifest);
 
                 manifests.add(mergeLibManifest);
             }
@@ -409,6 +407,19 @@ public class AndroidBuilder {
     public void processResources(
             @NonNull String manifestFile,
             @Nullable String preprocessResDir,
+            @Nullable String sourceOutputDir,
+            @Nullable String resPackageOutput,
+            @Nullable String proguardOutput,
+            @NonNull AaptOptions options) throws IOException, InterruptedException {
+        List<File> inputs = mVariant.getResourceInputs();
+        processResources(manifestFile, preprocessResDir, inputs, sourceOutputDir,
+                resPackageOutput, proguardOutput, options);
+    }
+
+        public void processResources(
+            @NonNull String manifestFile,
+            @Nullable String preprocessResDir,
+            @NonNull List<File> resInputs,
             @Nullable String sourceOutputDir,
             @Nullable String resPackageOutput,
             @Nullable String proguardOutput,
@@ -448,44 +459,24 @@ public class AndroidBuilder {
         command.add("-M");
         command.add(manifestFile);
 
-        // TODO: handle libraries!
         boolean useOverlay =  false;
         if (preprocessResDir != null) {
             File preprocessResFile = new File(preprocessResDir);
             if (preprocessResFile.isDirectory()) {
                 command.add("-S");
                 command.add(preprocessResDir);
-                useOverlay = true;
             }
         }
 
-        if (mVariant.getBuildTypeSourceSet() != null) {
-            File typeResLocation = mVariant.getBuildTypeSourceSet().getAndroidResources();
-            if (typeResLocation != null && typeResLocation.isDirectory()) {
+        for (File resFolder : resInputs) {
+            if (resFolder.isDirectory()) {
                 command.add("-S");
-                command.add(typeResLocation.getAbsolutePath());
-                useOverlay = true;
+                command.add(resFolder.getAbsolutePath());
             }
         }
 
-        for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
-            File flavorResLocation = sourceSet.getAndroidResources();
-            if (flavorResLocation != null && flavorResLocation.isDirectory()) {
-                command.add("-S");
-                command.add(flavorResLocation.getAbsolutePath());
-                useOverlay = true;
-            }
-        }
+        command.add("--auto-add-overlay");
 
-        File mainResLocation = mVariant.getDefaultSourceSet().getAndroidResources();
-        if (mainResLocation != null && mainResLocation.isDirectory()) {
-            command.add("-S");
-            command.add(mainResLocation.getAbsolutePath());
-        }
-
-        if (useOverlay) {
-            command.add("--auto-add-overlay");
-        }
 
         // TODO support 2+ assets folders.
 //        if (typeAssetsLocation != null) {
@@ -580,6 +571,17 @@ public class AndroidBuilder {
             }
         }
 
+        // library specific options
+        if (mVariant.getType() == VariantConfiguration.Type.LIBRARY) {
+            command.add("--non-constant-id");
+        }
+
+        String extraPackages = mVariant.getLibraryPackages();
+        if (extraPackages != null) {
+            command.add("--extra-packages");
+            command.add(extraPackages);
+        }
+
         // AAPT options
         String ignoreAssets = options.getIgnoreAssets();
         if (ignoreAssets != null) {
@@ -595,13 +597,14 @@ public class AndroidBuilder {
             }
         }
 
-        mLogger.verbose("aapt command: %s", command.toString());
+        mLogger.info("aapt command: %s", command.toString());
 
         mCmdLineRunner.runCmdLine(command);
     }
 
     public void convertBytecode(
             @NonNull List<String> classesLocation,
+            @NonNull List<String> libraries,
             @NonNull String outDexFile,
             @NonNull DexOptions dexOptions) throws IOException, InterruptedException {
         if (mVariant == null) {
@@ -630,9 +633,13 @@ public class AndroidBuilder {
         // TODO: handle dependencies
         // TODO: handle dex options
 
-        mLogger.verbose("Input: " + classesLocation);
+        mLogger.verbose("Dex class inputs: " + classesLocation);
 
         command.addAll(classesLocation);
+
+        mLogger.verbose("Dex library inputs: " + libraries);
+
+        command.addAll(libraries);
 
         mCmdLineRunner.runCmdLine(command);
     }

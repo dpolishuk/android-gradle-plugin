@@ -142,6 +142,8 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             def variantConfig = new VariantConfiguration(
                     defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
                     buildTypeData.buildType, buildTypeData.androidSourceSet)
+            // TODO: add actual dependencies
+            variantConfig.setAndroidDependencies(null)
 
             boolean isTestedVariant = (buildTypeData == testData)
 
@@ -159,6 +161,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                 defaultConfigData.productFlavor, defaultConfigData.androidTestSourceSet,
                 testData.buildType, null,
                 VariantConfiguration.Type.TEST, testedVariant.config)
+
+        // TODO: add actual dependencies
+        testVariantConfig.setAndroidDependencies(null)
 
         def testVariant = new TestAppVariant(testVariantConfig)
         createTestTasks(testVariant, testedVariant)
@@ -187,6 +192,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             variantConfig.addProductFlavor(productFlavorData.productFlavor,
                     productFlavorData.androidSourceSet)
 
+            // TODO: add actual dependencies
+            variantConfig.setAndroidDependencies(null)
+
             boolean isTestedVariant = (buildTypeData == testData)
 
             ProductionAppVariant productionAppVariant = addVariant(variantConfig, null,
@@ -209,6 +217,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         testVariantConfig.addProductFlavor(productFlavorData.productFlavor,
                 productFlavorData.androidTestSourceSet)
 
+        // TODO: add actual dependencies
+        testVariantConfig.setAndroidDependencies(null)
+
         def testVariant = new TestAppVariant(testVariantConfig)
         createTestTasks(testVariant, testedVariant)
     }
@@ -227,7 +238,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def variant = new ProductionAppVariant(variantConfig)
 
         // Add a task to process the manifest(s)
-        ProcessManifest processManifestTask = createProcessManifestTask(variant)
+        ProcessManifest processManifestTask = createProcessManifestTask(variant, "manifests")
 
         // Add a task to crunch resource files
         def crunchTask = createCrunchResTask(variant)
@@ -253,9 +264,4 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     String getTarget() {
         return extension.target;
     }
-
-    protected String getManifestOutDir() {
-        return "manifests"
-    }
-
 }

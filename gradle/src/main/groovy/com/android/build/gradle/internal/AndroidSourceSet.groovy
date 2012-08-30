@@ -39,6 +39,11 @@ public class AndroidSourceSet implements com.android.builder.SourceSet {
     }
 
     @Override
+    Iterable<File> getCompileClasspath() {
+        return sourceSet.compileClasspath
+    }
+
+    @Override
     File getAndroidResources() {
         // FIXME: make this configurable by the SourceSet
         return project.file("src/$name/res")

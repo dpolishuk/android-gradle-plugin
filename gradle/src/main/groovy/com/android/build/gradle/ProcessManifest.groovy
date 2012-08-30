@@ -23,10 +23,10 @@ import org.gradle.api.tasks.TaskAction
 class ProcessManifest extends BaseAndroidTask {
 
     @OutputFile
-    File mergedManifest
+    File processedManifest
 
     @TaskAction
     void generate() {
-        getBuilder().processManifest(getMergedManifest().absolutePath)
+        getBuilder().processManifest(getProcessedManifest().absolutePath)
     }
 }

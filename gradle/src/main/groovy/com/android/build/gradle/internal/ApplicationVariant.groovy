@@ -24,32 +24,33 @@ import com.android.builder.VariantConfiguration
 /**
  * Represents something that can be packaged into an APK and installed.
  */
-public interface ApplicationVariant {
-    String getName()
+public abstract class ApplicationVariant {
 
-    String getDescription()
+    final VariantConfiguration config
+    FileCollection runtimeClasspath
+    FileCollection packagedClasspath
+    FileCollection resourcePackage
+    Compile compileTask
 
-    String getDirName()
+    ApplicationVariant(VariantConfiguration config) {
+        this.config = config
+    }
 
-    String getBaseName()
+    abstract String getDescription()
 
-    VariantConfiguration getConfig()
+    abstract String getDirName()
 
-    boolean getZipAlign()
+    abstract String getBaseName()
 
-    boolean isSigned()
+    abstract boolean getZipAlign()
 
-    boolean getRunProguard()
+    abstract boolean isSigned()
 
-    FileCollection getRuntimeClasspath()
+    abstract boolean getRunProguard()
 
-    FileCollection getResourcePackage()
+    abstract List<String> getRunCommand()
 
-    Compile getCompileTask()
+    abstract String getPackage()
 
-    List<String> getRunCommand()
-
-    String getPackage()
-
-    AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
+    abstract AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
 }

@@ -22,7 +22,9 @@ import com.android.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A Variant configuration.
@@ -45,6 +47,8 @@ public class VariantConfiguration {
 
     private ProductFlavor mMergedFlavor;
 
+    private AndroidDependency mOutput;
+
     private List<JarDependency> mJars;
 
     /** List of direct library project dependencies. Each object defines its own dependencies. */
@@ -54,7 +58,6 @@ public class VariantConfiguration {
      * The order is based on the order needed to call aapt: earlier libraries override resources
      * of latter ones. */
     private final List<AndroidDependency> mFlatLibraryProjects = new ArrayList<AndroidDependency>();
-
 
     public static enum Type {
         DEFAULT, LIBRARY, TEST;
@@ -117,6 +120,9 @@ public class VariantConfiguration {
         mTestedConfig = testedConfig;
 
         assert mType != Type.TEST || mTestedConfig != null;
+        assert mTestedConfig == null ||
+                mTestedConfig.mType != Type.LIBRARY ||
+                mTestedConfig.mOutput != null;
 
         mMergedFlavor = mDefaultConfig;
 
@@ -148,9 +154,56 @@ public class VariantConfiguration {
      * @param directLibraryProjects list of direct dependencies. Each library object should contain
      *            its own dependencies.
      */
-    public void setAndroidDependencies(List<AndroidDependency> directLibraryProjects) {
-        mDirectLibraryProjects.addAll(directLibraryProjects);
-        resolveIndirectLibraryDependencies(directLibraryProjects, mFlatLibraryProjects);
+    public void setAndroidDependencies(@NonNull List<AndroidDependency> directLibraryProjects) {
+        if (directLibraryProjects != null) {
+            mDirectLibraryProjects.addAll(directLibraryProjects);
+        }
+
+        resolveIndirectLibraryDependencies(getFullDirectDependencies(), mFlatLibraryProjects);
+    }
+
+    /**
+     * Returns all direct dependencies, including the tested config if it's a library itself.
+     * @return
+     */
+    public List<AndroidDependency> getFullDirectDependencies() {
+        if (mTestedConfig != null && mTestedConfig.getType() == Type.LIBRARY) {
+            // in case of a library we merge all the dependencies together.
+            List<AndroidDependency> list = new ArrayList<AndroidDependency>(
+                    mDirectLibraryProjects.size() +
+                            mTestedConfig.mDirectLibraryProjects.size() + 1);
+            list.addAll(mDirectLibraryProjects);
+            list.add(mTestedConfig.mOutput);
+            list.addAll(mTestedConfig.mDirectLibraryProjects);
+
+            return list;
+        }
+
+        return mDirectLibraryProjects;
+    }
+
+    public String getLibraryPackages() {
+        if (mFlatLibraryProjects.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        for (AndroidDependency dep : mFlatLibraryProjects) {
+            File manifest = dep.getManifest();
+            String packageName = sManifestParser.getPackage(manifest);
+            if (sb.length() > 0) {
+                sb.append(':');
+            }
+            sb.append(packageName);
+        }
+
+        return sb.toString();
+    }
+
+
+    public void setOutput(AndroidDependency output) {
+        mOutput = output;
     }
 
     public ProductFlavor getDefaultConfig() {
@@ -217,6 +270,10 @@ public class VariantConfiguration {
         return mType;
     }
 
+    VariantConfiguration getTestedConfig() {
+        return mTestedConfig;
+    }
+
     /**
      * Resolves a given list of libraries, finds out if they depend on other libraries, and
      * returns a flat list of all the direct and indirect dependencies in the proper order (first
@@ -227,6 +284,9 @@ public class VariantConfiguration {
     @VisibleForTesting
     void resolveIndirectLibraryDependencies(List<AndroidDependency> directDependencies,
                                             List<AndroidDependency> outFlatDependencies) {
+        if (directDependencies == null) {
+            return;
+        }
         // loop in the inverse order to resolve dependencies on the libraries, so that if a library
         // is required by two higher level libraries it can be inserted in the correct place
         for (int i = directDependencies.size() - 1  ; i >= 0 ; i--) {
@@ -272,7 +332,11 @@ public class VariantConfiguration {
 
     public String getTestedPackageName() {
         if (mType == Type.TEST) {
-            return mTestedConfig.getPackageName();
+            if (mTestedConfig.mType == Type.LIBRARY) {
+                return getPackageName();
+            } else {
+                return mTestedConfig.getPackageName();
+            }
         }
 
         return null;
@@ -314,11 +378,82 @@ public class VariantConfiguration {
      * Reads the package name from the manifest.
      * @return
      */
-    @VisibleForTesting
-    String getPackageFromManifest() {
+    public String getPackageFromManifest() {
         File manifestLocation = mDefaultSourceSet.getAndroidManifest();
         return sManifestParser.getPackage(manifestLocation);
     }
+
+    /**
+     * Returns the dynamic list of resource folders based on the configuration, its dependencies,
+     * as well as tested config if applicable (test of a library).
+     * @return a list of input resource folders.
+     */
+    public List<File> getResourceInputs() {
+        List<File> inputs = new ArrayList<File>();
+
+        if (mBuildTypeSourceSet != null) {
+            File typeResLocation = mBuildTypeSourceSet.getAndroidResources();
+            if (typeResLocation != null) {
+                inputs.add(typeResLocation);
+            }
+        }
+
+        for (SourceSet sourceSet : mFlavorSourceSets) {
+            File flavorResLocation = sourceSet.getAndroidResources();
+            if (flavorResLocation != null) {
+                inputs.add(flavorResLocation);
+            }
+        }
+
+        File mainResLocation = mDefaultSourceSet.getAndroidResources();
+        if (mainResLocation != null) {
+            inputs.add(mainResLocation);
+        }
+
+        for (AndroidDependency dependency : mFlatLibraryProjects) {
+            File resFolder = dependency.getResFolder();
+            if (resFolder != null) {
+                inputs.add(resFolder);
+            }
+        }
+
+        return inputs;
+    }
+
+    /**
+     * Returns the compile classpath for this config. If the config tests a library, this
+     * will include the classpath of the tested config
+     * @return
+     */
+    public Set<File> getCompileClasspath() {
+        Set<File> classpath = new HashSet<File>();
+
+        for (File f : mDefaultSourceSet.getCompileClasspath()) {
+            classpath.add(f);
+        }
+
+        if (mBuildTypeSourceSet != null) {
+            for (File f : mBuildTypeSourceSet.getCompileClasspath()) {
+                classpath.add(f);
+            }
+        }
+
+        for (SourceSet sourceSet : mFlavorSourceSets) {
+            for (File f : sourceSet.getCompileClasspath()) {
+                classpath.add(f);
+            }
+        }
+
+        if (mType == Type.TEST && mTestedConfig.mType == Type.LIBRARY) {
+            // the tested library is added to the main app so we need its compile classpath as well.
+            // which starts with its output
+            classpath.add(mTestedConfig.mOutput.getJarFile());
+            classpath.addAll(mTestedConfig.getCompileClasspath());
+        }
+
+        return classpath;
+    }
+
 
     protected void validate() {
         if (mType != Type.TEST) {

@@ -16,6 +16,7 @@
 
 package com.android.builder;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -32,35 +33,35 @@ public interface AndroidDependency {
      * Returns the location of the jar file to use for packaging.
      * Cannot be null.
      */
-    String getJarFile();
+    File getJarFile();
 
     /**
      * Returns the location of the manifest.
      */
-    String getManifest();
+    File getManifest();
 
     /**
      * Returns the location of the res folder.
      */
-    String getResFolder();
+    File getResFolder();
 
     /**
      * Returns the location of the assets folder.
      */
-    String getAssetsFolder();
+    File getAssetsFolder();
 
     /**
      * Returns the location of the jni libraries folder.
      */
-    String getJniFolder();
+    File getJniFolder();
 
     /**
      * Returns the location of the proguard files.
      */
-    String getProguardRules();
+    File getProguardRules();
 
     /**
      * Returns the location of the lint jar.
      */
-    String getLintJar();
+    File getLintJar();
 }
