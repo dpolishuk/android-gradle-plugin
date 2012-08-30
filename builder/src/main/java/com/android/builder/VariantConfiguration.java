@@ -43,11 +43,13 @@ public class VariantConfiguration {
     private final List<SourceSet> mFlavorSourceSets = new ArrayList<SourceSet>();
 
     private final Type mType;
+    /** Optional tested config in case type is Type#TEST */
     private final VariantConfiguration mTestedConfig;
+    /** An optional output that is only valid if the type is Type#LIBRARY so that the test
+     * for the library can use the library as if it was a normal dependency. */
+    private AndroidDependency mOutput;
 
     private ProductFlavor mMergedFlavor;
-
-    private AndroidDependency mOutput;
 
     private List<JarDependency> mJars;
 
