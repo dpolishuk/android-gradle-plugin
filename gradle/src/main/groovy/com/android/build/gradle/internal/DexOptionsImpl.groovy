@@ -18,6 +18,5 @@ package com.android.build.gradle.internal
 
 import com.android.builder.DexOptions;
 
-public class DexOptionsImpl implements DexOptions, Serializable {
-    private static final long serialVersionUID = 1L
+public class DexOptionsImpl implements DexOptions {
 }

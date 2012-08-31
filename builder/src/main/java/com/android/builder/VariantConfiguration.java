@@ -386,6 +386,22 @@ public class VariantConfiguration {
     }
 
     /**
+     * Returns a list of object that represents the configuration. This can be used to compare
+     * 2 different list of config objects to know whether the build is up to date or not.
+     * @return
+     */
+    public Iterable<Object> getConfigObjects() {
+        List<Object> list = new ArrayList<Object>();
+        list.add(mDefaultConfig);
+        list.add(mBuildType);
+        list.addAll(mFlavorConfigs);
+        // TODO: figure out the deps in here.
+//        list.addAll(mFlatLibraryProjects);
+
+        return list;
+    }
+
+    /**
      * Returns the dynamic list of resource folders based on the configuration, its dependencies,
      * as well as tested config if applicable (test of a library).
      * @return a list of input resource folders.

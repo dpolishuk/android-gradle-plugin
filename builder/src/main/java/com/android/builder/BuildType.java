@@ -19,7 +19,12 @@ package com.android.builder;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 
-public class BuildType {
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class BuildType implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     public final static String DEBUG = "debug";
     public final static String RELEASE = "release";
@@ -30,6 +35,8 @@ public class BuildType {
     private boolean mDebugSigned;
     private String mPackageNameSuffix = null;
     private boolean mRunProguard = false;
+    private boolean mBuildConfigDebug;
+    private final List<String> mBuildConfigLines = new ArrayList<String>();
 
     private boolean mZipAlign = true;
 
@@ -47,12 +54,14 @@ public class BuildType {
         mDebugJniBuild = true;
         mDebugSigned = true;
         mZipAlign = false;
+        mBuildConfigDebug = true;
     }
 
     private void initRelease() {
         mDebuggable = false;
         mDebugJniBuild = false;
         mDebugSigned = false;
+        mBuildConfigDebug = false;
     }
 
     public String getName() {
@@ -107,6 +116,54 @@ public class BuildType {
         return mZipAlign;
     }
 
+    public void setBuildConfigLines(List<String> lines) {
+        mBuildConfigLines.addAll(lines);
+    }
+
+    public List<String> getBuildConfigLines() {
+        return mBuildConfigLines;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BuildType buildType = (BuildType) o;
+
+        if (mBuildConfigDebug != buildType.mBuildConfigDebug) return false;
+        if (mDebugJniBuild != buildType.mDebugJniBuild) return false;
+        if (mDebugSigned != buildType.mDebugSigned) return false;
+        if (mDebuggable != buildType.mDebuggable) return false;
+        if (mRunProguard != buildType.mRunProguard) return false;
+        if (mZipAlign != buildType.mZipAlign) return false;
+        if (mBuildConfigLines != null ?
+                !mBuildConfigLines.equals(buildType.mBuildConfigLines) :
+                buildType.mBuildConfigLines != null)
+            return false;
+        if (mName != null ? !mName.equals(buildType.mName) : buildType.mName != null) return false;
+        if (mPackageNameSuffix != null ?
+                !mPackageNameSuffix.equals(buildType.mPackageNameSuffix) :
+                buildType.mPackageNameSuffix != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = mName != null ? mName.hashCode() : 0;
+        result = 31 * result + (mDebuggable ? 1 : 0);
+        result = 31 * result + (mDebugJniBuild ? 1 : 0);
+        result = 31 * result + (mDebugSigned ? 1 : 0);
+        result = 31 * result + (mPackageNameSuffix != null ? mPackageNameSuffix.hashCode() : 0);
+        result = 31 * result + (mRunProguard ? 1 : 0);
+        result = 31 * result + (mBuildConfigDebug ? 1 : 0);
+        result = 31 * result + (mBuildConfigLines != null ? mBuildConfigLines.hashCode() : 0);
+        result = 31 * result + (mZipAlign ? 1 : 0);
+        return result;
+    }
+
     @Override
     public String toString() {
         return "BuildType{" +
@@ -119,9 +176,4 @@ public class BuildType {
                 ", zipAlign=" + mZipAlign +
                 '}';
     }
-
-
-    /*
-Buildconfig: DEBUG flag + other custom properties?
-    */
 }

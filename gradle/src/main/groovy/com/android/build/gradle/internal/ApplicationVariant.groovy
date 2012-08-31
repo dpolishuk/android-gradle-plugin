@@ -31,9 +31,18 @@ public abstract class ApplicationVariant {
     FileCollection packagedClasspath
     FileCollection resourcePackage
     Compile compileTask
+    Iterable<Object> configObjects
 
     ApplicationVariant(VariantConfiguration config) {
         this.config = config
+    }
+
+    Iterable<Object> getConfigObjects() {
+        if (configObjects == null) {
+            configObjects = config.configObjects
+        }
+
+        return configObjects
     }
 
     abstract String getDescription()
@@ -41,6 +50,7 @@ public abstract class ApplicationVariant {
     abstract String getDirName()
 
     abstract String getBaseName()
+
 
     abstract boolean getZipAlign()
 

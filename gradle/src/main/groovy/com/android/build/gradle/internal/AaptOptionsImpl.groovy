@@ -18,11 +18,14 @@ package com.android.build.gradle.internal;
 
 
 import com.android.builder.AaptOptions
+import org.gradle.api.tasks.Input
 
-public class AaptOptionsImpl implements AaptOptions, Serializable {
-    private static final long serialVersionUID = 1L
+public class AaptOptionsImpl implements AaptOptions {
 
+    @Input
     private String ignoreAssetsPattern
+
+    @Input
     private List<String> noCompressList
 
     public void ignoreAssetsPattern(String ignoreAssetsPattern) {

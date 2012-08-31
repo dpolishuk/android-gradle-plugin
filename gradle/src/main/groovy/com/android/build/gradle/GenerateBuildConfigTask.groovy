@@ -31,6 +31,6 @@ class GenerateBuildConfigTask extends BaseAndroidTask {
     @TaskAction
     void generate() {
         getBuilder().generateBuildConfig(getSourceOutputDir().absolutePath,
-                optionalJavaLines);
+                getOptionalJavaLines());
     }
 }

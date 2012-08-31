@@ -165,6 +165,7 @@ abstract class AndroidBasePlugin {
                 ProcessManifest)
         processManifestTask.plugin = this
         processManifestTask.variant = variant
+        processManifestTask.configObjects = variant.configObjects
         processManifestTask.conventionMapping.processedManifest = {
             project.file(
                     "$project.buildDir/${manifestOurDir}/$variant.dirName/AndroidManifest.xml")
@@ -177,6 +178,7 @@ abstract class AndroidBasePlugin {
         def crunchTask = project.tasks.add("crunch${variant.name}Res", CrunchResources)
         crunchTask.plugin = this
         crunchTask.variant = variant
+        crunchTask.configObjects = variant.configObjects
         crunchTask.conventionMapping.resDirectories = { variant.config.resourceInputs }
         crunchTask.conventionMapping.outputDir = {
             project.file("$project.buildDir/res/$variant.dirName")
@@ -195,6 +197,7 @@ abstract class AndroidBasePlugin {
         }
         generateBuildConfigTask.plugin = this
         generateBuildConfigTask.variant = variant
+        generateBuildConfigTask.configObjects = variant.configObjects
         generateBuildConfigTask.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/${variant.dirName}")
         }
@@ -208,6 +211,7 @@ abstract class AndroidBasePlugin {
         processResources.dependsOn processManifestTask
         processResources.plugin = this
         processResources.variant = variant
+        processResources.configObjects = variant.configObjects
         processResources.conventionMapping.manifestFile = { processManifestTask.processedManifest }
         // TODO: unify with generateBuilderConfig somehow?
         processResources.conventionMapping.sourceOutputDir = {
@@ -340,6 +344,7 @@ abstract class AndroidBasePlugin {
         packageApp.dependsOn variant.resourcePackage, dexTask
         packageApp.plugin = this
         packageApp.variant = variant
+        packageApp.configObjects = variant.configObjects
 
         def signedApk = variant.isSigned()
 

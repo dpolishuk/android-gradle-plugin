@@ -18,7 +18,12 @@ package com.android.builder;
 
 import com.android.annotations.NonNull;
 
-public class ProductFlavor {
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProductFlavor implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final String mName;
     private int mMinSdkVersion = -1;
@@ -33,6 +38,8 @@ public class ProductFlavor {
     private String mSigningStorePassword = null;
     private String mSigningKeyAlias = null;
     private String mSigningKeyPassword = null;
+
+    private final List<String> mBuildConfigLines = new ArrayList<String>();
 
     public ProductFlavor(String name) {
         mName = name;
@@ -137,6 +144,14 @@ public class ProductFlavor {
                 mSigningKeyPassword != null;
     }
 
+    public void setBuildConfigLines(List<String> lines) {
+        mBuildConfigLines.addAll(lines);
+    }
+
+    public List<String> getBuildConfigLines() {
+        return mBuildConfigLines;
+    }
+
     /**
      * Merges the flavor on top of a base platform and returns a new object with the result.
      * @param base the flavor to merge on top of
@@ -173,6 +188,76 @@ public class ProductFlavor {
 
     private String chooseString(String overlay, String base) {
         return overlay != null ? overlay : base;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ProductFlavor that = (ProductFlavor) o;
+
+        if (mMinSdkVersion != that.mMinSdkVersion) return false;
+        if (mTargetSdkVersion != that.mTargetSdkVersion) return false;
+        if (mVersionCode != that.mVersionCode) return false;
+        if (mBuildConfigLines != null ?
+                !mBuildConfigLines.equals(that.mBuildConfigLines) :
+                that.mBuildConfigLines != null)
+            return false;
+        if (mName != null ? !mName.equals(that.mName) : that.mName != null) return false;
+        if (mPackageName != null ?
+                !mPackageName.equals(that.mPackageName) :
+                that.mPackageName != null)
+            return false;
+        if (mSigningKeyAlias != null ?
+                !mSigningKeyAlias.equals(that.mSigningKeyAlias) :
+                that.mSigningKeyAlias != null)
+            return false;
+        if (mSigningKeyPassword != null ?
+                !mSigningKeyPassword.equals(that.mSigningKeyPassword) :
+                that.mSigningKeyPassword != null)
+            return false;
+        if (mSigningStoreLocation != null ?
+                !mSigningStoreLocation.equals(that.mSigningStoreLocation) :
+                that.mSigningStoreLocation != null)
+            return false;
+        if (mSigningStorePassword != null ?
+                !mSigningStorePassword.equals(that.mSigningStorePassword) :
+                that.mSigningStorePassword != null)
+            return false;
+        if (mTestInstrumentationRunner != null ?
+                !mTestInstrumentationRunner.equals(that.mTestInstrumentationRunner) :
+                that.mTestInstrumentationRunner != null)
+            return false;
+        if (mTestPackageName != null ?
+                !mTestPackageName.equals(that.mTestPackageName) : that.mTestPackageName != null)
+            return false;
+        if (mVersionName != null ?
+                !mVersionName.equals(that.mVersionName) : that.mVersionName != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = mName != null ? mName.hashCode() : 0;
+        result = 31 * result + mMinSdkVersion;
+        result = 31 * result + mTargetSdkVersion;
+        result = 31 * result + mVersionCode;
+        result = 31 * result + (mVersionName != null ? mVersionName.hashCode() : 0);
+        result = 31 * result + (mPackageName != null ? mPackageName.hashCode() : 0);
+        result = 31 * result + (mTestPackageName != null ? mTestPackageName.hashCode() : 0);
+        result = 31 * result + (mTestInstrumentationRunner != null ?
+                mTestInstrumentationRunner.hashCode() : 0);
+        result = 31 * result + (mSigningStoreLocation != null ?
+                mSigningStoreLocation.hashCode() : 0);
+        result = 31 * result + (mSigningStorePassword != null ?
+                mSigningStorePassword.hashCode() : 0);
+        result = 31 * result + (mSigningKeyAlias != null ? mSigningKeyAlias.hashCode() : 0);
+        result = 31 * result + (mSigningKeyPassword != null ? mSigningKeyPassword.hashCode() : 0);
+        result = 31 * result + (mBuildConfigLines != null ? mBuildConfigLines.hashCode() : 0);
+        return result;
     }
 
     @Override
