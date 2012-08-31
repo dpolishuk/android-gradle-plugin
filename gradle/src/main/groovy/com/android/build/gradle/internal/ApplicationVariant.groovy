@@ -17,9 +17,9 @@ package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
+import com.android.builder.VariantConfiguration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
-import com.android.builder.VariantConfiguration
 
 /**
  * Represents something that can be packaged into an APK and installed.
@@ -43,6 +43,10 @@ public abstract class ApplicationVariant {
         }
 
         return configObjects
+    }
+
+    List<String> getBuildConfigLines() {
+        return config.buildConfigLines
     }
 
     abstract String getDescription()

@@ -18,6 +18,8 @@ package com.android.build.gradle
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
+import com.android.build.gradle.internal.TestAppVariant
+import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
@@ -25,8 +27,6 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
-import com.android.build.gradle.internal.TestAppVariant
-import com.android.builder.AndroidDependency
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 

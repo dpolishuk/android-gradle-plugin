@@ -15,10 +15,10 @@
  */
 package com.android.build.gradle
 
-import com.android.builder.ProductFlavor
-import org.gradle.api.Action
 import com.android.build.gradle.internal.AaptOptionsImpl
 import com.android.build.gradle.internal.DexOptionsImpl
+import com.android.build.gradle.internal.ProductFlavorDsl
+import org.gradle.api.Action
 
 /**
  * Base android extension for all android plugins.
@@ -26,7 +26,7 @@ import com.android.build.gradle.internal.DexOptionsImpl
 class BaseAndroidExtension {
 
     String target
-    final ProductFlavor defaultConfig = new ProductFlavor("main");
+    final ProductFlavorDsl defaultConfig = new ProductFlavorDsl("main");
 
     final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
     final DexOptionsImpl dexOptions = new DexOptionsImpl()
@@ -34,7 +34,7 @@ class BaseAndroidExtension {
     BaseAndroidExtension() {
     }
 
-    void defaultConfig(Action<ProductFlavor> action) {
+    void defaultConfig(Action<ProductFlavorDsl> action) {
         action.execute(defaultConfig)
     }
 

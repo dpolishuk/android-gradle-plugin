@@ -198,6 +198,7 @@ abstract class AndroidBasePlugin {
         generateBuildConfigTask.plugin = this
         generateBuildConfigTask.variant = variant
         generateBuildConfigTask.configObjects = variant.configObjects
+        generateBuildConfigTask.optionalJavaLines = variant.buildConfigLines
         generateBuildConfigTask.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/${variant.dirName}")
         }

@@ -35,7 +35,6 @@ public class BuildType implements Serializable {
     private boolean mDebugSigned;
     private String mPackageNameSuffix = null;
     private boolean mRunProguard = false;
-    private boolean mBuildConfigDebug;
     private final List<String> mBuildConfigLines = new ArrayList<String>();
 
     private boolean mZipAlign = true;
@@ -54,14 +53,12 @@ public class BuildType implements Serializable {
         mDebugJniBuild = true;
         mDebugSigned = true;
         mZipAlign = false;
-        mBuildConfigDebug = true;
     }
 
     private void initRelease() {
         mDebuggable = false;
         mDebugJniBuild = false;
         mDebugSigned = false;
-        mBuildConfigDebug = false;
     }
 
     public String getName() {
@@ -116,8 +113,12 @@ public class BuildType implements Serializable {
         return mZipAlign;
     }
 
-    public void setBuildConfigLines(List<String> lines) {
+    protected void addBuildConfigLines(List<String> lines) {
         mBuildConfigLines.addAll(lines);
+    }
+
+    protected void clearBuildConfigLines() {
+        mBuildConfigLines.clear();
     }
 
     public List<String> getBuildConfigLines() {
@@ -131,7 +132,7 @@ public class BuildType implements Serializable {
 
         BuildType buildType = (BuildType) o;
 
-        if (mBuildConfigDebug != buildType.mBuildConfigDebug) return false;
+        if (mName != null ? !mName.equals(buildType.mName) : buildType.mName != null) return false;
         if (mDebugJniBuild != buildType.mDebugJniBuild) return false;
         if (mDebugSigned != buildType.mDebugSigned) return false;
         if (mDebuggable != buildType.mDebuggable) return false;
@@ -141,7 +142,6 @@ public class BuildType implements Serializable {
                 !mBuildConfigLines.equals(buildType.mBuildConfigLines) :
                 buildType.mBuildConfigLines != null)
             return false;
-        if (mName != null ? !mName.equals(buildType.mName) : buildType.mName != null) return false;
         if (mPackageNameSuffix != null ?
                 !mPackageNameSuffix.equals(buildType.mPackageNameSuffix) :
                 buildType.mPackageNameSuffix != null)
@@ -158,7 +158,6 @@ public class BuildType implements Serializable {
         result = 31 * result + (mDebugSigned ? 1 : 0);
         result = 31 * result + (mPackageNameSuffix != null ? mPackageNameSuffix.hashCode() : 0);
         result = 31 * result + (mRunProguard ? 1 : 0);
-        result = 31 * result + (mBuildConfigDebug ? 1 : 0);
         result = 31 * result + (mBuildConfigLines != null ? mBuildConfigLines.hashCode() : 0);
         result = 31 * result + (mZipAlign ? 1 : 0);
         return result;

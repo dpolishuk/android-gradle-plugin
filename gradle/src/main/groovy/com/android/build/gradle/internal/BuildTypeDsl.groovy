@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.TaskAction
+package com.android.build.gradle.internal
 
-class InstallApplication extends DefaultTask {
-    @Input
-    File sdkDir
+import com.android.builder.BuildType
 
-    @InputFile
-    File packageFile
+/**
+ * Dsl overlay for BuildType.
+ */
+public class BuildTypeDsl extends BuildType {
+    public BuildTypeDsl(String name) {
+        super(name)
+    }
 
-    @TaskAction
-    void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/adb")
-            args 'install'
-            args '-r'
-            args getPackageFile()
-        }
+    public void buildConfig(String... lines) {
+        addBuildConfigLines(Arrays.asList(lines))
     }
 }

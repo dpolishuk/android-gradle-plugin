@@ -20,11 +20,16 @@ android {
         signingStorePassword = "android"
         signingKeyAlias = "androiddebugkey"
         signingKeyPassword = "android"
+ 
+        buildConfig "private final static boolean DEFAULT = true;", \
+                    "private final static String FOO = \"foo\";"
     }
 
     buildTypes {
         debug {
             packageNameSuffix = ".debug"
+
+            buildConfig "private final static boolean DEBUG2 = false;"
         }
     }
 
