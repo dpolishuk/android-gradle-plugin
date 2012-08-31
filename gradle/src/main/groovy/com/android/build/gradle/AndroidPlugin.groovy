@@ -26,7 +26,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
-import org.gradle.internal.reflect.Instantiator
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     private final Map<String, BuildTypeData> buildTypes = [:]
@@ -39,10 +38,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         super.apply(project)
 
         def buildTypes = project.container(BuildType)
-        // TODO - do the decoration by default
-        def productFlavors = project.container(ProductFlavor) { name ->
-            project.services.get(Instantiator).newInstance(ProductFlavor, name)
-        }
+        def productFlavors = project.container(ProductFlavor)
 
         extension = project.extensions.create('android', AndroidExtension,
                 buildTypes, productFlavors)

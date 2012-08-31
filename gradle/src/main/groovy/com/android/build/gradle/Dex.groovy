@@ -16,8 +16,8 @@
 package com.android.build.gradle
 
 import com.android.builder.DexOptions
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
@@ -31,7 +31,7 @@ class Dex extends BaseAndroidTask {
     @InputFiles
     Iterable<File> libraries
 
-    @Input
+    @Nested
     DexOptions dexOptions
 
     @TaskAction

@@ -16,14 +16,14 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.AaptOptionsImpl
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.InputFiles
 
 class ProcessResources extends BaseAndroidTask {
 
@@ -45,7 +45,7 @@ class ProcessResources extends BaseAndroidTask {
     @OutputFile @Optional
     File proguardFile
 
-    @Input
+    @Nested
     AaptOptionsImpl aaptOptions
 
     @TaskAction
