@@ -16,7 +16,10 @@
 package com.android.build.gradle
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 
 class ZipAlign extends DefaultTask {
     @OutputFile

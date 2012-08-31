@@ -144,8 +144,12 @@ public class ProductFlavor implements Serializable {
                 mSigningKeyPassword != null;
     }
 
-    public void setBuildConfigLines(List<String> lines) {
+    protected void addBuildConfigLines(List<String> lines) {
         mBuildConfigLines.addAll(lines);
+    }
+
+    protected void clearBuildConfigLines() {
+        mBuildConfigLines.clear();
     }
 
     public List<String> getBuildConfigLines() {
@@ -197,6 +201,7 @@ public class ProductFlavor implements Serializable {
 
         ProductFlavor that = (ProductFlavor) o;
 
+        if (mName != null ? !mName.equals(that.mName) : that.mName != null) return false;
         if (mMinSdkVersion != that.mMinSdkVersion) return false;
         if (mTargetSdkVersion != that.mTargetSdkVersion) return false;
         if (mVersionCode != that.mVersionCode) return false;
@@ -204,7 +209,6 @@ public class ProductFlavor implements Serializable {
                 !mBuildConfigLines.equals(that.mBuildConfigLines) :
                 that.mBuildConfigLines != null)
             return false;
-        if (mName != null ? !mName.equals(that.mName) : that.mName != null) return false;
         if (mPackageName != null ?
                 !mPackageName.equals(that.mPackageName) :
                 that.mPackageName != null)

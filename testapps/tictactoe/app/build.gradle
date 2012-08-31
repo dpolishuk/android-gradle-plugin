@@ -4,5 +4,5 @@ apply plugin: 'android'
 // A basic Android application split over a library and a main project.
 //
 dependencies {
-    compile project(':lib')
+//    compile project(':lib')
 }

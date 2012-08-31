@@ -16,8 +16,8 @@
 package com.android.build.gradle
 
 import com.android.utils.ILogger
-import org.gradle.api.logging.Logger
 import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logger
 
 /**
  * Implementation of Android's {@link ILogger} over gradle's {@link Logger}.

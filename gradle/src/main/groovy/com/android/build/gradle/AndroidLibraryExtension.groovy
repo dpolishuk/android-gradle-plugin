@@ -15,23 +15,24 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.BuildTypeDsl
 import com.android.builder.BuildType
 import org.gradle.api.Action
 
 class AndroidLibraryExtension extends BaseAndroidExtension {
 
-    final BuildType debug = new BuildType(BuildType.DEBUG)
-    final BuildType release = new BuildType(BuildType.RELEASE)
+    final BuildTypeDsl debug = new BuildTypeDsl(BuildType.DEBUG)
+    final BuildTypeDsl release = new BuildTypeDsl(BuildType.RELEASE)
 
     AndroidLibraryExtension() {
         super()
     }
 
-    void debug(Action<BuildType> action) {
+    void debug(Action<BuildTypeDsl> action) {
         action.execute(debug);
     }
 
-    void release(Action<BuildType> action) {
+    void release(Action<BuildTypeDsl> action) {
         action.execute(release);
     }
 }

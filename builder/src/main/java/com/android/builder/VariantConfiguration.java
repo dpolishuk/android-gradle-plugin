@@ -472,6 +472,31 @@ public class VariantConfiguration {
         return classpath;
     }
 
+    public List<String> getBuildConfigLines() {
+        List<String> fullList = new ArrayList<String>();
+
+        List<String> list = mDefaultConfig.getBuildConfigLines();
+        if (!list.isEmpty()) {
+            fullList.add("// lines from default config.");
+            fullList.addAll(list);
+        }
+
+        list = mBuildType.getBuildConfigLines();
+        if (!list.isEmpty()) {
+            fullList.add("// lines from build type: " + mBuildType.getName());
+            fullList.addAll(list);
+        }
+
+        for (ProductFlavor flavor : mFlavorConfigs) {
+            list = flavor.getBuildConfigLines();
+            if (!list.isEmpty()) {
+                fullList.add("// lines from product flavor: " + flavor.getName());
+                fullList.addAll(list);
+            }
+        }
+
+        return fullList;
+    }
 
     protected void validate() {
         if (mType != Type.TEST) {

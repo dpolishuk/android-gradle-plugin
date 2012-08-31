@@ -16,7 +16,9 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.BuildTypeData
+import com.android.build.gradle.internal.BuildTypeDsl
 import com.android.build.gradle.internal.ProductFlavorData
+import com.android.build.gradle.internal.ProductFlavorDsl
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.BuildType
@@ -37,8 +39,8 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     void apply(Project project) {
         super.apply(project)
 
-        def buildTypes = project.container(BuildType)
-        def productFlavors = project.container(ProductFlavor)
+        def buildTypes = project.container(BuildTypeDsl)
+        def productFlavors = project.container(ProductFlavorDsl)
 
         extension = project.extensions.create('android', AndroidExtension,
                 buildTypes, productFlavors)

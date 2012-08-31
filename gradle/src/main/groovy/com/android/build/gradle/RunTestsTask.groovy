@@ -15,8 +15,8 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
 
 /**
  * Run tests for a given variant
