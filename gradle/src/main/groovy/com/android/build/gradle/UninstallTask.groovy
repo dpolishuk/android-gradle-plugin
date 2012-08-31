@@ -15,25 +15,21 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 
-class InstallApplication extends DefaultTask {
+class UninstallTask extends BaseAndroidTask {
     @Input
     File sdkDir
 
-    @InputFile
-    File packageFile
-
     @TaskAction
     void generate() {
+        String packageName = variant.package
+        logger.info("Uninstalling app: " + packageName)
         project.exec {
             executable = new File(getSdkDir(), "platform-tools/adb")
-            args 'install'
-            args '-r'
-            args getPackageFile()
+            args "uninstall"
+            args packageName
         }
     }
 }

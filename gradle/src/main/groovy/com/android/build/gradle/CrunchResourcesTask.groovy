@@ -15,29 +15,19 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class ZipAlign extends DefaultTask {
-    @OutputFile
-    File outputFile
+class CrunchResourcesTask extends BaseAndroidTask {
+    @OutputDirectory
+    File outputDir
 
-    @Input
-    File sdkDir
-
-    @InputFile
-    File inputFile
+    @InputFiles
+    Iterable<File> resDirectories
 
     @TaskAction
     void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "tools/zipalign")
-            args '-f', '4'
-            args getInputFile()
-            args getOutputFile()
-        }
+        getBuilder().preprocessResources(getOutputDir().absolutePath, getResDirectories())
     }
 }
