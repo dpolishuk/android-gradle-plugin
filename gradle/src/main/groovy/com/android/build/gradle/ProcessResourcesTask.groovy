@@ -25,7 +25,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class ProcessResources extends BaseAndroidTask {
+class ProcessResourcesTask extends BaseAndroidTask {
 
     @InputFile
     File manifestFile

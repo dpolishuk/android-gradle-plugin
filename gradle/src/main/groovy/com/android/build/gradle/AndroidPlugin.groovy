@@ -236,7 +236,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def variant = new ProductionAppVariant(variantConfig)
 
         // Add a task to process the manifest(s)
-        ProcessManifest processManifestTask = createProcessManifestTask(variant, "manifests")
+        ProcessManifestTask processManifestTask = createProcessManifestTask(variant, "manifests")
 
         // Add a task to crunch resource files
         def crunchTask = createCrunchResTask(variant)

@@ -159,10 +159,10 @@ abstract class AndroidBasePlugin {
         return androidBuilder.runtimeClasspath.join(":")
     }
 
-    protected ProcessManifest createProcessManifestTask(ApplicationVariant variant,
+    protected ProcessManifestTask createProcessManifestTask(ApplicationVariant variant,
                                                         String manifestOurDir) {
         def processManifestTask = project.tasks.add("process${variant.name}Manifest",
-                ProcessManifest)
+                ProcessManifestTask)
         processManifestTask.plugin = this
         processManifestTask.variant = variant
         processManifestTask.configObjects = variant.configObjects
@@ -174,8 +174,8 @@ abstract class AndroidBasePlugin {
         return processManifestTask
     }
 
-    protected CrunchResources createCrunchResTask(ApplicationVariant variant) {
-        def crunchTask = project.tasks.add("crunch${variant.name}Res", CrunchResources)
+    protected CrunchResourcesTask createCrunchResTask(ApplicationVariant variant) {
+        def crunchTask = project.tasks.add("crunch${variant.name}Res", CrunchResourcesTask)
         crunchTask.plugin = this
         crunchTask.variant = variant
         crunchTask.configObjects = variant.configObjects
@@ -188,7 +188,7 @@ abstract class AndroidBasePlugin {
     }
 
     protected GenerateBuildConfigTask createBuildConfigTask(ApplicationVariant variant,
-                                                            ProcessManifest processManifestTask) {
+                                                            ProcessManifestTask processManifestTask) {
         def generateBuildConfigTask = project.tasks.add(
                 "generate${variant.name}BuildConfig", GenerateBuildConfigTask)
         if (processManifestTask != null) {
@@ -205,10 +205,10 @@ abstract class AndroidBasePlugin {
         return generateBuildConfigTask
     }
 
-    protected ProcessResources createProcessResTask(ApplicationVariant variant,
-                                                    ProcessManifest processManifestTask,
-                                                    CrunchResources crunchTask) {
-        def processResources = project.tasks.add("process${variant.name}Res", ProcessResources)
+    protected ProcessResourcesTask createProcessResTask(ApplicationVariant variant,
+                                                    ProcessManifestTask processManifestTask,
+                                                    CrunchResourcesTask crunchTask) {
+        def processResources = project.tasks.add("process${variant.name}Res", ProcessResourcesTask)
         processResources.dependsOn processManifestTask
         processResources.plugin = this
         processResources.variant = variant
@@ -242,7 +242,7 @@ abstract class AndroidBasePlugin {
 
     protected void createCompileTask(ApplicationVariant variant,
                                      ApplicationVariant testedVariant,
-                                     ProcessResources processResources,
+                                     ProcessResourcesTask processResources,
                                      GenerateBuildConfigTask generateBuildConfigTask) {
         def compileTask = project.tasks.add("compile${variant.name}", Compile)
         compileTask.dependsOn processResources, generateBuildConfigTask
@@ -328,7 +328,7 @@ abstract class AndroidBasePlugin {
                                    boolean isTestApk) {
         // Add a dex task
         def dexTaskName = "dex${variant.name}"
-        def dexTask = project.tasks.add(dexTaskName, Dex)
+        def dexTask = project.tasks.add(dexTaskName, DexTask)
         dexTask.dependsOn variant.compileTask
         dexTask.plugin = this
         dexTask.variant = variant
@@ -341,7 +341,7 @@ abstract class AndroidBasePlugin {
         dexTask.dexOptions = extension.dexOptions
 
         // Add a task to generate application package
-        def packageApp = project.tasks.add("package${variant.name}", PackageApplication)
+        def packageApp = project.tasks.add("package${variant.name}", PackageApplicationTask)
         packageApp.dependsOn variant.resourcePackage, dexTask
         packageApp.plugin = this
         packageApp.variant = variant
@@ -364,7 +364,7 @@ abstract class AndroidBasePlugin {
         if (signedApk) {
             if (variant.zipAlign) {
                 // Add a task to zip align application package
-                def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlign)
+                def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlignTask)
                 alignApp.dependsOn packageApp
                 alignApp.conventionMapping.inputFile = { packageApp.outputFile }
                 alignApp.conventionMapping.outputFile = {
@@ -377,7 +377,7 @@ abstract class AndroidBasePlugin {
             }
 
             // Add a task to install the application package
-            def installApp = project.tasks.add("install${variant.name}", InstallApplication)
+            def installApp = project.tasks.add("install${variant.name}", InstallTask)
             installApp.description = "Installs the " + variant.description
             installApp.group = "Install"
             installApp.dependsOn appTask
@@ -400,7 +400,7 @@ abstract class AndroidBasePlugin {
         assembleTask.dependsOn appTask
 
         // add an uninstall task
-        def uninstallApp = project.tasks.add("uninstall${variant.name}", UninstallApplication)
+        def uninstallApp = project.tasks.add("uninstall${variant.name}", UninstallTask)
         uninstallApp.description = "Uninstalls the " + variant.description
         uninstallApp.group = AndroidBasePlugin.INSTALL_GROUP
         uninstallApp.variant = variant

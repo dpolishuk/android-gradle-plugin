@@ -15,21 +15,18 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class UninstallApplication extends BaseAndroidTask {
-    @Input
-    File sdkDir
+/**
+ */
+class ProcessManifestTask extends BaseAndroidTask {
+
+    @OutputFile
+    File processedManifest
 
     @TaskAction
     void generate() {
-        String packageName = variant.package
-        logger.info("Uninstalling app: " + packageName)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools/adb")
-            args "uninstall"
-            args packageName
-        }
+        getBuilder().processManifest(getProcessedManifest().absolutePath)
     }
 }

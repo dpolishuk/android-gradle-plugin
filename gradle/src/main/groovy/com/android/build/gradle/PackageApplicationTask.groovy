@@ -22,7 +22,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class PackageApplication extends BaseAndroidTask {
+class PackageApplicationTask extends BaseAndroidTask {
     @OutputFile
     File outputFile
 

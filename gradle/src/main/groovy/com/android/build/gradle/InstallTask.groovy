@@ -15,19 +15,28 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.TaskAction
 
-class CrunchResources extends BaseAndroidTask {
-    @OutputDirectory
-    File outputDir
+/**
+ * Task installing an app.
+ */
+class InstallTask extends DefaultTask {
+    @Input
+    File sdkDir
 
-    @InputFiles
-    Iterable<File> resDirectories
+    @InputFile
+    File packageFile
 
     @TaskAction
     void generate() {
-        getBuilder().preprocessResources(getOutputDir().absolutePath, getResDirectories())
+        project.exec {
+            executable = new File(getSdkDir(), "platform-tools/adb")
+            args 'install'
+            args '-r'
+            args getPackageFile()
+        }
     }
 }

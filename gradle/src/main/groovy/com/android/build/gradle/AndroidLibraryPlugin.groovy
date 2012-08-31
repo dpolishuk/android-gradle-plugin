@@ -77,7 +77,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
 
         // Add a task to process the manifest(s)
-        ProcessManifest processManifestTask = createProcessManifestTask(variant, DIR_BUNDLES)
+        ProcessManifestTask processManifestTask = createProcessManifestTask(variant, DIR_BUNDLES)
 
         // Add a task to create the BuildConfig class
         def generateBuildConfigTask = createBuildConfigTask(variant, null)
