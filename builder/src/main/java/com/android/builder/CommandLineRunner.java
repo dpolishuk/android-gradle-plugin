@@ -25,7 +25,7 @@ import com.android.utils.ILogger;
 import java.io.IOException;
 import java.util.List;
 
-class CommandLineRunner {
+public class CommandLineRunner {
 
     private final ILogger mLogger;
 
@@ -51,7 +51,6 @@ class CommandLineRunner {
     /**
      * Get the stderr output of a process and return when the process is done.
      * @param process The process to get the output from
-     * @param stderr The array to store the stderr output
      * @return the process return code.
      * @throws InterruptedException
      */

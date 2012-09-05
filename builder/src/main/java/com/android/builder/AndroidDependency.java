@@ -56,6 +56,11 @@ public interface AndroidDependency {
     File getJniFolder();
 
     /**
+     * Returns the location of the aidl import folder.
+     */
+    File getAidlFolder();
+
+    /**
      * Returns the location of the proguard files.
      */
     File getProguardRules();

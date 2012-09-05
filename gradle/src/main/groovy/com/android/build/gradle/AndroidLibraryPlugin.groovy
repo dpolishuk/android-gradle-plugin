@@ -86,8 +86,11 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         def processResources = createProcessResTask(variant, processManifestTask,
                 null /*crunchTask*/)
 
+        def compileAidl = createAidlTask(variant)
+
         // Add a compile task
-        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask)
+        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
+                compileAidl)
 
         // jar the classes.
         Jar jar = project.tasks.add("${buildTypeData.buildType.name}Jar", Jar);
@@ -100,17 +103,24 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         jar.exclude(packageName + "/Manifest.class")
         jar.exclude(packageName + "/Manifest\$*.class")
 
-        // merge the resources into the bundle folder
-        Copy mergeRes = project.tasks.add("merge${variant.name}Res",
-                Copy)
-        // mergeRes from 3 sources. the order is important to make sure the override works well.
+        // package the resources into the bundle folder
+        Copy packageRes = project.tasks.add("package${variant.name}Res", Copy)
+        // packageRes from 3 sources. the order is important to make sure the override works well.
         // TODO: fix the case of values -- need to merge the XML!
-        mergeRes.from(defaultConfigData.androidSourceSet.androidResources,
+        packageRes.from(defaultConfigData.androidSourceSet.androidResources,
                 buildTypeData.androidSourceSet.androidResources)
-        mergeRes.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/res"))
+        packageRes.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/res"))
+
+        // package the aidl files into the bundle folder
+        Copy packageAidl = project.tasks.add("package${variant.name}Aidl", Copy)
+        // packageAidl from 3 sources. the order is important to make sure the override works well.
+        // TODO: fix the case of values -- need to merge the XML!
+        packageAidl.from(defaultConfigData.androidSourceSet.aidlSource,
+                buildTypeData.androidSourceSet.aidlSource)
+        packageAidl.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/aidl"))
 
         Zip bundle = project.tasks.add("bundle${variant.name}", Zip)
-        bundle.dependsOn jar, mergeRes
+        bundle.dependsOn jar, packageRes, packageAidl
         bundle.setDescription("Assembles a bundle containing the library in ${variant.name}.");
         bundle.destinationDir = project.file("$project.buildDir/libs")
         bundle.extension = "alb"
@@ -140,7 +150,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
 
             @Override
             File getResFolder() {
-                return mergeRes.destinationDir
+                return packageRes.destinationDir
             }
 
             @Override
@@ -151,6 +161,11 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
             @Override
             File getJniFolder() {
                 return null
+            }
+
+            @Override
+            File getAidlFolder() {
+                return packageAidl.destinationDir
             }
 
             @Override

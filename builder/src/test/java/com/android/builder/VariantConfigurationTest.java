@@ -110,7 +110,7 @@ public class VariantConfigurationTest extends TestCase {
                 mBuildType, new MockSourceSet("debug"),
                 VariantConfiguration.Type.DEFAULT) {
             @Override
-            String getPackageFromManifest() {
+            public String getPackageFromManifest() {
                 return packageName;
             }
             // don't do validation.

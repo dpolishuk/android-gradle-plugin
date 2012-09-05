@@ -214,7 +214,7 @@ abstract class AndroidBasePlugin {
         processResources.variant = variant
         processResources.configObjects = variant.configObjects
         processResources.conventionMapping.manifestFile = { processManifestTask.processedManifest }
-        // TODO: unify with generateBuilderConfig somehow?
+        // TODO: unify with generateBuilderConfig, and compileAidl somehow?
         processResources.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/$variant.dirName")
         }
@@ -240,12 +240,43 @@ abstract class AndroidBasePlugin {
         return processResources
     }
 
+    protected CompileAidlTask createAidlTask(ApplicationVariant variant) {
+
+        VariantConfiguration config = variant.config
+
+        def compileTask = project.tasks.add("compile${variant.name}Aidl", CompileAidlTask)
+        compileTask.plugin = this
+        compileTask.variant = variant
+        compileTask.configObjects = variant.configObjects
+
+        List<Object> sourceList = new ArrayList<Object>();
+        sourceList.add(config.defaultSourceSet.aidlSource)
+        if (config.getType() != VariantConfiguration.Type.TEST) {
+            sourceList.add(config.buildTypeSourceSet.aidlSource)
+        }
+        if (config.hasFlavors()) {
+            for (com.android.builder.SourceSet flavorSourceSet : config.flavorSourceSets) {
+                sourceList.add(flavorSourceSet.aidlSource)
+            }
+        }
+
+        compileTask.sourceDirs = sourceList
+        compileTask.importDirs = variant.config.aidlImports
+
+        compileTask.conventionMapping.sourceOutputDir = {
+            project.file("$project.buildDir/source/$variant.dirName")
+        }
+
+        return compileTask
+    }
+
     protected void createCompileTask(ApplicationVariant variant,
                                      ApplicationVariant testedVariant,
                                      ProcessResourcesTask processResources,
-                                     GenerateBuildConfigTask generateBuildConfigTask) {
+                                     GenerateBuildConfigTask generateBuildConfigTask,
+                                     CompileAidlTask aidlTask) {
         def compileTask = project.tasks.add("compile${variant.name}", Compile)
-        compileTask.dependsOn processResources, generateBuildConfigTask
+        compileTask.dependsOn processResources, generateBuildConfigTask, aidlTask
 
         VariantConfiguration config = variant.config
 
@@ -308,8 +339,11 @@ abstract class AndroidBasePlugin {
         // Add a task to generate resource source files
         def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
 
+        def compileAidl = createAidlTask(variant)
+
         // Add a task to compile the test application
-        createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask)
+        createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask,
+                compileAidl)
 
         Task assembleTask = addPackageTasks(variant, null, true /*isTestApk*/)
 
