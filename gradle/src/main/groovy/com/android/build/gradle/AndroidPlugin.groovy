@@ -247,8 +247,11 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         // Add a task to generate resource source files
         def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
 
+        def compileAidl = createAidlTask(variant)
+
         // Add a compile task
-        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask)
+        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
+                compileAidl)
 
         Task returnTask = addPackageTasks(variant, assembleTask, isTestApk)
         if (returnTask != null) {

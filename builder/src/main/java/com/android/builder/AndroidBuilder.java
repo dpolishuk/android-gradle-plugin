@@ -19,6 +19,8 @@ package com.android.builder;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 import com.android.annotations.VisibleForTesting;
+import com.android.builder.compiler.AidlProcessor;
+import com.android.builder.compiler.SourceGenerator;
 import com.android.builder.packaging.DuplicateFileException;
 import com.android.builder.packaging.JavaResourceProcessor;
 import com.android.builder.packaging.Packager;
@@ -57,7 +59,7 @@ import java.util.Set;
  * {@link #generateBuildConfig(String, java.util.List)}
  * {@link #processManifest(String)}
  * {@link #processResources(String, String, String, String, String, AaptOptions)}
- * {@link #convertBytecode(java.util.List, String, DexOptions)}
+ * {@link #convertBytecode(java.util.List, java.util.List, String, DexOptions)}
  * {@link #packageApk(String, String, String, String)}
  *
  * Java compilation is not handled but the builder provides the runtime classpath with
@@ -404,6 +406,24 @@ public class AndroidBuilder {
         }
     }
 
+    /**
+     *
+     * Process the resources and generate R.java and/or the packaged resources.
+     *
+     * Call this directly if you don't care about checking whether the inputs have changed.
+     * Otherwise, get the input first to check with {@link VariantConfiguration#getResourceInputs()}
+     * and then call (or not),
+     * {@link #processResources(String, String, java.util.List, String, String, String, AaptOptions)}.
+
+     * @param manifestFile the location of the manifest file
+     * @param preprocessResDir the pre-processed folder
+     * @param sourceOutputDir optional source folder to generate R.java
+     * @param resPackageOutput optional filepath for packaged resources
+     * @param proguardOutput optional filepath for proguard file to generate
+     * @param options the {@link AaptOptions}
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public void processResources(
             @NonNull String manifestFile,
             @Nullable String preprocessResDir,
@@ -416,7 +436,21 @@ public class AndroidBuilder {
                 resPackageOutput, proguardOutput, options);
     }
 
-        public void processResources(
+    /**
+     * Process the resources and generate R.java and/or the packaged resources.
+     *
+     *
+     * @param manifestFile the location of the manifest file
+     * @param preprocessResDir the pre-processed folder
+     * @param resInputs the res folder inputs
+     * @param sourceOutputDir optional source folder to generate R.java
+     * @param resPackageOutput optional filepath for packaged resources
+     * @param proguardOutput optional filepath for proguard file to generate
+     * @param options the {@link AaptOptions}
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void processResources(
             @NonNull String manifestFile,
             @Nullable String preprocessResDir,
             @NonNull List<File> resInputs,
@@ -600,6 +634,44 @@ public class AndroidBuilder {
         mLogger.info("aapt command: %s", command.toString());
 
         mCmdLineRunner.runCmdLine(command);
+    }
+
+    /**
+     * compiles all AIDL files.
+     *
+     * Call this directly if you don't care about checking whether the imports have changed.
+     * Otherwise, get the imports first to check with
+     * {@link com.android.builder.VariantConfiguration#getAidlImports()}
+     * and then call (or not), {@link #compileAidl(java.util.List, java.io.File, java.util.List)}.
+     *
+     * @param sourceFolders
+     * @param sourceOutputDir
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void compileAidl(@NonNull List<File> sourceFolders,
+                            @NonNull File sourceOutputDir)
+            throws IOException, InterruptedException {
+        compileAidl(sourceFolders, sourceOutputDir, mVariant.getAidlImports());
+    }
+
+    public void compileAidl(@NonNull List<File> sourceFolders,
+                            @NonNull File sourceOutputDir,
+                            @NonNull List<File> importFolders)
+            throws IOException, InterruptedException {
+
+        SourceGenerator compiler = new SourceGenerator(mLogger);
+
+        @SuppressWarnings("deprecation")
+        String aidlPath = mTarget.getPath(IAndroidTarget.AIDL);
+
+        AidlProcessor processor = new AidlProcessor(
+                aidlPath,
+                mTarget.getPath(IAndroidTarget.ANDROID_AIDL),
+                importFolders,
+                mCmdLineRunner);
+
+        compiler.processFiles(processor, sourceFolders, sourceOutputDir);
     }
 
     public void convertBytecode(

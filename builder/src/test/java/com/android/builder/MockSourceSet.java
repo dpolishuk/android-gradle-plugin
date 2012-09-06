@@ -37,6 +37,11 @@ class MockSourceSet implements SourceSet {
     }
 
     @Override
+    public Iterable<File> getCompileClasspath() {
+        return null;
+    }
+
+    @Override
     public File getAndroidResources() {
         return new File(mRoot, "res");
     }

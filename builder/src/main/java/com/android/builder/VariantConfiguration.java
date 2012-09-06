@@ -260,11 +260,11 @@ public class VariantConfiguration {
         return !mDirectLibraryProjects.isEmpty();
     }
 
-    public Iterable<AndroidDependency> getDirectLibraries() {
+    public List<AndroidDependency> getDirectLibraries() {
         return mDirectLibraryProjects;
     }
 
-    public Iterable<AndroidDependency> getFlatLibraries() {
+    public List<AndroidDependency> getFlatLibraries() {
         return mFlatLibraryProjects;
     }
 
@@ -437,6 +437,25 @@ public class VariantConfiguration {
 
         return inputs;
     }
+
+    /**
+     * Returns all the aidl import folder that are outside of the current project.
+     *
+     * @return
+     */
+    public List<File> getAidlImports() {
+        List<File> list = new ArrayList<File>();
+
+        for (AndroidDependency lib : mFlatLibraryProjects) {
+            File aidlLib = lib.getAidlFolder();
+            if (aidlLib != null && aidlLib.isDirectory()) {
+                list.add(aidlLib);
+            }
+        }
+
+        return list;
+    }
+
 
     /**
      * Returns the compile classpath for this config. If the config tests a library, this
