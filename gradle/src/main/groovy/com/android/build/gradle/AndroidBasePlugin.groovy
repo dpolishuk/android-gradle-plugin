@@ -295,13 +295,16 @@ abstract class AndroidBasePlugin {
 
         // if the test is for a full app, the tested runtimeClasspath is added to the classpath for
         // compilation only, not for packaging
-        variant.packagedClasspath = project.files(config.compileClasspath)
+        variant.packagedClasspath = project.files({config.compileClasspath})
         if (testedVariant != null &&
                 testedVariant.config.type != VariantConfiguration.Type.LIBRARY) {
             compileTask.classpath = variant.packagedClasspath + testedVariant.runtimeClasspath
         } else {
             compileTask.classpath = variant.packagedClasspath
         }
+        // TODO - dependency information for the compile classpath is being lost.
+        // Add a temporary approximation
+        compileTask.dependsOn project.configurations.compile.buildDependencies
 
         compileTask.conventionMapping.destinationDir = {
             project.file("$project.buildDir/classes/$variant.dirName")
