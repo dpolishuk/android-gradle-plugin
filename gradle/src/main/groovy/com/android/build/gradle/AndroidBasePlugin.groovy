@@ -228,9 +228,12 @@ abstract class AndroidBasePlugin {
         processResources.variant = variant
         processResources.configObjects = variant.configObjects
         processResources.conventionMapping.manifestFile = { processManifestTask.processedManifest }
-        // TODO: unify with generateBuilderConfig, and compileAidl somehow?
+        // TODO: unify with generateBuilderConfig, compileAidl, and library packaging somehow?
         processResources.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/$variant.dirName")
+        }
+        processResources.conventionMapping.textSymbolDir = {
+            project.file("$project.buildDir/symbols/$variant.dirName")
         }
         processResources.conventionMapping.packageFile = {
             project.file(

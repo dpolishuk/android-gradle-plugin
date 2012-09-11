@@ -126,7 +126,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
                 compileAidl)
 
         // jar the classes.
-        Jar jar = project.tasks.add("${buildTypeData.buildType.name}Jar", Jar);
+        Jar jar = project.tasks.add("package${buildTypeData.buildType.name}Jar", Jar);
         jar.from(variant.compileTask.outputs);
         // TODO: replace with proper ProcessResources task with properly configured SourceDirectorySet
         jar.from(defaultConfigData.androidSourceSet.javaResources);
@@ -137,8 +137,6 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         String packageName = variantConfig.getPackageFromManifest().replace('.', '/');
         jar.exclude(packageName + "/R.class")
         jar.exclude(packageName + "/R\$*.class")
-        jar.exclude(packageName + "/Manifest.class")
-        jar.exclude(packageName + "/Manifest\$*.class")
 
         // package the resources into the bundle folder
         Copy packageRes = project.tasks.add("package${variant.name}Res", Copy)
@@ -151,13 +149,18 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         // package the aidl files into the bundle folder
         Copy packageAidl = project.tasks.add("package${variant.name}Aidl", Copy)
         // packageAidl from 3 sources. the order is important to make sure the override works well.
-        // TODO: fix the case of values -- need to merge the XML!
         packageAidl.from(defaultConfigData.androidSourceSet.aidlSource,
                 buildTypeData.androidSourceSet.aidlSource)
         packageAidl.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/aidl"))
 
+        // package the resources into the bundle folder
+        Copy packageSymbol = project.tasks.add("package${variant.name}Symbols", Copy)
+        packageSymbol.dependsOn processResources
+        packageSymbol.from(processResources.textSymbolDir)
+        packageSymbol.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
+
         Zip bundle = project.tasks.add("bundle${variant.name}", Zip)
-        bundle.dependsOn jar, packageRes, packageAidl
+        bundle.dependsOn jar, packageRes, packageAidl, packageSymbol
         bundle.setDescription("Assembles a bundle containing the library in ${variant.name}.");
         bundle.destinationDir = project.file("$project.buildDir/libs")
         bundle.extension = "alb"
