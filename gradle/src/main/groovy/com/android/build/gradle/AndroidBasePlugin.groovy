@@ -166,6 +166,7 @@ abstract class AndroidBasePlugin {
         processManifestTask.plugin = this
         processManifestTask.variant = variant
         processManifestTask.configObjects = variant.configObjects
+        processManifestTask.conventionMapping.inputManifests = { variant.config.manifestInputs }
         processManifestTask.conventionMapping.processedManifest = {
             project.file(
                     "$project.buildDir/${manifestOurDir}/$variant.dirName/AndroidManifest.xml")

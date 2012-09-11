@@ -327,7 +327,7 @@ public class AndroidBuilder {
         try {
             File mainLocation = config.getDefaultSourceSet().getAndroidManifest();
             File typeLocation = config.getBuildTypeSourceSet().getAndroidManifest();
-            if (typeLocation != null && typeLocation.isDirectory() == false) {
+            if (typeLocation != null && typeLocation.isFile() == false) {
                 typeLocation = null;
             }
 

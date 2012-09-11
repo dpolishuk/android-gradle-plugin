@@ -22,6 +22,8 @@ import com.android.builder.ProductFlavor
  * Dsl overlay for ProductFlavor.
  */
 public class ProductFlavorDsl extends ProductFlavor {
+    private static final long serialVersionUID = 1L;
+
     public ProductFlavorDsl(String name) {
         super(name)
     }
