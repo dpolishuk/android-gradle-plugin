@@ -401,6 +401,38 @@ public class VariantConfiguration {
         return list;
     }
 
+    public List<File> getManifestInputs() {
+        List<File> inputs = new ArrayList<File>();
+
+        File defaultManifest = mDefaultSourceSet.getAndroidManifest();
+        // this could not exist in a test project.
+        if (defaultManifest != null && defaultManifest.isFile()) {
+            inputs.add(defaultManifest);
+        }
+
+        File typeLocation = mBuildTypeSourceSet.getAndroidManifest();
+        if (typeLocation != null && typeLocation.isFile()) {
+            inputs.add(typeLocation);
+        }
+
+        for (SourceSet sourceSet : mFlavorSourceSets) {
+            File f = sourceSet.getAndroidManifest();
+            if (f != null && f.isFile()) {
+                inputs.add(f);
+            }
+        }
+
+        List<AndroidDependency> libs = getFullDirectDependencies();
+        for (AndroidDependency lib : libs) {
+            File manifest = lib.getManifest();
+            if (manifest != null && manifest.isFile()) {
+                inputs.add(manifest);
+            }
+        }
+
+        return inputs;
+    }
+
     /**
      * Returns the dynamic list of resource folders based on the configuration, its dependencies,
      * as well as tested config if applicable (test of a library).
@@ -455,7 +487,6 @@ public class VariantConfiguration {
 
         return list;
     }
-
 
     /**
      * Returns the compile classpath for this config. If the config tests a library, this

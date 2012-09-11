@@ -17,10 +17,16 @@ package com.android.build.gradle
 
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.InputFiles
 
 /**
  */
 class ProcessManifestTask extends BaseAndroidTask {
+
+    // this is not actually used by the task because it needs a graph more than a list
+    // but we need it here with the @InputFiles annotation to properly trigger recompiles.
+    @InputFiles
+    List<File> inputManifests
 
     @OutputFile
     File processedManifest

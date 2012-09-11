@@ -22,6 +22,8 @@ import com.android.builder.BuildType
  * Dsl overlay for BuildType.
  */
 public class BuildTypeDsl extends BuildType {
+    private static final long serialVersionUID = 1L;
+
     public BuildTypeDsl(String name) {
         super(name)
     }
