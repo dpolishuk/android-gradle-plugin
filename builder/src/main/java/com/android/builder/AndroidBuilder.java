@@ -361,13 +361,9 @@ public class AndroidBuilder {
                         throw new RuntimeException();
                     }
                 } else {
-
-                    File appMergeOut = File.createTempFile("manifestMerge", ".xml");
-                    appMergeOut.deleteOnExit();
-
                     // recursively merge all manifests starting with the leaves and up toward the
                     // root (the app)
-                    mergeLibraryManifests(appMergeOut, config.getDirectLibraries(),
+                    mergeLibraryManifests(mainLocation, config.getDirectLibraries(),
                             new File(outManifestLocation));
                     }
             }
