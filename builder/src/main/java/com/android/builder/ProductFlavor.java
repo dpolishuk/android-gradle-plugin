@@ -17,9 +17,10 @@
 package com.android.builder;
 
 import com.android.annotations.NonNull;
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ProductFlavor implements Serializable {
@@ -39,7 +40,7 @@ public class ProductFlavor implements Serializable {
     private String mSigningKeyAlias = null;
     private String mSigningKeyPassword = null;
 
-    private final List<String> mBuildConfigLines = new ArrayList<String>();
+    private final List<String> mBuildConfigLines = Lists.newArrayList();
 
     public ProductFlavor(String name) {
         mName = name;
@@ -266,20 +267,21 @@ public class ProductFlavor implements Serializable {
 
     @Override
     public String toString() {
-        return "ProductFlavor{" +
-                "name='" + mName + '\'' +
-                ", minSdkVersion=" + mMinSdkVersion +
-                ", targetSdkVersion=" + mTargetSdkVersion +
-                ", versionCode=" + mVersionCode +
-                ", versionName='" + mVersionName + '\'' +
-                ", packageName='" + mPackageName + '\'' +
-                ", testPackageName='" + mTestPackageName + '\'' +
-                ", testInstrumentationRunner='" + mTestInstrumentationRunner + '\'' +
-                ", signingStoreLocation='" + mSigningStoreLocation + '\'' +
-                ", signingStorePassword='" + mSigningStorePassword + '\'' +
-                ", signingKeyAlias='" + mSigningKeyAlias + '\'' +
-                ", signingKeyPassword='" + mSigningKeyPassword + '\'' +
-                '}';
+        return Objects.toStringHelper(this)
+                .add("name", mName)
+                .add("minSdkVersion", mMinSdkVersion)
+                .add("targetSdkVersion", mTargetSdkVersion)
+                .add("versionCode", mVersionCode)
+                .add("versionName", mVersionName)
+                .add("packageName", mPackageName)
+                .add("testPackageName", mTestPackageName)
+                .add("testInstrumentationRunner", mTestInstrumentationRunner)
+                .add("signingStoreLocation", mSigningStoreLocation)
+                .add("signingStorePassword", mSigningStorePassword)
+                .add("signingKeyAlias", mSigningKeyAlias)
+                .add("signingKeyPassword", mSigningKeyPassword)
+                .omitNullValues()
+                .toString();
     }
 
     /*

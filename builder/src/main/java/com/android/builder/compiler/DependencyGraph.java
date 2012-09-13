@@ -18,12 +18,12 @@ package com.android.builder.compiler;
 
 import com.android.utils.ILogger;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -179,14 +179,14 @@ public class DependencyGraph {
             prereqs = files[1].trim().split(" ");
         }
 
-        mTargets = new HashSet<File>(targets.length);
+        mTargets = Sets.newHashSetWithExpectedSize(targets.length);
         for (String path : targets) {
             if (path.length() > 0) {
                 mTargets.add(new File(path));
             }
         }
 
-        mPrereqs = new HashSet<File>(prereqs.length);
+        mPrereqs = Sets.newHashSetWithExpectedSize(prereqs.length);
         for (String path : prereqs) {
             if (path.length() > 0) {
                 if (DEBUG) {

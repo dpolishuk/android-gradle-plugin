@@ -37,6 +37,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.IAndroidTarget.IOptionalLibrary;
 import com.android.sdklib.io.FileOp;
 import com.android.utils.ILogger;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,6 +45,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 /**
  * This is the main builder class. It is given all the data to process the build (such as
@@ -90,9 +95,12 @@ public class AndroidBuilder {
      * @param logger
      * @param verboseExec
      */
-    public AndroidBuilder(@NonNull SdkParser sdkParser, ILogger logger, boolean verboseExec) {
-        mSdkParser = sdkParser;
-        mLogger = logger;
+    public AndroidBuilder(
+            @NonNull SdkParser sdkParser,
+            @NonNull ILogger logger,
+            boolean verboseExec) {
+        mSdkParser = checkNotNull(sdkParser);
+        mLogger = checkNotNull(logger);
         mVerboseExec = verboseExec;
         mCmdLineRunner = new CommandLineRunner(mLogger);
     }
@@ -100,14 +108,13 @@ public class AndroidBuilder {
     @VisibleForTesting
     AndroidBuilder(
             @NonNull SdkParser sdkParser,
-            @NonNull ManifestParser manifestParser,
             @NonNull CommandLineRunner cmdLineRunner,
             @NonNull ILogger logger,
             boolean verboseExec) {
-        mSdkParser = sdkParser;
-        mLogger = logger;
+        mSdkParser = checkNotNull(sdkParser);
+        mCmdLineRunner = checkNotNull(cmdLineRunner);
+        mLogger = checkNotNull(logger);
         mVerboseExec = verboseExec;
-        mCmdLineRunner = cmdLineRunner;
     }
 
     /**
@@ -118,9 +125,8 @@ public class AndroidBuilder {
      * @see IAndroidTarget#hashString()
      */
     public void setTarget(@NonNull String target) {
-        if (target == null) {
-            throw new RuntimeException("Compilation target not set!");
-        }
+        checkNotNull(target, "target cannot be null.");
+
         mTarget = mSdkParser.resolveTarget(target, mLogger);
 
         if (mTarget == null) {
@@ -135,18 +141,16 @@ public class AndroidBuilder {
      *
      */
     public void setVariantConfig(@NonNull VariantConfiguration variant) {
-        mVariant = variant;
+        mVariant = checkNotNull(variant, "variant cannot be null.");
     }
 
     /**
      * Returns the runtime classpath to be used during compilation.
      */
     public List<String> getRuntimeClasspath() {
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
+        checkState(mTarget != null, "Target not set.");
 
-        List<String> classpath = new ArrayList<String>();
+        List<String> classpath = Lists.newArrayList();
 
         classpath.add(mTarget.getPath(IAndroidTarget.ANDROID_JAR));
 
@@ -176,12 +180,8 @@ public class AndroidBuilder {
     public void generateBuildConfig(
             @NonNull String sourceOutputDir,
             @Nullable List<String> additionalLines) throws IOException {
-        if (mVariant == null) {
-            throw new IllegalArgumentException("No Variant Configuration has been set.");
-        }
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
 
         String packageName;
         if (mVariant.getType() == VariantConfiguration.Type.TEST) {
@@ -210,8 +210,9 @@ public class AndroidBuilder {
      */
     public void preprocessResources(@NonNull String resOutputDir)
             throws IOException, InterruptedException {
-        List<File> inputs = mVariant.getResourceInputs();
+        checkState(mVariant != null, "No Variant Configuration has been set.");
 
+        List<File> inputs = mVariant.getResourceInputs();
         preprocessResources(resOutputDir, inputs);
     }
     /**
@@ -224,21 +225,18 @@ public class AndroidBuilder {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void preprocessResources(@NonNull String resOutputDir, @NonNull List<File> inputs)
+    public void preprocessResources(@NonNull String resOutputDir, List<File> inputs)
             throws IOException, InterruptedException {
-        if (mVariant == null) {
-            throw new IllegalArgumentException("No Variant Configuration has been set.");
-        }
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
+        checkNotNull(resOutputDir, "resOutputDir cannot be null.");
 
         if (inputs == null || inputs.isEmpty()) {
             return;
         }
 
         // launch aapt: create the command line
-        ArrayList<String> command = new ArrayList<String>();
+        ArrayList<String> command = Lists.newArrayList();
 
         @SuppressWarnings("deprecation")
         String aaptPath = mTarget.getPath(IAndroidTarget.AAPT);
@@ -279,12 +277,9 @@ public class AndroidBuilder {
      * @param outManifestLocation the output location for the merged manifest
      */
     public void processManifest(@NonNull String outManifestLocation) {
-        if (mVariant == null) {
-            throw new IllegalArgumentException("No Variant Configuration has been set.");
-        }
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
+        checkNotNull(outManifestLocation, "outManifestLocation cannot be null.");
 
         if (mVariant.getType() == VariantConfiguration.Type.TEST) {
             VariantConfiguration testedConfig = mVariant.getTestedConfig();
@@ -331,7 +326,7 @@ public class AndroidBuilder {
                 typeLocation = null;
             }
 
-            List<File> flavorManifests = new ArrayList<File>();
+            List<File> flavorManifests = Lists.newArrayList();
             for (SourceSet sourceSet : config.getFlavorSourceSets()) {
                 File f = sourceSet.getAndroidManifest();
                 if (f != null && f.isFile()) {
@@ -347,7 +342,7 @@ public class AndroidBuilder {
 
                     File appMergeOut = new File(outManifestLocation);
 
-                    List<File> manifests = new ArrayList<File>();
+                    List<File> manifests = Lists.newArrayList();
                     if (typeLocation != null) {
                         manifests.add(typeLocation);
                     }
@@ -377,7 +372,7 @@ public class AndroidBuilder {
             Iterable<AndroidDependency> directLibraries,
             File outManifest) throws IOException {
 
-        List<File> manifests = new ArrayList<File>();
+        List<File> manifests = Lists.newArrayList();
         for (AndroidDependency library : directLibraries) {
             List<AndroidDependency> subLibraries = library.getDependencies();
             if (subLibraries == null || subLibraries.size() == 0) {
@@ -454,20 +449,17 @@ public class AndroidBuilder {
             @Nullable String resPackageOutput,
             @Nullable String proguardOutput,
             @NonNull AaptOptions options) throws IOException, InterruptedException {
-        if (mVariant == null) {
-            throw new IllegalArgumentException("No Variant Configuration has been set.");
-        }
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
-
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
+        checkNotNull(manifestFile, "manifestFile cannot be null.");
+        checkNotNull(resInputs, "resInputs cannot be null.");
+        checkNotNull(options, "options cannot be null.");
         // if both output types are empty, then there's nothing to do and this is an error
-        if (sourceOutputDir == null && resPackageOutput == null) {
-            throw new IllegalArgumentException("no output provided for aapt task");
-        }
+        checkArgument(sourceOutputDir != null || resPackageOutput != null,
+                "No output provided for aapt task");
 
         // launch aapt: create the command line
-        ArrayList<String> command = new ArrayList<String>();
+        ArrayList<String> command = Lists.newArrayList();
 
         @SuppressWarnings("deprecation")
         String aaptPath = mTarget.getPath(IAndroidTarget.AAPT);
@@ -648,6 +640,8 @@ public class AndroidBuilder {
     public void compileAidl(@NonNull List<File> sourceFolders,
                             @NonNull File sourceOutputDir)
             throws IOException, InterruptedException {
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+
         compileAidl(sourceFolders, sourceOutputDir, mVariant.getAidlImports());
     }
 
@@ -655,6 +649,11 @@ public class AndroidBuilder {
                             @NonNull File sourceOutputDir,
                             @NonNull List<File> importFolders)
             throws IOException, InterruptedException {
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
+        checkNotNull(sourceFolders, "sourceFolders cannot be null.");
+        checkNotNull(sourceOutputDir, "sourceOutputDir cannot be null.");
+        checkNotNull(importFolders, "importFolders cannot be null.");
 
         SourceGenerator compiler = new SourceGenerator(mLogger);
 
@@ -675,15 +674,15 @@ public class AndroidBuilder {
             @NonNull List<String> libraries,
             @NonNull String outDexFile,
             @NonNull DexOptions dexOptions) throws IOException, InterruptedException {
-        if (mVariant == null) {
-            throw new IllegalArgumentException("No Variant Configuration has been set.");
-        }
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
+        checkNotNull(classesLocation, "classesLocation cannot be null.");
+        checkNotNull(libraries, "libraries cannot be null.");
+        checkNotNull(outDexFile, "outDexFile cannot be null.");
+        checkNotNull(dexOptions, "dexOptions cannot be null.");
 
         // launch dx: create the command line
-        ArrayList<String> command = new ArrayList<String>();
+        ArrayList<String> command = Lists.newArrayList();
 
         @SuppressWarnings("deprecation")
         String dxPath = mTarget.getPath(IAndroidTarget.DX);
@@ -724,12 +723,11 @@ public class AndroidBuilder {
             @NonNull String classesDexLocation,
             @Nullable String jniLibsLocation,
             @NonNull String outApkLocation) throws DuplicateFileException {
-        if (mVariant == null) {
-            throw new IllegalArgumentException("No Variant Configuration has been set.");
-        }
-        if (mTarget == null) {
-            throw new IllegalArgumentException("Target not set.");
-        }
+        checkState(mVariant != null, "No Variant Configuration has been set.");
+        checkState(mTarget != null, "Target not set.");
+        checkNotNull(androidResPkgLocation, "androidResPkgLocation cannot be null.");
+        checkNotNull(classesDexLocation, "classesDexLocation cannot be null.");
+        checkNotNull(outApkLocation, "outApkLocation cannot be null.");
 
         BuildType buildType = mVariant.getBuildType();
 

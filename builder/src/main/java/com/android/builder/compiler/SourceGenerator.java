@@ -17,11 +17,12 @@
 package com.android.builder.compiler;
 
 import com.android.utils.ILogger;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,9 +67,9 @@ public class SourceGenerator {
 
         // parse all the dep files and keep the ones that are of the proper type and check if
         // they require compilation again.
-        Map<File, File> toCompile = new HashMap<File, File>();
-        ArrayList<File> toRemove = new ArrayList<File>();
-        ArrayList<File> depsToRemove = new ArrayList<File>();
+        Map<File, File> toCompile = Maps.newHashMap();
+        ArrayList<File> toRemove = Lists.newArrayList();
+        ArrayList<File> depsToRemove = Lists.newArrayList();
         for (File depFile : depFiles) {
             DependencyGraph graph = new DependencyGraph(depFile, null /*watchPaths*/, mLogger);
 
@@ -144,7 +145,7 @@ public class SourceGenerator {
      * @return a map of (file, folder)
      */
     private Map<File, File> getFilesByNameEntryFilter(List<File> folders, String extension) {
-        Map<File, File> sourceFiles = new HashMap<File, File>();
+        Map<File, File> sourceFiles = Maps.newHashMap();
 
         for (File folder : folders) {
             List<File> files = getFilesByNameEntryFilter(folder, extension);
@@ -164,7 +165,7 @@ public class SourceGenerator {
      * @return an iterator.
      */
     private List<File> getFilesByNameEntryFilter(File sourceFolder, String extension) {
-        ArrayList<File> result = new ArrayList<File>();
+        ArrayList<File> result = Lists.newArrayList();
 
         if (sourceFolder.isDirectory()) {
             gatherFiles(sourceFolder, extension, result);

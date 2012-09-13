@@ -20,6 +20,7 @@ import com.android.annotations.NonNull;
 import com.android.builder.CommandLineRunner;
 import com.android.builder.compiler.SourceGenerator.DisplayType;
 import com.android.utils.ILogger;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +56,7 @@ public class AidlProcessor implements SourceGenerator.Processor {
                         ILogger logger)
             throws IOException, InterruptedException {
 
-        ArrayList<String> command = new ArrayList<String>();
+        ArrayList<String> command = Lists.newArrayList();
 
         command.add(mAidlExecutable);
 

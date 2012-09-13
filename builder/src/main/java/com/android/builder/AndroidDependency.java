@@ -25,6 +25,11 @@ import java.util.List;
 public interface AndroidDependency {
 
     /**
+     * Returns the location of the unarchived bundle.
+     */
+    File getFolder();
+
+    /**
      * Returns the direct dependency of this dependency.
      */
     List<AndroidDependency> getDependencies();
