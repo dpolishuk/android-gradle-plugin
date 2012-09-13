@@ -15,6 +15,7 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.AndroidDependencyImpl
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.BuildTypeDsl
 import com.android.build.gradle.internal.ProductFlavorData
@@ -27,6 +28,7 @@ import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.plugins.BasePlugin
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
@@ -140,8 +142,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             def variantConfig = new VariantConfiguration(
                     defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
                     buildTypeData.buildType, buildTypeData.androidSourceSet)
-            // TODO: add actual dependencies
-            variantConfig.setAndroidDependencies(null)
 
             boolean isTestedVariant = (buildTypeData == testData)
 
@@ -190,9 +190,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             variantConfig.addProductFlavor(productFlavorData.productFlavor,
                     productFlavorData.androidSourceSet)
 
-            // TODO: add actual dependencies
-            variantConfig.setAndroidDependencies(null)
-
             boolean isTestedVariant = (buildTypeData == testData)
 
             ProductionAppVariant productionAppVariant = addVariant(variantConfig, null,
@@ -235,8 +232,12 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
         def variant = new ProductionAppVariant(variantConfig)
 
+        def prepareDependenciesTask = createPrepareDependenciesTask(variant)
+
         // Add a task to process the manifest(s)
-        ProcessManifestTask processManifestTask = createProcessManifestTask(variant, "manifests")
+        def processManifestTask = createProcessManifestTask(variant, "manifests")
+        // TODO - move this
+        processManifestTask.dependsOn prepareDependenciesTask
 
         // Add a task to crunch resource files
         def crunchTask = createCrunchResTask(variant)
@@ -248,6 +249,8 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
 
         def compileAidl = createAidlTask(variant)
+        // TODO - move this
+        compileAidl.dependsOn prepareDependenciesTask
 
         // Add a compile task
         createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
@@ -264,5 +267,40 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     @Override
     String getTarget() {
         return extension.target;
+    }
+
+    PrepareDependenciesTask createPrepareDependenciesTask(ProductionAppVariant variant) {
+        // TODO - include variant specific dependencies too
+        def compileClasspath = project.configurations.compile
+
+        // TODO - need to sort out ordering here
+        compileClasspath.allDependencies.withType(ProjectDependency).each { dep ->
+            project.evaluationDependsOn(dep.dependencyProject.path)
+        }
+
+        def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies", PrepareDependenciesTask)
+
+        // TODO - should be able to infer this
+        prepareDependenciesTask.dependsOn compileClasspath
+
+        // TODO - defer downloading until required
+        // TODO - build the library dependency graph
+        List<File> jars = []
+        List<AndroidDependencyImpl> bundles = []
+        compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+            if (artifact.type == 'alb') {
+                def explodedDir = project.file("$project.buildDir/exploded-bundles/$artifact.file.name")
+                bundles << new AndroidDependencyImpl(explodedDir)
+                prepareDependenciesTask.add(artifact.file, explodedDir)
+            } else {
+                jars << artifact.file
+            }
+        }
+
+        variant.config.androidDependencies = bundles
+
+        // TODO - attach jars
+
+        return prepareDependenciesTask
     }
 }
