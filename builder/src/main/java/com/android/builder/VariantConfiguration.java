@@ -26,6 +26,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * A Variant configuration.
  */
@@ -37,6 +40,7 @@ public class VariantConfiguration {
     private final SourceSet mDefaultSourceSet;
 
     private final BuildType mBuildType;
+    /** SourceSet for the BuildType. Can be null */
     private final SourceSet mBuildTypeSourceSet;
 
     private final List<ProductFlavor> mFlavorConfigs = new ArrayList<ProductFlavor>();
@@ -112,19 +116,15 @@ public class VariantConfiguration {
      */
     public VariantConfiguration(
             @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
-            @NonNull BuildType buildType, @NonNull SourceSet buildTypeSourceSet,
+            @NonNull BuildType buildType, SourceSet buildTypeSourceSet,
             @NonNull Type type, @Nullable VariantConfiguration testedConfig) {
-        mDefaultConfig = defaultConfig;
-        mDefaultSourceSet = defaultSourceSet;
-        mBuildType = buildType;
+        mDefaultConfig = checkNotNull(defaultConfig);
+        mDefaultSourceSet = checkNotNull(defaultSourceSet);
+        mBuildType = checkNotNull(buildType);
         mBuildTypeSourceSet = buildTypeSourceSet;
-        mType = type;
+        mType = checkNotNull(type);
         mTestedConfig = testedConfig;
-
-        assert mType != Type.TEST || mTestedConfig != null;
-        assert mTestedConfig == null ||
-                mTestedConfig.mType != Type.LIBRARY ||
-                mTestedConfig.mOutput != null;
+        checkState(mType != Type.TEST || mTestedConfig != null);
 
         mMergedFlavor = mDefaultConfig;
 
@@ -224,6 +224,9 @@ public class VariantConfiguration {
         return mBuildType;
     }
 
+    /**
+     * The SourceSet for the BuildType. Can be null.
+     */
     public SourceSet getBuildTypeSourceSet() {
         return mBuildTypeSourceSet;
     }
@@ -410,9 +413,11 @@ public class VariantConfiguration {
             inputs.add(defaultManifest);
         }
 
-        File typeLocation = mBuildTypeSourceSet.getAndroidManifest();
-        if (typeLocation != null && typeLocation.isFile()) {
-            inputs.add(typeLocation);
+        if (mBuildTypeSourceSet != null) {
+            File typeLocation = mBuildTypeSourceSet.getAndroidManifest();
+            if (typeLocation != null && typeLocation.isFile()) {
+                inputs.add(typeLocation);
+            }
         }
 
         for (SourceSet sourceSet : mFlavorSourceSets) {
@@ -510,6 +515,10 @@ public class VariantConfiguration {
             for (File f : sourceSet.getCompileClasspath()) {
                 classpath.add(f);
             }
+        }
+
+        for (AndroidDependency lib : mFlatLibraryProjects) {
+            classpath.add(lib.getJarFile());
         }
 
         if (mType == Type.TEST && mTestedConfig.mType == Type.LIBRARY) {
