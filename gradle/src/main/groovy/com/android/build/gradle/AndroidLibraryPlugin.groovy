@@ -53,6 +53,10 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         project.tasks.assemble.dependsOn debugBuildTypeData.assembleTask
         project.tasks.assemble.dependsOn releaseBuildTypeData.assembleTask
 
+        project.configurations.add(BuildType.DEBUG)
+        def releaseConfig = project.configurations.add(BuildType.RELEASE)
+        project.configurations["default"].extendsFrom(releaseConfig)
+
         project.afterEvaluate {
             createAndroidTasks()
         }
@@ -126,6 +130,8 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         bundle.extension = "alb"
         bundle.baseName = "${project.archivesBaseName}-${variant.baseName}"
         bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
+
+        project.artifacts.add(buildTypeData.buildType.name, bundle)
 
         buildTypeData.assembleTask.dependsOn bundle
         variant.assembleTask = bundle
