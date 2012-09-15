@@ -21,6 +21,8 @@ import com.android.annotations.NonNull;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Signing information.
  *
@@ -32,12 +34,8 @@ public class SigningInfo {
     public final X509Certificate mCertificate;
 
     public SigningInfo(@NonNull PrivateKey key, @NonNull X509Certificate certificate) {
-        if (key == null || certificate == null) {
-            throw new IllegalArgumentException("key and certificate cannot be null");
-        }
-
-        mKey = key;
-        mCertificate = certificate;
+        mKey = checkNotNull(key, "Key cannot be null.");
+        mCertificate = checkNotNull(certificate, "Certificate cannot be null.");
     }
 
     public PrivateKey getKey() {

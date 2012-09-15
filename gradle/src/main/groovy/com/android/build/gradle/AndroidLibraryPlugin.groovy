@@ -21,12 +21,14 @@ import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
+
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
+import com.android.builder.BundleDependency
 
 class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
@@ -137,51 +139,12 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         variant.assembleTask = bundle
 
         // configure the variant to be testable.
-        variantConfig.output = new AndroidDependency() {
+        variantConfig.output = new BundleDependency(
+                project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")) {
 
             @Override
             List<AndroidDependency> getDependencies() {
-                return null;
-            }
-
-            @Override
-            File getJarFile() {
-                return jar.archivePath
-            }
-
-            @Override
-            File getManifest() {
-                return processManifestTask.processedManifest
-            }
-
-            @Override
-            File getResFolder() {
-                return packageRes.destinationDir
-            }
-
-            @Override
-            File getAssetsFolder() {
-                return null
-            }
-
-            @Override
-            File getJniFolder() {
-                return null
-            }
-
-            @Override
-            File getAidlFolder() {
-                return packageAidl.destinationDir
-            }
-
-            @Override
-            File getProguardRules() {
-                return null
-            }
-
-            @Override
-            File getLintJar() {
-                return null
+                return []
             }
         };
 

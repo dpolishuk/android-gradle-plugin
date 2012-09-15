@@ -16,10 +16,10 @@
 package com.android.builder;
 
 import com.android.annotations.Nullable;
+import com.google.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -70,7 +70,7 @@ class BuildConfigGenerator {
      * @param additionalLines a list of additional lines to be added to the class.
      */
     public void generate(@Nullable List<String> additionalLines) throws IOException {
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = Maps.newHashMap();
         map.put(PH_PACKAGE, mAppPackage);
         map.put(PH_DEBUG, Boolean.toString(mDebug));
 

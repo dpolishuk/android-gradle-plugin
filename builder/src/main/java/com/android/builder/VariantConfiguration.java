@@ -19,10 +19,10 @@ package com.android.builder;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 import com.android.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -43,8 +43,8 @@ public class VariantConfiguration {
     /** SourceSet for the BuildType. Can be null */
     private final SourceSet mBuildTypeSourceSet;
 
-    private final List<ProductFlavor> mFlavorConfigs = new ArrayList<ProductFlavor>();
-    private final List<SourceSet> mFlavorSourceSets = new ArrayList<SourceSet>();
+    private final List<ProductFlavor> mFlavorConfigs = Lists.newArrayList();
+    private final List<SourceSet> mFlavorSourceSets = Lists.newArrayList();
 
     private final Type mType;
     /** Optional tested config in case type is Type#TEST */
@@ -58,12 +58,12 @@ public class VariantConfiguration {
     private List<JarDependency> mJars;
 
     /** List of direct library project dependencies. Each object defines its own dependencies. */
-    private final List<AndroidDependency> mDirectLibraryProjects =
-            new ArrayList<AndroidDependency>();
+    private final List<AndroidDependency> mDirectLibraryProjects = Lists.newArrayList();
+
     /** list of all library project dependencies in the flat list.
      * The order is based on the order needed to call aapt: earlier libraries override resources
      * of latter ones. */
-    private final List<AndroidDependency> mFlatLibraryProjects = new ArrayList<AndroidDependency>();
+    private final List<AndroidDependency> mFlatLibraryProjects = Lists.newArrayList();
 
     public static enum Type {
         DEFAULT, LIBRARY, TEST;
@@ -171,7 +171,7 @@ public class VariantConfiguration {
     public List<AndroidDependency> getFullDirectDependencies() {
         if (mTestedConfig != null && mTestedConfig.getType() == Type.LIBRARY) {
             // in case of a library we merge all the dependencies together.
-            List<AndroidDependency> list = new ArrayList<AndroidDependency>(
+            List<AndroidDependency> list = Lists.newArrayListWithExpectedSize(
                     mDirectLibraryProjects.size() +
                             mTestedConfig.mDirectLibraryProjects.size() + 1);
             list.addAll(mDirectLibraryProjects);
@@ -233,22 +233,6 @@ public class VariantConfiguration {
 
     public boolean hasFlavors() {
         return !mFlavorConfigs.isEmpty();
-    }
-
-    /**
-     * @Deprecated this is only valid until we move to more than one flavor
-     */
-    @Deprecated
-    public ProductFlavor getFirstFlavor() {
-        return mFlavorConfigs.get(0);
-    }
-
-    /**
-     * @Deprecated this is only valid until we move to more than one flavor
-     */
-    @Deprecated
-    public SourceSet getFirstFlavorSourceSet() {
-        return mFlavorSourceSets.get(0);
     }
 
     public Iterable<ProductFlavor> getFlavorConfigs() {
@@ -394,7 +378,7 @@ public class VariantConfiguration {
      * @return
      */
     public Iterable<Object> getConfigObjects() {
-        List<Object> list = new ArrayList<Object>();
+        List<Object> list = Lists.newArrayListWithExpectedSize(mFlavorConfigs.size() + 2);
         list.add(mDefaultConfig);
         list.add(mBuildType);
         list.addAll(mFlavorConfigs);
@@ -405,7 +389,7 @@ public class VariantConfiguration {
     }
 
     public List<File> getManifestInputs() {
-        List<File> inputs = new ArrayList<File>();
+        List<File> inputs = Lists.newArrayList();
 
         File defaultManifest = mDefaultSourceSet.getAndroidManifest();
         // this could not exist in a test project.
@@ -444,7 +428,7 @@ public class VariantConfiguration {
      * @return a list of input resource folders.
      */
     public List<File> getResourceInputs() {
-        List<File> inputs = new ArrayList<File>();
+        List<File> inputs = Lists.newArrayList();
 
         if (mBuildTypeSourceSet != null) {
             File typeResLocation = mBuildTypeSourceSet.getAndroidResources();
@@ -481,7 +465,7 @@ public class VariantConfiguration {
      * @return
      */
     public List<File> getAidlImports() {
-        List<File> list = new ArrayList<File>();
+        List<File> list = Lists.newArrayList();
 
         for (AndroidDependency lib : mFlatLibraryProjects) {
             File aidlLib = lib.getAidlFolder();
@@ -499,7 +483,7 @@ public class VariantConfiguration {
      * @return
      */
     public Set<File> getCompileClasspath() {
-        Set<File> classpath = new HashSet<File>();
+        Set<File> classpath = Sets.newHashSet();
 
         for (File f : mDefaultSourceSet.getCompileClasspath()) {
             classpath.add(f);
@@ -532,7 +516,7 @@ public class VariantConfiguration {
     }
 
     public List<String> getBuildConfigLines() {
-        List<String> fullList = new ArrayList<String>();
+        List<String> fullList = Lists.newArrayList();
 
         List<String> list = mDefaultConfig.getBuildConfigLines();
         if (!list.isEmpty()) {

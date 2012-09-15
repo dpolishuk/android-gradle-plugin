@@ -16,61 +16,17 @@
 package com.android.build.gradle.internal
 
 import com.android.builder.AndroidDependency
+import com.android.builder.BundleDependency
 
-class AndroidDependencyImpl implements AndroidDependency {
-    private final File explodedBundle
+class AndroidDependencyImpl extends BundleDependency {
 
     AndroidDependencyImpl(File explodedBundle) {
-        this.explodedBundle = explodedBundle
-    }
-
-    @Override
-    File getJarFile() {
-        return new File(explodedBundle, "classes.jar")
-    }
-
-    @Override
-    File getManifest() {
-        return new File(explodedBundle, "AndroidManifest.xml")
+        super(explodedBundle)
     }
 
     @Override
     List<AndroidDependency> getDependencies() {
         return []
-    }
-
-    @Override
-    File getAidlFolder() {
-        return new File(explodedBundle, "aidl")
-    }
-
-    @Override
-    File getResFolder() {
-        return new File(explodedBundle, "res")
-    }
-
-    @Override
-    File getAssetsFolder() {
-        // TODO - implement
-        return null;
-    }
-
-    @Override
-    File getJniFolder() {
-        // TODO - implement
-        return null
-    }
-
-    @Override
-    File getLintJar() {
-        // TODO - implement
-        return null
-    }
-
-    @Override
-    File getProguardRules() {
-        // TODO - implement
-        return null
     }
 }
 

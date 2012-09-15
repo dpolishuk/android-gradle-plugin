@@ -18,6 +18,7 @@ package com.android.builder;
 
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
+import com.google.common.base.Objects;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -165,14 +166,15 @@ public class BuildType implements Serializable {
 
     @Override
     public String toString() {
-        return "BuildType{" +
-                "name='" + mName + '\'' +
-                ", debuggable=" + mDebuggable +
-                ", debugJniBuild=" + mDebugJniBuild +
-                ", debugSigned=" + mDebugSigned +
-                ", packageNameSuffix='" + mPackageNameSuffix + '\'' +
-                ", runProguard=" + mRunProguard +
-                ", zipAlign=" + mZipAlign +
-                '}';
+        return Objects.toStringHelper(this)
+                .add("name", mName)
+                .add("debuggable", mDebuggable)
+                .add("debugJniBuild", mDebugJniBuild)
+                .add("debugSigned", mDebugSigned)
+                .add("packageNameSuffix", mPackageNameSuffix)
+                .add("runProguard", mRunProguard)
+                .add("zipAlign", mZipAlign)
+                .omitNullValues()
+                .toString();
     }
 }
