@@ -27,7 +27,7 @@ class ProductionAppVariant extends ApplicationVariant {
     ProductionAppVariant(VariantConfiguration config) {
         super(config)
         if (config.hasFlavors()) {
-            this.name = "${config.firstFlavor.name.capitalize()}${config.buildType.name.capitalize()}"
+            this.name = "${getFlavoredName(true)}${config.buildType.name.capitalize()}"
         } else {
             this.name = "${config.buildType.name.capitalize()}"
         }
@@ -35,7 +35,7 @@ class ProductionAppVariant extends ApplicationVariant {
 
     String getDescription() {
         if (config.hasFlavors()) {
-            return "${config.buildType.name.capitalize()} build for flavor ${config.firstFlavor.name.capitalize()}"
+            return "${config.buildType.name.capitalize()} build for flavor ${getFlavoredName(true)}"
         } else {
             return "${config.buildType.name.capitalize()} build"
         }
@@ -43,7 +43,7 @@ class ProductionAppVariant extends ApplicationVariant {
 
     String getDirName() {
         if (config.hasFlavors()) {
-            return "$config.firstFlavor.name/$config.buildType.name"
+            return "${getFlavoredName(false)}/$config.buildType.name"
         } else {
             return "$config.buildType.name"
         }
@@ -51,7 +51,7 @@ class ProductionAppVariant extends ApplicationVariant {
 
     String getBaseName() {
         if (config.hasFlavors()) {
-            return "$config.firstFlavor.name-$config.buildType.name"
+            return "${getFlavoredName(false)}-$config.buildType.name"
         } else {
             return "$config.buildType.name"
         }

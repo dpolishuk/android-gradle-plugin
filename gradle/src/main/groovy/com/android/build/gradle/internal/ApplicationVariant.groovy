@@ -20,6 +20,7 @@ import com.android.builder.AndroidBuilder
 import com.android.builder.VariantConfiguration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
+import com.android.builder.ProductFlavor
 
 /**
  * Represents something that can be packaged into an APK and installed.
@@ -67,4 +68,14 @@ public abstract class ApplicationVariant {
     abstract String getPackage()
 
     abstract AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
+
+    protected String getFlavoredName(boolean capitalized) {
+        def iterator = config.flavorConfigs
+        def name = ""
+        for (ProductFlavor flavor : iterator) {
+            name = name << capitalized ? flavor.name.capitalize() : flavor.name
+        }
+
+        return name
+    }
 }
