@@ -25,7 +25,7 @@ class TestAppVariant extends ApplicationVariant {
     TestAppVariant(VariantConfiguration config) {
         super(config)
         if (config.hasFlavors()) {
-            this.name = "${config.firstFlavor.name.capitalize()}Test"
+            this.name = "${getFlavoredName(true)}Test"
         } else {
             this.name = "Test"
         }
@@ -34,7 +34,7 @@ class TestAppVariant extends ApplicationVariant {
     @Override
     String getDescription() {
         if (config.hasFlavors()) {
-            return "Test build for the ${config.firstFlavor.name.capitalize()}${config.buildType.name.capitalize()} build"
+            return "Test build for the ${getFlavoredName(true)}${config.buildType.name.capitalize()} build"
         } else {
             return "Test for the ${config.buildType.name.capitalize()} build"
         }
@@ -42,7 +42,7 @@ class TestAppVariant extends ApplicationVariant {
 
     String getDirName() {
         if (config.hasFlavors()) {
-            return "$config.firstFlavor.name/test"
+            return "${getFlavoredName(false)}/test"
         } else {
             return "test"
         }
@@ -50,7 +50,7 @@ class TestAppVariant extends ApplicationVariant {
 
     String getBaseName() {
         if (config.hasFlavors()) {
-            return "$config.firstFlavor.name-test"
+            return "${getFlavoredName(false)}-test"
         } else {
             return "test"
         }
