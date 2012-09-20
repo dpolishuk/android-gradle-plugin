@@ -22,7 +22,9 @@ import com.android.builder.ProductFlavor
  * Dsl overlay for ProductFlavor.
  */
 public class ProductFlavorDsl extends ProductFlavor {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L
+
+    String flavorGroup
 
     public ProductFlavorDsl(String name) {
         super(name)
@@ -30,5 +32,9 @@ public class ProductFlavorDsl extends ProductFlavor {
 
     public void buildConfig(String... lines) {
         addBuildConfigLines(Arrays.asList(lines))
+    }
+
+    public void flavorGroup(String flavorGroup) {
+        this.flavorGroup = flavorGroup
     }
 }

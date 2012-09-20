@@ -15,13 +15,12 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.builder.ProductFlavor
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.SourceSet
 
 class ProductFlavorData {
-    final ProductFlavor productFlavor
+    final ProductFlavorDsl productFlavor
 
     final SourceSet mainSource
     final AndroidSourceSet androidSourceSet
@@ -29,9 +28,9 @@ class ProductFlavorData {
     final SourceSet testSource
     final AndroidSourceSet androidTestSourceSet
 
-    final Task assembleTask
+    Task assembleTask
 
-    ProductFlavorData(ProductFlavor productFlavor, SourceSet mainSource, SourceSet testSource,
+    ProductFlavorData(ProductFlavorDsl productFlavor, SourceSet mainSource, SourceSet testSource,
                            Project project) {
         this.productFlavor = productFlavor
 
@@ -40,11 +39,17 @@ class ProductFlavorData {
 
         this.testSource = testSource
         androidTestSourceSet = new AndroidSourceSet(testSource, project)
+    }
 
-        if (productFlavor.name != "main") {
-            assembleTask = project.tasks.add("assemble${productFlavor.name.capitalize()}")
-            assembleTask.description = "Assembles all builds for flavor ${productFlavor.name.capitalize()}"
-            assembleTask.group = "Build"
+
+    public static String getFlavoredName(ProductFlavorData[] flavorDataArray, boolean capitalized) {
+        StringBuilder builder = new StringBuilder()
+        for (ProductFlavorData data : flavorDataArray) {
+            builder.append(capitalized ?
+                data.productFlavor.name.capitalize() :
+                data.productFlavor.name)
         }
+
+        return builder.toString()
     }
 }

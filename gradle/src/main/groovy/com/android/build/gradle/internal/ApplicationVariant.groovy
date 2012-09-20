@@ -70,12 +70,11 @@ public abstract class ApplicationVariant {
     abstract AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
 
     protected String getFlavoredName(boolean capitalized) {
-        def iterator = config.flavorConfigs
-        def name = ""
-        for (ProductFlavor flavor : iterator) {
-            name = name << capitalized ? flavor.name.capitalize() : flavor.name
+        StringBuilder builder = new StringBuilder()
+        for (ProductFlavor flavor : config.flavorConfigs) {
+            builder.append(capitalized ? flavor.name.capitalize() : flavor.name)
         }
 
-        return name
+        return builder.toString()
     }
 }
