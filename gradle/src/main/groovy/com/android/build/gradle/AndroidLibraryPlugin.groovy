@@ -102,7 +102,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         Jar jar = project.tasks.add("${buildTypeData.buildType.name}Jar", Jar);
         jar.from(variant.compileTask.outputs);
         jar.destinationDir = project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")
-        jar.baseName = "classes"
+        jar.archiveName = "classes.jar"
         String packageName = variantConfig.getPackageFromManifest().replace('.', '/');
         jar.exclude(packageName + "/R.class")
         jar.exclude(packageName + "/R\$*.class")
