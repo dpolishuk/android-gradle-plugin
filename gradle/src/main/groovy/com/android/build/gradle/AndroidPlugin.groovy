@@ -15,7 +15,6 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.AndroidDependencyImpl
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.BuildTypeDsl
 import com.android.build.gradle.internal.ProductFlavorData
@@ -28,8 +27,6 @@ import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.plugins.BasePlugin
 
 class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
@@ -268,46 +265,5 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     @Override
     String getTarget() {
         return extension.target;
-    }
-
-    PrepareDependenciesTask createPrepareDependenciesTask(ProductionAppVariant variant) {
-        // TODO - include variant specific dependencies too
-        def compileClasspath = project.configurations.compile
-
-        // TODO - fix this in Gradle
-        ensureConfigured(compileClasspath)
-
-        def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies", PrepareDependenciesTask)
-
-        // TODO - should be able to infer this
-        prepareDependenciesTask.dependsOn compileClasspath
-
-        // TODO - defer downloading until required
-        // TODO - build the library dependency graph
-        List<File> jars = []
-        List<AndroidDependencyImpl> bundles = []
-        compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-            if (artifact.type == 'alb') {
-                def explodedDir = project.file("$project.buildDir/exploded-bundles/$artifact.file.name")
-                bundles << new AndroidDependencyImpl(explodedDir)
-                prepareDependenciesTask.add(artifact.file, explodedDir)
-            } else {
-                jars << artifact.file
-            }
-        }
-
-        variant.config.androidDependencies = bundles
-
-        // TODO - attach jars
-        // TODO - filter bundles out of source set classpath
-
-        return prepareDependenciesTask
-    }
-
-    def ensureConfigured(Configuration config) {
-        config.allDependencies.withType(ProjectDependency).each { dep ->
-            project.evaluationDependsOn(dep.dependencyProject.path)
-            ensureConfigured(dep.projectConfiguration)
-        }
     }
 }
