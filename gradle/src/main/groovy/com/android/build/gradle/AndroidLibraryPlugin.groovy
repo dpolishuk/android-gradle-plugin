@@ -25,6 +25,7 @@ import com.android.builder.BuildType
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.MavenPlugin
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
@@ -55,12 +56,26 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         project.tasks.assemble.dependsOn debugBuildTypeData.assembleTask
         project.tasks.assemble.dependsOn releaseBuildTypeData.assembleTask
 
-        project.configurations.add(BuildType.DEBUG)
-        def releaseConfig = project.configurations.add(BuildType.RELEASE)
-        project.configurations["default"].extendsFrom(releaseConfig)
+        createConfigurations()
 
         project.afterEvaluate {
             createAndroidTasks()
+        }
+    }
+
+    void createConfigurations() {
+        def debugConfig = project.configurations.add(BuildType.DEBUG)
+        def releaseConfig = project.configurations.add(BuildType.RELEASE)
+        debugConfig.extendsFrom(project.configurations.runtime)
+        releaseConfig.extendsFrom(project.configurations.runtime)
+        project.configurations["default"].extendsFrom(releaseConfig)
+
+        // Adjust the pom scope mappings
+        // TODO - this should be part of JavaBase plugin. Fix this in Gradle
+        project.plugins.withType(MavenPlugin) {
+            project.conf2ScopeMappings.addMapping(300, project.configurations.compile, "runtime")
+            project.conf2ScopeMappings.addMapping(300, project.configurations.runtime, "runtime")
+            project.conf2ScopeMappings.addMapping(300, releaseConfig, "runtime")
         }
     }
 
@@ -130,7 +145,9 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         bundle.setDescription("Assembles a bundle containing the library in ${variant.name}.");
         bundle.destinationDir = project.file("$project.buildDir/libs")
         bundle.extension = "alb"
-        bundle.baseName = "${project.archivesBaseName}-${variant.baseName}"
+        if (variant.baseName != BuildType.RELEASE) {
+            bundle.classifier = variant.baseName
+        }
         bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
 
         project.artifacts.add(buildTypeData.buildType.name, bundle)
