@@ -300,6 +300,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         variant.config.androidDependencies = bundles
 
         // TODO - attach jars
+        // TODO - filter bundles out of source set classpath
 
         return prepareDependenciesTask
     }

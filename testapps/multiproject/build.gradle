@@ -6,3 +6,11 @@ buildscript {
         classpath 'com.android.build:gradle-android:0.1-SNAPSHOT'
     }
 }
+
+allprojects {
+    version = '1.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
