@@ -1,4 +1,4 @@
-package org.gradle.sample;
+package com.example.android.multiproject;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,6 +7,9 @@ import android.widget.TextView;
 
 import java.lang.String;
 import java.util.Arrays;
+
+import com.example.android.multiproject.person.Person;
+import com.example.android.multiproject.person.People;
 
 public class ShowPeopleActivity extends Activity {
     @Override

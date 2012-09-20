@@ -1,4 +1,4 @@
-package org.gradle.sample;
+package com.example.android.multiproject.person;
 
 import java.util.Iterator;
 import com.google.common.collect.Lists;

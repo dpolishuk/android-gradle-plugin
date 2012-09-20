@@ -1,10 +1,9 @@
 apply plugin: 'android-library'
 
 android {
-    target 'android-15'
+    target 'android-16'
 }
 
 dependencies {
-    compile project(':baseLibrary')
     compile project(':util')
 }

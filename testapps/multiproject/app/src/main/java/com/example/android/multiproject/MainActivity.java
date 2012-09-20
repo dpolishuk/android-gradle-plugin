@@ -1,4 +1,4 @@
-package org.gradle.sample;
+package com.example.android.multiproject;
 
 import android.app.Activity;
 import android.view.View;

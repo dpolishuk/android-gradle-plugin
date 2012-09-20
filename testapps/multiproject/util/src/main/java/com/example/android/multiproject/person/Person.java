@@ -1,4 +1,4 @@
-package org.gradle.sample;
+package com.example.android.multiproject.person;
 
 public class Person {
     private final String name;
