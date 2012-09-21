@@ -11,5 +11,6 @@ testapps/multiproject/*/build
 testapps/tictactoe/*/build
 testapps/applibtest/*/build
 testapps/libsTest/*/build
+testapps/repo/*/build
 /repo
 /out
