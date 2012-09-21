@@ -22,8 +22,9 @@ import com.android.build.gradle.internal.ProductFlavorDsl
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.BuildType
-import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.ListMultimap
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -39,28 +40,28 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     void apply(Project project) {
         super.apply(project)
 
-        def buildTypes = project.container(BuildTypeDsl)
-        def productFlavors = project.container(ProductFlavorDsl)
+        def buildTypeContainer = project.container(BuildTypeDsl)
+        def productFlavorContainer = project.container(ProductFlavorDsl)
 
         extension = project.extensions.create('android', AndroidExtension,
-                buildTypes, productFlavors)
+                buildTypeContainer, productFlavorContainer)
         setDefaultConfig(extension.defaultConfig)
 
-        buildTypes.whenObjectAdded { BuildType buildType ->
+        buildTypeContainer.whenObjectAdded { BuildType buildType ->
             addBuildType(buildType)
         }
-        buildTypes.whenObjectRemoved {
+        buildTypeContainer.whenObjectRemoved {
             throw new UnsupportedOperationException("Removing build types is not implemented yet.")
         }
 
-        buildTypes.create(BuildType.DEBUG)
-        buildTypes.create(BuildType.RELEASE)
+        buildTypeContainer.create(BuildType.DEBUG)
+        buildTypeContainer.create(BuildType.RELEASE)
 
-        productFlavors.whenObjectAdded { ProductFlavor productFlavor ->
+        productFlavorContainer.whenObjectAdded { ProductFlavorDsl productFlavor ->
             addProductFlavor(productFlavor)
         }
 
-        productFlavors.whenObjectRemoved {
+        productFlavorContainer.whenObjectRemoved {
             throw new UnsupportedOperationException(
                     "Removing product flavors is not implemented yet.")
         }
@@ -86,7 +87,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         buildTypes[buildType.name] = buildTypeData
     }
 
-    private void addProductFlavor(ProductFlavor productFlavor) {
+    private void addProductFlavor(ProductFlavorDsl productFlavor) {
         if (productFlavor.name.startsWith("test")) {
             throw new RuntimeException("ProductFlavor names cannot start with 'test'")
         }
@@ -99,7 +100,6 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
         ProductFlavorData productFlavorData = new ProductFlavorData(
                 productFlavor, mainSourceSet, testSourceSet, project)
-        project.tasks.assemble.dependsOn productFlavorData.assembleTask
 
         productFlavors[productFlavor.name] = productFlavorData
     }
@@ -113,9 +113,49 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             assembleTest.group = BasePlugin.BUILD_GROUP
             assembleTest.description = "Assembles all the Test applications"
 
-            productFlavors.values().each { ProductFlavorData productFlavorData ->
-                createTasksForFlavoredBuild(productFlavorData)
+            // check whether we have multi flavor builds
+            if (extension.flavorGroupList == null || extension.flavorGroupList.size() < 2) {
+                productFlavors.values().each { ProductFlavorData productFlavorData ->
+                    createTasksForFlavoredBuild(productFlavorData)
+                }
+            } else {
+                // need to group the flavor per group.
+                // First a map of group -> list(ProductFlavor)
+                ArrayListMultimap<String, ProductFlavorData> map = ArrayListMultimap.create();
+                productFlavors.values().each { ProductFlavorData productFlavorData ->
+                    def flavor = productFlavorData.productFlavor
+                    if (flavor.flavorGroup == null) {
+                        throw new RuntimeException(
+                                "Flavor ${flavor.name} has no flavor group.")
+                    }
+                    if (!extension.flavorGroupList.contains(flavor.flavorGroup)) {
+                        throw new RuntimeException(
+                                "Flavor ${flavor.name} has unknown group ${flavor.flavorGroup}.")
+                    }
+
+                    map.put(flavor.flavorGroup, productFlavorData)
+                }
+
+                // now we use the flavor groups to generate an ordered array of flavor to use
+                ProductFlavorData[] array = new ProductFlavorData[extension.flavorGroupList.size()]
+                createTasksForMultiFlavoredBuilds(array, 0, map)
             }
+        }
+    }
+
+    private createTasksForMultiFlavoredBuilds(ProductFlavorData[] datas, int i,
+                                              ListMultimap<String, ProductFlavorData> map) {
+        if (i == datas.length) {
+            createTasksForFlavoredBuild(datas)
+            return
+        }
+
+        // fill the array at the current index
+        def group = extension.flavorGroupList.get(i)
+        def flavorList = map.get(group)
+        for (ProductFlavorData flavor : flavorList) {
+           datas[i] = flavor
+            createTasksForMultiFlavoredBuilds(datas, i+1, map)
         }
     }
 
@@ -168,9 +208,9 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     /**
      * Creates Task for a given flavor. This will create tasks for all build types for the given
      * flavor.
-     * @param productFlavorData the flavor to build.
+     * @param flavorDataList the flavor(s) to build.
      */
-    private createTasksForFlavoredBuild(ProductFlavorData productFlavorData) {
+    private createTasksForFlavoredBuild(ProductFlavorData... flavorDataList) {
 
         BuildTypeData testData = buildTypes[extension.testBuildType]
         if (testData == null) {
@@ -179,14 +219,18 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
         ProductionAppVariant testedVariant = null
 
+        // assembleTask for this flavor(group)
+        def assembleTask
+
         for (BuildTypeData buildTypeData : buildTypes.values()) {
 
             def variantConfig = new VariantConfiguration(
                     extension.defaultConfig, getDefaultConfigData().androidSourceSet,
                     buildTypeData.buildType, buildTypeData.androidSourceSet)
 
-            variantConfig.addProductFlavor(productFlavorData.productFlavor,
-                    productFlavorData.androidSourceSet)
+            for (ProductFlavorData data : flavorDataList) {
+                variantConfig.addProductFlavor(data.productFlavor, data.androidSourceSet)
+            }
 
             boolean isTestedVariant = (buildTypeData == testData)
 
@@ -194,7 +238,13 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                     isTestedVariant)
 
             buildTypeData.assembleTask.dependsOn productionAppVariant.assembleTask
-            productFlavorData.assembleTask.dependsOn productionAppVariant.assembleTask
+
+            if (assembleTask == null) {
+                // create the task based on the name of the flavors.
+                assembleTask = createAssembleTask(flavorDataList)
+                project.tasks.assemble.dependsOn assembleTask
+            }
+            assembleTask.dependsOn productionAppVariant.assembleTask
 
             if (isTestedVariant) {
                 testedVariant = productionAppVariant
@@ -207,14 +257,26 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                 extension.defaultConfig, getDefaultConfigData().androidTestSourceSet,
                 testData.buildType, null,
                 VariantConfiguration.Type.TEST, testedVariant.config)
-        testVariantConfig.addProductFlavor(productFlavorData.productFlavor,
-                productFlavorData.androidTestSourceSet)
+
+        for (ProductFlavorData data : flavorDataList) {
+            testVariantConfig.addProductFlavor(data.productFlavor, data.androidTestSourceSet)
+        }
 
         // TODO: add actual dependencies
         testVariantConfig.setAndroidDependencies(null)
 
         def testVariant = new TestAppVariant(testVariantConfig)
         createTestTasks(testVariant, testedVariant)
+    }
+
+    private Task createAssembleTask(ProductFlavorData[] flavorDataList) {
+        def name = ProductFlavorData.getFlavoredName(flavorDataList, true)
+
+        def assembleTask = project.tasks.add("assemble${name}")
+        assembleTask.description = "Assembles all builds for flavor ${name}"
+        assembleTask.group = "Build"
+
+        return assembleTask
     }
 
     /**

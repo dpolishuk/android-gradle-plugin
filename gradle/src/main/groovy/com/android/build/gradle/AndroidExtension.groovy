@@ -24,6 +24,7 @@ class AndroidExtension extends BaseAndroidExtension {
     final NamedDomainObjectContainer<ProductFlavorDsl> productFlavors
     final NamedDomainObjectContainer<BuildTypeDsl> buildTypes
 
+    List<String> flavorGroupList
 
     String testBuildType = "debug"
 
@@ -39,5 +40,9 @@ class AndroidExtension extends BaseAndroidExtension {
 
     void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavorDsl>> action) {
         action.execute(productFlavors)
+    }
+
+    public void flavorGroups(String... groups) {
+        flavorGroupList = Arrays.asList(groups)
     }
 }

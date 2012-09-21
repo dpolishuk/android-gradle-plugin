@@ -27,9 +27,9 @@ class ProductionAppVariant extends ApplicationVariant {
     ProductionAppVariant(VariantConfiguration config) {
         super(config)
         if (config.hasFlavors()) {
-            this.name = "${getFlavoredName(true)}${config.buildType.name.capitalize()}"
+            name = "${getFlavoredName(true)}${config.buildType.name.capitalize()}"
         } else {
-            this.name = "${config.buildType.name.capitalize()}"
+            name = "${config.buildType.name.capitalize()}"
         }
     }
 
