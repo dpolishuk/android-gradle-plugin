@@ -112,12 +112,15 @@ abstract class AndroidBasePlugin {
         return project.logger.isEnabled(LogLevel.DEBUG)
     }
 
-    AndroidBuilder getAndroidBuilder(Object key) {
-        return builders.get(key)
-    }
+    AndroidBuilder getAndroidBuilder(ApplicationVariant variant) {
+        AndroidBuilder androidBuilder = builders.get(variant)
 
-    void setAndroidBuilder(Object key, AndroidBuilder androidBuilder) {
-        builders.put(key, androidBuilder)
+        if (androidBuilder == null) {
+            androidBuilder = variant.createBuilder(this)
+            builders.put(variant, androidBuilder)
+        }
+
+        return androidBuilder
     }
 
     private void findSdk(Project project) {
