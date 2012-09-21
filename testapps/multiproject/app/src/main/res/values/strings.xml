@@ -2,5 +2,4 @@
 <resources>
     <string name="app_name">Composite App</string>
     <string name="button_send">Go</string>
-    <string name="title_activity_display_message">People</string>
 </resources>

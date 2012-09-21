@@ -5,6 +5,6 @@ import com.google.common.collect.Lists;
 
 public class People implements Iterable<Person> {
     public Iterator<Person> iterator() {
-        return Lists.newArrayList(new Person("fred")).iterator();
+        return Lists.newArrayList(new Person("Fred"), new Person("Barney")).iterator();
     }
 }
