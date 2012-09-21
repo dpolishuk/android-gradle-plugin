@@ -1,7 +1,7 @@
 apply plugin: 'android-library'
 
 android {
-    target 'android-16'
+    target 'android-15'
 }
 
 dependencies {

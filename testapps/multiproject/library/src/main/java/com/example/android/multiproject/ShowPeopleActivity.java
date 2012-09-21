@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.content.Intent;
 import android.widget.TextView;
+import android.widget.LinearLayout;
 
 import java.lang.String;
 import java.util.Arrays;
@@ -16,18 +17,14 @@ public class ShowPeopleActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        String message = "People:";
+        LinearLayout group = new LinearLayout(this);
+        group.setOrientation(LinearLayout.VERTICAL);
 
         Iterable<Person> people = new People();
         for (Person person : people) {
-            message += "\n * ";
-            message += person.getName();
+            group.addView(new PersonView(this, person));
         }
 
-        TextView textView = new TextView(this);
-        textView.setTextSize(20);
-        textView.setText(message);
-
-        setContentView(textView);
+        setContentView(group);
     }
 }
