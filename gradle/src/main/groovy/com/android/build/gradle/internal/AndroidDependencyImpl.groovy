@@ -19,16 +19,10 @@ import com.android.builder.AndroidDependency
 import com.android.builder.BundleDependency
 
 class AndroidDependencyImpl extends BundleDependency {
+    final List<AndroidDependency> dependencies;
 
-    AndroidDependencyImpl(File explodedBundle) {
+    AndroidDependencyImpl(File explodedBundle, List<AndroidDependency> dependencies) {
         super(explodedBundle)
-    }
-
-    @Override
-    List<AndroidDependency> getDependencies() {
-        return []
+        this.dependencies = dependencies
     }
 }
-
-
-

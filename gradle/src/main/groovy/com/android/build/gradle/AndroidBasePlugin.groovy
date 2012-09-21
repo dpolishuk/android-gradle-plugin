@@ -22,15 +22,20 @@ import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidBuilder
+import com.android.builder.AndroidDependency
 import com.android.builder.DefaultSdkParser
+import com.android.builder.JarDependency
 import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
@@ -456,7 +461,7 @@ abstract class AndroidBasePlugin {
         // TODO - include variant specific dependencies too
         def compileClasspath = project.configurations.compile
 
-        // TODO - fix this in Gradle
+        // TODO - shouldn't need to do this - fix this in Gradle
         ensureConfigured(compileClasspath)
 
         def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies",
@@ -467,23 +472,16 @@ abstract class AndroidBasePlugin {
 
         // TODO - defer downloading until required
         // TODO - build the library dependency graph
-        List<File> jars = []
-        List<AndroidDependencyImpl> bundles = []
-        compileClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-            if (artifact.type == 'alb') {
-                def explodedDir = project.file(
-                        "$project.buildDir/exploded-bundles/$artifact.file.name")
-
-                bundles << new AndroidDependencyImpl(explodedDir)
-                prepareDependenciesTask.add(artifact.file, explodedDir)
-            } else {
-                jars << artifact.file
-            }
+        List<AndroidDependency> bundles = []
+        List<JarDependency> jars = []
+        Map<ModuleVersionIdentifier, Object> modules = [:]
+        compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.each { ResolvedDependency dependency ->
+            addDependency(dependency, prepareDependenciesTask, bundles, jars, modules)
         }
 
         variant.config.androidDependencies = bundles
+        variant.config.jarDependencies = jars
 
-        // TODO - attach jars
         // TODO - filter bundles out of source set classpath
 
         return prepareDependenciesTask
@@ -496,6 +494,35 @@ abstract class AndroidBasePlugin {
         }
     }
 
+    def addDependency(ResolvedDependency dependency, PrepareDependenciesTask prepareDependenciesTask, Collection<AndroidDependency> bundles, Collection<JarDependency> jars, Map<ModuleVersionIdentifier, Object> modules) {
+        def id = dependency.module.id
+        List<AndroidDependency> bundlesForThisModule = modules[id]
+        if (bundlesForThisModule == null) {
+            bundlesForThisModule = []
+            modules[id] = bundlesForThisModule
 
+            def nestedBundles = []
+            dependency.children.each { ResolvedDependency child ->
+                addDependency(child, prepareDependenciesTask, nestedBundles, jars, modules)
+            }
+
+            dependency.moduleArtifacts.each { artifact ->
+                if (artifact.type == 'alb') {
+                    def explodedDir = project.file("$project.buildDir/exploded-bundles/$artifact.file.name")
+                    bundlesForThisModule << new AndroidDependencyImpl(explodedDir, nestedBundles)
+                    prepareDependenciesTask.add(artifact.file, explodedDir)
+                } else {
+                    // TODO - need the correct values for the boolean flags
+                    jars << new JarDependency(artifact.file.absolutePath, true, true, true)
+                }
+            }
+
+            if (bundlesForThisModule.empty && !nestedBundles.empty) {
+                throw new GradleException("Module version $id depends on libraries but is not a library itself")
+            }
+        }
+
+        bundles.addAll(bundlesForThisModule)
+    }
 
 }
