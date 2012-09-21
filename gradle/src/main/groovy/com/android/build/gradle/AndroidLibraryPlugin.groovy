@@ -92,13 +92,15 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
                 defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
                 buildTypeData.buildType, buildTypeData.androidSourceSet,
                 VariantConfiguration.Type.LIBRARY)
-        // TODO: add actual dependencies
-        variantConfig.setAndroidDependencies(null)
 
         ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
 
+        def prepareDependenciesTask = createPrepareDependenciesTask(variant)
+
         // Add a task to process the manifest(s)
         ProcessManifestTask processManifestTask = createProcessManifestTask(variant, DIR_BUNDLES)
+        // TODO - move this
+        processManifestTask.dependsOn prepareDependenciesTask
 
         // Add a task to create the BuildConfig class
         def generateBuildConfigTask = createBuildConfigTask(variant, null)
@@ -108,6 +110,8 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
                 null /*crunchTask*/)
 
         def compileAidl = createAidlTask(variant)
+        // TODO - move this
+        compileAidl.dependsOn prepareDependenciesTask
 
         // Add a compile task
         createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
