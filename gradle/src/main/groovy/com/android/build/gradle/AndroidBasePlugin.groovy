@@ -29,6 +29,7 @@ import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
+import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -60,8 +61,6 @@ abstract class AndroidBasePlugin {
     protected SourceSet mainSourceSet
     protected SourceSet testSourceSet
 
-    protected Task installAllForTests
-    protected Task runAllTests
     protected Task uninstallAll
     protected Task assembleTest
 
@@ -79,19 +78,9 @@ abstract class AndroidBasePlugin {
 
         findSdk(project)
 
-        installAllForTests = project.tasks.add("installAllForTests")
-        installAllForTests.group = "Verification"
-        installAllForTests.description = "Installs all applications needed to run tests."
-
-        runAllTests = project.tasks.add("runAllTests")
-        runAllTests.group = "Verification"
-        runAllTests.description = "Runs all tests."
-
         uninstallAll = project.tasks.add("uninstallAll")
         uninstallAll.description = "Uninstall all applications."
-        uninstallAll.group = "Install"
-
-        project.tasks.check.dependsOn installAllForTests, runAllTests
+        uninstallAll.group = INSTALL_GROUP
     }
 
     protected setDefaultConfig(ProductFlavor defaultConfig) {
@@ -357,21 +346,43 @@ abstract class AndroidBasePlugin {
         createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask,
                 compileAidl)
 
-        Task assembleTask = addPackageTasks(variant, null, true /*isTestApk*/)
+        addPackageTasks(variant, null)
 
         if (assembleTest != null) {
-            assembleTest.dependsOn assembleTask
+            assembleTest.dependsOn variant.assembleTask
         }
 
-        def runTestsTask = project.tasks.add("Run${variant.name}Tests", RunTestsTask)
+        // create the check task for this test
+        def checkTask = project.tasks.add("check${testedVariant.name}", DefaultTask)
+        checkTask.description = "Installs and runs the checks for Build ${testedVariant.name}."
+        checkTask.group = JavaBasePlugin.VERIFICATION_GROUP
+
+        checkTask.dependsOn testedVariant.assembleTask, variant.assembleTask
+        project.tasks.check.dependsOn checkTask
+
+        // now run the test.
+        def runTestsTask = project.tasks.add("run${testedVariant.name}Tests", RunTestsTask)
+        runTestsTask.description = "Runs the checks for Build ${testedVariant.name}. Must be installed on device."
+        runTestsTask.group = JavaBasePlugin.VERIFICATION_GROUP
         runTestsTask.sdkDir = sdkDir
         runTestsTask.variant = variant
+        checkTask.doLast { runTestsTask }
 
-        runAllTests.dependsOn runTestsTask
+        // TODO: don't rely on dependsOn which isn't reliable for execution order.
+        if (testedVariant.config.type == VariantConfiguration.Type.DEFAULT) {
+            checkTask.dependsOn testedVariant.installTask, variant.installTask, runTestsTask, testedVariant.uninstallTask, variant.uninstallTask
+        } else {
+            checkTask.dependsOn variant.installTask, runTestsTask, variant.uninstallTask
+        }
     }
 
-    protected Task addPackageTasks(ApplicationVariant variant, Task assembleTask,
-                                   boolean isTestApk) {
+    /**
+     * Creates the packaging tasks for the given Variant.
+     * @param variant the variant.
+     * @param assembleTask an optional assembleTask to be used. If null a new one is created. The
+     *                assembleTask is always set in the Variant.
+     */
+    protected void addPackageTasks(ApplicationVariant variant, Task assembleTask) {
         // Add a dex task
         def dexTaskName = "dex${variant.name}"
         def dexTask = project.tasks.add(dexTaskName, DexTask)
@@ -423,38 +434,34 @@ abstract class AndroidBasePlugin {
             }
 
             // Add a task to install the application package
-            def installApp = project.tasks.add("install${variant.name}", InstallTask)
-            installApp.description = "Installs the " + variant.description
-            installApp.group = "Install"
-            installApp.dependsOn appTask
-            installApp.conventionMapping.packageFile = { appTask.outputFile }
-            installApp.sdkDir = sdkDir
+            def installTask = project.tasks.add("install${variant.name}", InstallTask)
+            installTask.description = "Installs the " + variant.description
+            installTask.group = INSTALL_GROUP
+            installTask.dependsOn appTask
+            installTask.conventionMapping.packageFile = { appTask.outputFile }
+            installTask.sdkDir = sdkDir
 
-            if (isTestApk) {
-                installAllForTests.dependsOn installApp
-            }
+            variant.installTask = installTask
         }
 
         // Add an assemble task
-        Task returnTask = null
         if (assembleTask == null) {
             assembleTask = project.tasks.add("assemble${variant.name}")
             assembleTask.description = "Assembles the " + variant.description
             assembleTask.group = BasePlugin.BUILD_GROUP
-            returnTask = assembleTask
         }
         assembleTask.dependsOn appTask
+        variant.assembleTask = assembleTask
 
         // add an uninstall task
-        def uninstallApp = project.tasks.add("uninstall${variant.name}", UninstallTask)
-        uninstallApp.description = "Uninstalls the " + variant.description
-        uninstallApp.group = AndroidBasePlugin.INSTALL_GROUP
-        uninstallApp.variant = variant
-        uninstallApp.sdkDir = sdkDir
+        def uninstallTask = project.tasks.add("uninstall${variant.name}", UninstallTask)
+        uninstallTask.description = "Uninstalls the " + variant.description
+        uninstallTask.group = INSTALL_GROUP
+        uninstallTask.variant = variant
+        uninstallTask.sdkDir = sdkDir
 
-        uninstallAll.dependsOn uninstallApp
-
-        return returnTask
+        variant.uninstallTask = uninstallTask
+        uninstallAll.dependsOn uninstallTask
     }
 
     PrepareDependenciesTask createPrepareDependenciesTask(ProductionAppVariant variant) {

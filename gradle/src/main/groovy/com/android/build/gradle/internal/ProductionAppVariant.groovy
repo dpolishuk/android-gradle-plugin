@@ -18,11 +18,9 @@ package com.android.build.gradle.internal
 import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
 import com.android.builder.VariantConfiguration
-import org.gradle.api.Task
 
 class ProductionAppVariant extends ApplicationVariant {
     final String name
-    Task assembleTask
 
     ProductionAppVariant(VariantConfiguration config) {
         super(config)
