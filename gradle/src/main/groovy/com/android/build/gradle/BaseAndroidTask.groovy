@@ -30,13 +30,6 @@ abstract class BaseAndroidTask extends DefaultTask {
     Iterable<Object> configObjects
 
     protected AndroidBuilder getBuilder() {
-        AndroidBuilder androidBuilder = plugin.getAndroidBuilder(variant);
-
-        if (androidBuilder == null) {
-            androidBuilder = variant.createBuilder(plugin)
-            plugin.setAndroidBuilder(variant, androidBuilder)
-        }
-
-        return androidBuilder
+        return plugin.getAndroidBuilder(variant);
     }
 }

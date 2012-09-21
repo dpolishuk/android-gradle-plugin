@@ -37,17 +37,17 @@ import android.widget.TextView;
  * See {@link com.example.android.apis.AllTests} for documentation on running
  * all tests and individual tests in this application.
  */
-public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActivity> {
+public class MainActivityGroup2Test extends ActivityInstrumentationTestCase2<MainActivity> {
 
     private TextView mResOverLay;
-    private TextView mResOverLay1;
-    private TextView mBuildConfig1;
-    private TextView mCodeOverlay1;
+    private TextView mResOverLay2;
+    private TextView mBuildConfig2;
+    private TextView mCodeOverlay2;
 
     /**
      * Creates an {@link ActivityInstrumentationTestCase2} that tests the {@link Focus2} activity.
      */
-    public MainActivityTest() {
+    public MainActivityGroup2Test() {
         super(MainActivity.class);
     }
 
@@ -59,9 +59,9 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
         assertNotNull(a);
         
         mResOverLay = (TextView) a.findViewById(R.id.resoverlay);
-        mResOverLay1 = (TextView) a.findViewById(R.id.resoverlay1);
-        mBuildConfig1 = (TextView) a.findViewById(R.id.buildconfig1);
-        mCodeOverlay1 = (TextView) a.findViewById(R.id.codeoverlay1);
+        mResOverLay2 = (TextView) a.findViewById(R.id.resoverlay2);
+        mBuildConfig2 = (TextView) a.findViewById(R.id.buildconfig2);
+        mCodeOverlay2 = (TextView) a.findViewById(R.id.codeoverlay2);
     }
 
     /**
@@ -73,24 +73,26 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     @MediumTest
     public void testPreconditions() {
         assertNotNull(mResOverLay);
-        assertNotNull(mResOverLay1);
-        assertNotNull(mBuildConfig1);
-        assertNotNull(mCodeOverlay1);
+        assertNotNull(mResOverLay2);
+        assertNotNull(mBuildConfig2);
+        assertNotNull(mCodeOverlay2);
     }
 
     @MediumTest
     public void testResOverlay() {
-        assertEquals("F1", mResOverLay.getText());
-        assertEquals("F1", mResOverLay1.getText());
+        // because this group has lower priority, we check that the resource from
+        // this flavor is not used.
+        assertFalse("FA".equals(mResOverLay.getText()));
+        assertEquals("FA", mResOverLay2.getText());
     }
 
     @MediumTest
     public void testBuildConfig() {
-        assertEquals("F1", mBuildConfig1.getText());
+        assertEquals("FA", mBuildConfig2.getText());
     }
 
     @MediumTest
     public void testCodeOverlay() {
-        assertEquals("F1", mCodeOverlay1.getText());
+        assertEquals("FA", mCodeOverlay2.getText());
     }
 }
