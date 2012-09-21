@@ -17,10 +17,11 @@ package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
+import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
+import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.Compile
-import com.android.builder.ProductFlavor
 
 /**
  * Represents something that can be packaged into an APK and installed.
@@ -33,6 +34,9 @@ public abstract class ApplicationVariant {
     FileCollection resourcePackage
     Compile compileTask
     Iterable<Object> configObjects
+    Task assembleTask
+    Task installTask
+    Task uninstallTask
 
     ApplicationVariant(VariantConfiguration config) {
         this.config = config

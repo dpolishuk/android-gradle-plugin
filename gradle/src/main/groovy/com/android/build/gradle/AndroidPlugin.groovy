@@ -181,12 +181,10 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                     defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
                     buildTypeData.buildType, buildTypeData.androidSourceSet)
 
-            boolean isTestedVariant = (buildTypeData == testData)
-
             ProductionAppVariant productionAppVariant = addVariant(variantConfig,
-                    buildTypeData.assembleTask, isTestedVariant)
+                    buildTypeData.assembleTask)
 
-            if (isTestedVariant) {
+            if (buildTypeData == testData) {
                 testedVariant = productionAppVariant
             }
         }
@@ -232,10 +230,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
                 variantConfig.addProductFlavor(data.productFlavor, data.androidSourceSet)
             }
 
-            boolean isTestedVariant = (buildTypeData == testData)
-
-            ProductionAppVariant productionAppVariant = addVariant(variantConfig, null,
-                    isTestedVariant)
+            ProductionAppVariant productionAppVariant = addVariant(variantConfig, null)
 
             buildTypeData.assembleTask.dependsOn productionAppVariant.assembleTask
 
@@ -246,7 +241,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
             }
             assembleTask.dependsOn productionAppVariant.assembleTask
 
-            if (isTestedVariant) {
+            if (buildTypeData == testData) {
                 testedVariant = productionAppVariant
             }
         }
@@ -282,13 +277,10 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
     /**
      * Creates build tasks for a given variant.
      * @param variantConfig
-     * @param assembleTask an optional assembleTask to be used. If null, a new one is created in the
-     *                     returned ProductAppVariant instance.
-     * @param isTestApk whether this apk is needed for running tests
+     * @param assembleTask an optional assembleTask to be used. If null, a new one is created.
      * @return
      */
-    private ProductionAppVariant addVariant(VariantConfiguration variantConfig, Task assembleTask,
-                                            boolean isTestApk) {
+    private ProductionAppVariant addVariant(VariantConfiguration variantConfig, Task assembleTask) {
 
         def variant = new ProductionAppVariant(variantConfig)
 
@@ -316,10 +308,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
                 compileAidl)
 
-        Task returnTask = addPackageTasks(variant, assembleTask, isTestApk)
-        if (returnTask != null) {
-            variant.assembleTask = returnTask
-        }
+        addPackageTasks(variant, assembleTask)
 
         return variant;
     }
