@@ -28,6 +28,7 @@ import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.plugins.BasePlugin
 
@@ -92,7 +93,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         if (productFlavor.name.startsWith("test")) {
             throw new RuntimeException("ProductFlavor names cannot start with 'test'")
         }
-        if (productFlavors.containsKey(productFlavor.name)) {
+        if (buildTypes.containsKey(productFlavor.name)) {
             throw new RuntimeException("ProductFlavor names cannot collide with BuildType names")
         }
 
@@ -273,10 +274,8 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         // TODO - include variant specific dependencies too
         def compileClasspath = project.configurations.compile
 
-        // TODO - need to sort out ordering here
-        compileClasspath.allDependencies.withType(ProjectDependency).each { dep ->
-            project.evaluationDependsOn(dep.dependencyProject.path)
-        }
+        // TODO - fix this in Gradle
+        ensureConfigured(compileClasspath)
 
         def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies", PrepareDependenciesTask)
 
@@ -303,5 +302,12 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         // TODO - filter bundles out of source set classpath
 
         return prepareDependenciesTask
+    }
+
+    def ensureConfigured(Configuration config) {
+        config.allDependencies.withType(ProjectDependency).each { dep ->
+            project.evaluationDependsOn(dep.dependencyProject.path)
+            ensureConfigured(dep.projectConfiguration)
+        }
     }
 }
