@@ -57,13 +57,13 @@ public class VariantConfiguration {
 
     private List<JarDependency> mJars;
 
-    /** List of direct library project dependencies. Each object defines its own dependencies. */
-    private final List<AndroidDependency> mDirectLibraryProjects = Lists.newArrayList();
+    /** List of direct library dependencies. Each object defines its own dependencies. */
+    private final List<AndroidDependency> mDirectLibraries = Lists.newArrayList();
 
-    /** list of all library project dependencies in the flat list.
+    /** list of all library dependencies in a flat list.
      * The order is based on the order needed to call aapt: earlier libraries override resources
      * of latter ones. */
-    private final List<AndroidDependency> mFlatLibraryProjects = Lists.newArrayList();
+    private final List<AndroidDependency> mFlatLibraries = Lists.newArrayList();
 
     public static enum Type {
         DEFAULT, LIBRARY, TEST;
@@ -128,6 +128,12 @@ public class VariantConfiguration {
 
         mMergedFlavor = mDefaultConfig;
 
+        if (testedConfig != null &&
+                testedConfig.mType == Type.LIBRARY &&
+                testedConfig.mOutput != null) {
+            mDirectLibraries.add(testedConfig.mOutput);
+        }
+
         validate();
     }
 
@@ -151,47 +157,31 @@ public class VariantConfiguration {
         mJars = jars;
     }
 
-    /**
-     * Set the Library Project dependencies.
-     * @param directLibraryProjects list of direct dependencies. Each library object should contain
-     *            its own dependencies.
-     */
-    public void setAndroidDependencies(@NonNull List<AndroidDependency> directLibraryProjects) {
-        if (directLibraryProjects != null) {
-            mDirectLibraryProjects.addAll(directLibraryProjects);
-        }
-
-        resolveIndirectLibraryDependencies(getFullDirectDependencies(), mFlatLibraryProjects);
+    public List<JarDependency> getJars() {
+        return mJars;
     }
 
     /**
-     * Returns all direct dependencies, including the tested config if it's a library itself.
-     * @return
+     * Set the Library Project dependencies.
+     * @param directLibraries list of direct dependencies. Each library object should contain
+     *            its own dependencies.
      */
-    public List<AndroidDependency> getFullDirectDependencies() {
-        if (mTestedConfig != null && mTestedConfig.getType() == Type.LIBRARY) {
-            // in case of a library we merge all the dependencies together.
-            List<AndroidDependency> list = Lists.newArrayListWithExpectedSize(
-                    mDirectLibraryProjects.size() +
-                            mTestedConfig.mDirectLibraryProjects.size() + 1);
-            list.addAll(mDirectLibraryProjects);
-            list.add(mTestedConfig.mOutput);
-            list.addAll(mTestedConfig.mDirectLibraryProjects);
-
-            return list;
+    public void setAndroidDependencies(@NonNull List<AndroidDependency> directLibraries) {
+        if (directLibraries != null) {
+            mDirectLibraries.addAll(directLibraries);
         }
 
-        return mDirectLibraryProjects;
+        resolveIndirectLibraryDependencies(mDirectLibraries, mFlatLibraries);
     }
 
     public String getLibraryPackages() {
-        if (mFlatLibraryProjects.isEmpty()) {
+        if (mFlatLibraries.isEmpty()) {
             return null;
         }
 
         StringBuilder sb = new StringBuilder();
 
-        for (AndroidDependency dep : mFlatLibraryProjects) {
+        for (AndroidDependency dep : mFlatLibraries) {
             File manifest = dep.getManifest();
             String packageName = sManifestParser.getPackage(manifest);
             if (sb.length() > 0) {
@@ -244,15 +234,11 @@ public class VariantConfiguration {
     }
 
     public boolean hasLibraries() {
-        return !mDirectLibraryProjects.isEmpty();
+        return !mDirectLibraries.isEmpty();
     }
 
     public List<AndroidDependency> getDirectLibraries() {
-        return mDirectLibraryProjects;
-    }
-
-    public List<AndroidDependency> getFlatLibraries() {
-        return mFlatLibraryProjects;
+        return mDirectLibraries;
     }
 
     public Type getType() {
@@ -383,7 +369,7 @@ public class VariantConfiguration {
         list.add(mBuildType);
         list.addAll(mFlavorConfigs);
         // TODO: figure out the deps in here.
-//        list.addAll(mFlatLibraryProjects);
+//        list.addAll(mFlatLibraries);
 
         return list;
     }
@@ -411,7 +397,7 @@ public class VariantConfiguration {
             }
         }
 
-        List<AndroidDependency> libs = getFullDirectDependencies();
+        List<AndroidDependency> libs = mDirectLibraries;
         for (AndroidDependency lib : libs) {
             File manifest = lib.getManifest();
             if (manifest != null && manifest.isFile()) {
@@ -449,7 +435,7 @@ public class VariantConfiguration {
             inputs.add(mainResLocation);
         }
 
-        for (AndroidDependency dependency : mFlatLibraryProjects) {
+        for (AndroidDependency dependency : mFlatLibraries) {
             File resFolder = dependency.getResFolder();
             if (resFolder != null) {
                 inputs.add(resFolder);
@@ -467,7 +453,7 @@ public class VariantConfiguration {
     public List<File> getAidlImports() {
         List<File> list = Lists.newArrayList();
 
-        for (AndroidDependency lib : mFlatLibraryProjects) {
+        for (AndroidDependency lib : mFlatLibraries) {
             File aidlLib = lib.getAidlFolder();
             if (aidlLib != null && aidlLib.isDirectory()) {
                 list.add(aidlLib);
@@ -501,7 +487,7 @@ public class VariantConfiguration {
             }
         }
 
-        for (AndroidDependency lib : mFlatLibraryProjects) {
+        for (AndroidDependency lib : mFlatLibraries) {
             classpath.add(lib.getJarFile());
         }
 

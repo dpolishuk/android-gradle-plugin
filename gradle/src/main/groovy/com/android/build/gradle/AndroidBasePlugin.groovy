@@ -73,6 +73,14 @@ abstract class AndroidBasePlugin {
         mainSourceSet = project.sourceSets.add("main")
         testSourceSet = project.sourceSets.add("test")
 
+        // TODO remove when moving to custom source sets
+        project.tasks.remove(project.tasks.getByName("classes"))
+        project.tasks.remove(project.tasks.getByName("compileJava"))
+        project.tasks.remove(project.tasks.getByName("processResources"))
+        project.tasks.remove(project.tasks.getByName("testClasses"))
+        project.tasks.remove(project.tasks.getByName("compileTestJava"))
+        project.tasks.remove(project.tasks.getByName("processTestResources"))
+
         project.tasks.assemble.description =
             "Assembles all variants of all applications and secondary packages."
 

@@ -51,6 +51,14 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         def debugSourceSet = project.sourceSets.add(BuildType.DEBUG)
         def releaseSourceSet = project.sourceSets.add(BuildType.RELEASE)
 
+        // TODO remove when moving to custom source sets
+        project.tasks.remove(project.tasks.getByName("debugClasses"))
+        project.tasks.remove(project.tasks.getByName("compileDebugJava"))
+        project.tasks.remove(project.tasks.getByName("processDebugResources"))
+        project.tasks.remove(project.tasks.getByName("releaseClasses"))
+        project.tasks.remove(project.tasks.getByName("compileReleaseJava"))
+        project.tasks.remove(project.tasks.getByName("processReleaseResources"))
+
         debugBuildTypeData = new BuildTypeData(extension.debug, debugSourceSet, project)
         releaseBuildTypeData = new BuildTypeData(extension.release, releaseSourceSet, project)
         project.tasks.assemble.dependsOn debugBuildTypeData.assembleTask
@@ -120,6 +128,10 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
         // jar the classes.
         Jar jar = project.tasks.add("${buildTypeData.buildType.name}Jar", Jar);
         jar.from(variant.compileTask.outputs);
+        // TODO: replace with proper ProcessResources task with properly configured SourceDirectorySet
+        jar.from(defaultConfigData.androidSourceSet.javaResources);
+        jar.from(buildTypeData.androidSourceSet.javaResources);
+
         jar.destinationDir = project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")
         jar.archiveName = "classes.jar"
         String packageName = variantConfig.getPackageFromManifest().replace('.', '/');
@@ -165,7 +177,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
 
             @Override
             List<AndroidDependency> getDependencies() {
-                return []
+                return variantConfig.directLibraries
             }
         };
 
