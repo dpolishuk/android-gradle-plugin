@@ -35,9 +35,9 @@ import com.android.manifmerger.MergerLog;
 import com.android.prefs.AndroidLocation.AndroidLocationException;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.IAndroidTarget.IOptionalLibrary;
-import com.android.sdklib.io.FileOp;
 import com.android.utils.ILogger;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -292,7 +292,7 @@ public class AndroidBuilder {
 
                     mergeLibraryManifests(
                             generatedTestManifest,
-                            mVariant.getFullDirectDependencies(),
+                            mVariant.getDirectLibraries(),
                             new File(outManifestLocation));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -320,53 +320,71 @@ public class AndroidBuilder {
 
     private void mergeManifest(VariantConfiguration config, String outManifestLocation) {
         try {
-            File mainLocation = config.getDefaultSourceSet().getAndroidManifest();
+            // gather the app manifests: main + buildType and Flavors.
+            File mainManifest = config.getDefaultSourceSet().getAndroidManifest();
+
+            List<File> subManifests = Lists.newArrayList();
+
             File typeLocation = config.getBuildTypeSourceSet().getAndroidManifest();
-            if (typeLocation != null && typeLocation.isFile() == false) {
-                typeLocation = null;
+            if (typeLocation != null && typeLocation.isFile()) {
+                subManifests.add(typeLocation);
             }
 
-            List<File> flavorManifests = Lists.newArrayList();
             for (SourceSet sourceSet : config.getFlavorSourceSets()) {
                 File f = sourceSet.getAndroidManifest();
                 if (f != null && f.isFile()) {
-                    flavorManifests.add(f);
+                    subManifests.add(f);
                 }
             }
 
             // if no manifest to merge, just copy to location
-            if (typeLocation == null && flavorManifests.isEmpty() && !config.hasLibraries()) {
-                new FileOp().copyFile(mainLocation, new File(outManifestLocation));
+            if (subManifests.isEmpty() && !config.hasLibraries()) {
+                Files.copy(mainManifest, new File(outManifestLocation));
             } else {
-                if (!config.hasLibraries()) {
+                File outManifest = new File(outManifestLocation);
 
-                    File appMergeOut = new File(outManifestLocation);
+                // first merge the app manifest.
+                if (!subManifests.isEmpty()) {
+                    File mainManifestOut = outManifest;
 
-                    List<File> manifests = Lists.newArrayList();
-                    if (typeLocation != null) {
-                        manifests.add(typeLocation);
+                    // if there is also libraries, put this in a temp file.
+                    if (config.hasLibraries()) {
+                        // TODO find better way of storing intermediary file?
+                        mainManifestOut = File.createTempFile("manifestMerge", ".xml");
+                        mainManifestOut.deleteOnExit();
                     }
-                    manifests.addAll(flavorManifests);
 
                     ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger));
                     if (merger.process(
-                            appMergeOut,
-                            mainLocation,
-                            manifests.toArray(new File[manifests.size()])) == false) {
+                            mainManifestOut,
+                            mainManifest,
+                            subManifests.toArray(new File[subManifests.size()])) == false) {
                         throw new RuntimeException();
                     }
-                } else {
+
+                    // now the main manifest is the newly merged one
+                    mainManifest = mainManifestOut;
+                }
+
+                if (config.hasLibraries()) {
                     // recursively merge all manifests starting with the leaves and up toward the
                     // root (the app)
-                    mergeLibraryManifests(mainLocation, config.getDirectLibraries(),
+                    mergeLibraryManifests(mainManifest, config.getDirectLibraries(),
                             new File(outManifestLocation));
-                    }
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Merges library manifests into a main manifest.
+     * @param mainManifest the main manifest
+     * @param directLibraries the libraries to merge
+     * @param outManifest the output file
+     * @throws IOException
+     */
     private void mergeLibraryManifests(
             File mainManifest,
             Iterable<AndroidDependency> directLibraries,
@@ -806,6 +824,18 @@ public class AndroidBuilder {
                 }
             }
 
+            // add the resources from the jar files.
+            List<JarDependency> jars = mVariant.getJars();
+            if (jars != null) {
+                for (JarDependency jar : jars) {
+                    packager.addResourcesFromJar(new File(jar.getLocation()));
+                }
+            }
+
+            // add the resources from the libs jar files
+            List<AndroidDependency> libs = mVariant.getDirectLibraries();
+            addLibJavaResourcesToPackager(packager, libs);
+
             // also add resources from library projects and jars
             if (jniLibsLocation != null) {
                 packager.addNativeLibraries(jniLibsLocation);
@@ -816,6 +846,18 @@ public class AndroidBuilder {
             throw new RuntimeException(e);
         } catch (SealedPackageException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void addLibJavaResourcesToPackager(Packager packager, List<AndroidDependency> libs)
+            throws PackagerException, SealedPackageException, DuplicateFileException {
+        if (libs != null) {
+            for (AndroidDependency lib : libs) {
+                packager.addResourcesFromJar(lib.getJarFile());
+
+                // recursively add the dependencies of this library.
+                addLibJavaResourcesToPackager(packager, lib.getDependencies());
+            }
         }
     }
 }

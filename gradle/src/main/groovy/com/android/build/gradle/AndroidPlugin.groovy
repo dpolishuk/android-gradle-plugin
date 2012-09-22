@@ -81,6 +81,11 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
 
         def sourceSet = project.sourceSets.add(buildType.name)
 
+        // TODO remove when moving to custom source sets
+        project.tasks.remove(project.tasks.getByName("${buildType.name}Classes"))
+        project.tasks.remove(project.tasks.getByName("compile${buildType.name.capitalize()}Java"))
+        project.tasks.remove(project.tasks.getByName("process${buildType.name.capitalize()}Resources"))
+
         BuildTypeData buildTypeData = new BuildTypeData(buildType, sourceSet, project)
         project.tasks.assemble.dependsOn buildTypeData.assembleTask
 
@@ -96,7 +101,16 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         }
 
         def mainSourceSet = project.sourceSets.add(productFlavor.name)
-        def testSourceSet = project.sourceSets.add("test${productFlavor.name.capitalize()}")
+        String testName = "test${productFlavor.name.capitalize()}"
+        def testSourceSet = project.sourceSets.add(testName)
+
+        // TODO remove when moving to custom source sets
+        project.tasks.remove(project.tasks.getByName("${productFlavor.name}Classes"))
+        project.tasks.remove(project.tasks.getByName("compile${productFlavor.name.capitalize()}Java"))
+        project.tasks.remove(project.tasks.getByName("process${productFlavor.name.capitalize()}Resources"))
+        project.tasks.remove(project.tasks.getByName("${testName}Classes"))
+        project.tasks.remove(project.tasks.getByName("compile${testName.capitalize()}Java"))
+        project.tasks.remove(project.tasks.getByName("process${testName.capitalize()}Resources"))
 
         ProductFlavorData productFlavorData = new ProductFlavorData(
                 productFlavor, mainSourceSet, testSourceSet, project)
