@@ -354,7 +354,7 @@ public class AndroidBuilder {
                         mainManifestOut.deleteOnExit();
                     }
 
-                    ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger));
+                    ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger), null);
                     if (merger.process(
                             mainManifestOut,
                             mainManifest,
@@ -406,7 +406,7 @@ public class AndroidBuilder {
             }
         }
 
-        ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger));
+        ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger), null);
         if (merger.process(
                 outManifest,
                 mainManifest,
