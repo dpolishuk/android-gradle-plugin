@@ -42,6 +42,7 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.Compile
+import com.android.SdkConstants
 
 /**
  * Base class for all Android plugins
@@ -132,7 +133,8 @@ abstract class AndroidBasePlugin {
     }
 
     private void findSdk(Project project) {
-        def localProperties = project.file("local.properties")
+        def rootDir = project.rootDir
+        def localProperties = new File(rootDir, SdkConstants.FN_LOCAL_PROPERTIES)
         if (localProperties.exists()) {
             Properties properties = new Properties()
             localProperties.withInputStream { instr ->
