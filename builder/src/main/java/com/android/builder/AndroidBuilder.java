@@ -713,11 +713,17 @@ public class AndroidBuilder {
             command.add("--verbose");
         }
 
+        if (dexOptions.isCoreLibrary()) {
+            command.add("--core-library");
+        }
+
         command.add("--output");
         command.add(outDexFile);
 
         // TODO: handle dependencies
         // TODO: handle dex options
+
+        mLogger.info("dx command: %s", command.toString());
 
         mLogger.verbose("Dex class inputs: " + classesLocation);
 
