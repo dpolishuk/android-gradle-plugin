@@ -36,7 +36,9 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.artifacts.ResolvedArtifact
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
+import org.gradle.api.artifacts.result.ResolvedModuleVersionResult
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
@@ -497,9 +499,11 @@ abstract class AndroidBasePlugin {
         // TODO - build the library dependency graph
         List<AndroidDependency> bundles = []
         List<JarDependency> jars = []
-        Map<ModuleVersionIdentifier, Object> modules = [:]
-        compileClasspath.resolvedConfiguration.firstLevelModuleDependencies.each { ResolvedDependency dependency ->
-            addDependency(dependency, prepareDependenciesTask, bundles, jars, modules)
+        Map<ModuleVersionIdentifier, List<AndroidDependency>> modules = [:]
+        Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts = [:]
+        collectArtifacts(compileClasspath, artifacts)
+        compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
+            addDependency(dep.selected, prepareDependenciesTask, bundles, jars, modules, artifacts)
         }
 
         variant.config.androidDependencies = bundles
@@ -517,19 +521,34 @@ abstract class AndroidBasePlugin {
         }
     }
 
-    def addDependency(ResolvedDependency dependency, PrepareDependenciesTask prepareDependenciesTask, Collection<AndroidDependency> bundles, Collection<JarDependency> jars, Map<ModuleVersionIdentifier, Object> modules) {
-        def id = dependency.module.id
+    def collectArtifacts(Configuration configuration, Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
+        configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
+            def id = artifact.moduleVersion.id
+            List<ResolvedArtifact> moduleArtifacts = artifacts[id]
+            if (moduleArtifacts == null) {
+                moduleArtifacts = []
+                artifacts[id] = moduleArtifacts
+            }
+            moduleArtifacts << artifact
+        }
+    }
+
+    def addDependency(ResolvedModuleVersionResult moduleVersion, PrepareDependenciesTask prepareDependenciesTask, Collection<AndroidDependency> bundles,
+                      Collection<JarDependency> jars, Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
+                      Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
+        def id = moduleVersion.id
         List<AndroidDependency> bundlesForThisModule = modules[id]
         if (bundlesForThisModule == null) {
             bundlesForThisModule = []
             modules[id] = bundlesForThisModule
 
             def nestedBundles = []
-            dependency.children.each { ResolvedDependency child ->
-                addDependency(child, prepareDependenciesTask, nestedBundles, jars, modules)
+            moduleVersion.dependencies.each { ResolvedDependencyResult dep ->
+                addDependency(dep.selected, prepareDependenciesTask, nestedBundles, jars, modules, artifacts)
             }
 
-            dependency.moduleArtifacts.each { artifact ->
+            def moduleArtifacts = artifacts[id]
+            moduleArtifacts?.each { artifact ->
                 if (artifact.type == 'alb') {
                     def explodedDir = project.file("$project.buildDir/exploded-bundles/$artifact.file.name")
                     bundlesForThisModule << new AndroidDependencyImpl(explodedDir, nestedBundles)
