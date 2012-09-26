@@ -134,6 +134,13 @@ public class AndroidBuilder {
         }
     }
 
+    public int getTargetApiLevel() {
+        checkState(mTarget != null, "Target not set.");
+
+        return mTarget.getVersion().getApiLevel();
+    }
+
+
     /**
      * Sets the build variant configuration
      *

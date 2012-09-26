@@ -15,6 +15,7 @@
  */
 package com.android.build.gradle
 
+import com.android.SdkConstants
 import com.android.build.gradle.internal.AndroidDependencyImpl
 import com.android.build.gradle.internal.AndroidSourceSet
 import com.android.build.gradle.internal.ApplicationVariant
@@ -29,6 +30,7 @@ import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
+import com.android.utils.Pair
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -43,7 +45,6 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
-import com.android.SdkConstants
 import org.gradle.api.tasks.compile.JavaCompile
 
 /**
@@ -491,6 +492,8 @@ abstract class AndroidBasePlugin {
 
         def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies",
                 PrepareDependenciesTask)
+        prepareDependenciesTask.plugin = this
+        prepareDependenciesTask.variant = variant
 
         // TODO - should be able to infer this
         prepareDependenciesTask.dependsOn compileClasspath
@@ -503,7 +506,7 @@ abstract class AndroidBasePlugin {
         Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts = [:]
         collectArtifacts(compileClasspath, artifacts)
         compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
-            addDependency(dep.selected, prepareDependenciesTask, bundles, jars, modules, artifacts)
+            addDependency(dep.selected, null, prepareDependenciesTask, bundles, jars, modules, artifacts)
         }
 
         variant.config.androidDependencies = bundles
@@ -521,7 +524,8 @@ abstract class AndroidBasePlugin {
         }
     }
 
-    def collectArtifacts(Configuration configuration, Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
+    def collectArtifacts(Configuration configuration, Map<ModuleVersionIdentifier,
+                         List<ResolvedArtifact>> artifacts) {
         configuration.resolvedConfiguration.resolvedArtifacts.each { ResolvedArtifact artifact ->
             def id = artifact.moduleVersion.id
             List<ResolvedArtifact> moduleArtifacts = artifacts[id]
@@ -533,11 +537,15 @@ abstract class AndroidBasePlugin {
         }
     }
 
-    def addDependency(ResolvedModuleVersionResult moduleVersion, PrepareDependenciesTask prepareDependenciesTask, Collection<AndroidDependency> bundles,
-                      Collection<JarDependency> jars, Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
+    def addDependency(ResolvedModuleVersionResult moduleVersion,
+                      ResolvedModuleVersionResult parentModule,
+                      PrepareDependenciesTask prepareDependenciesTask,
+                      Collection<AndroidDependency> bundles,
+                      Collection<JarDependency> jars,
+                      Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
                       Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
         def id = moduleVersion.id
-        if (excluded(id)) {
+        if (excluded(id, parentModule, prepareDependenciesTask)) {
             return
         }
         List<AndroidDependency> bundlesForThisModule = modules[id]
@@ -547,13 +555,15 @@ abstract class AndroidBasePlugin {
 
             def nestedBundles = []
             moduleVersion.dependencies.each { ResolvedDependencyResult dep ->
-                addDependency(dep.selected, prepareDependenciesTask, nestedBundles, jars, modules, artifacts)
+                addDependency(dep.selected, moduleVersion, prepareDependenciesTask, nestedBundles,
+                        jars, modules, artifacts)
             }
 
             def moduleArtifacts = artifacts[id]
             moduleArtifacts?.each { artifact ->
                 if (artifact.type == 'alb') {
-                    def explodedDir = project.file("$project.buildDir/exploded-bundles/$artifact.file.name")
+                    def explodedDir = project.file(
+                            "$project.buildDir/exploded-bundles/$artifact.file.name")
                     bundlesForThisModule << new AndroidDependencyImpl(explodedDir, nestedBundles)
                     prepareDependenciesTask.add(artifact.file, explodedDir)
                 } else {
@@ -570,8 +580,18 @@ abstract class AndroidBasePlugin {
         bundles.addAll(bundlesForThisModule)
     }
 
-    private boolean excluded(ModuleVersionIdentifier id) {
+    private boolean excluded(ModuleVersionIdentifier id, ResolvedModuleVersionResult parentModule,
+                             PrepareDependenciesTask prepareDependenciesTask) {
         if (id.group == 'com.google.android' && id.name == 'android') {
+            String parentName = null;
+            if (parentModule != null) {
+                def parentId = parentModule.id
+                parentName = parentId.group + ":" + parentId.name + ":" + parentId.version
+            }
+            prepareDependenciesTask.addDependency(
+                Pair.of(getApiLevelFromMavenArtifact(id.version), parentName))
+
+            logger.info("Ignoring Android dependency " + id)
             return true
         }
         if (id.group == 'org.apache.httpcomponents' && id.name == 'httpclient') {
@@ -579,6 +599,29 @@ abstract class AndroidBasePlugin {
         }
         // TODO - need to exclude everything that is included in the Android API
         return false
+    }
+
+    private int getApiLevelFromMavenArtifact(String version) {
+        switch (version) {
+            case "1.5_r3":
+            case "1.5_r4":
+                return 3;
+            case "1.6_r2":
+                return 4;
+            case "2.1_r1":
+            case "2.1.2":
+                return 7;
+            case "2.2.1":
+                return 8;
+            case "2.3.1":
+                return 9;
+            case "2.3.3":
+                return 10;
+            case "4.0.1.2":
+                return 14;
+            case "4.1.1.4":
+                return 15;
+        }
     }
 }
 
