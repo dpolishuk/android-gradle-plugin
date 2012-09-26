@@ -15,6 +15,7 @@
  */
 package com.android.builder;
 
+import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 import com.google.common.collect.Maps;
 
@@ -23,13 +24,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Class able to generate a BuildConfig class in Android project.
  * The BuildConfig class contains constants related to the build target.
  */
 class BuildConfigGenerator {
 
-    private final static String TEMPLATE = "BuildConfig.template";
+    private final static String TEMPLATE = "/com/android/builder/BuildConfig.template";
     private final static String PH_PACKAGE = "#PACKAGE#";
     private final static String PH_DEBUG = "#DEBUG#";
     private final static String PH_LINES = "#ADDITIONAL_LINES#";
@@ -46,9 +49,10 @@ class BuildConfigGenerator {
      * @param appPackage the application package
      * @param debug whether it's a debug build
      */
-    public BuildConfigGenerator(String genFolder, String appPackage, boolean debug) {
-        mGenFolder = genFolder;
-        mAppPackage = appPackage;
+    public BuildConfigGenerator(@NonNull String genFolder, @NonNull String appPackage,
+                                boolean debug) {
+        mGenFolder = checkNotNull(genFolder);
+        mAppPackage = checkNotNull(appPackage);
         mDebug = debug;
     }
 

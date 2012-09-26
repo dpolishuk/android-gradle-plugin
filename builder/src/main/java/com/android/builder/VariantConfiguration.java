@@ -55,7 +55,7 @@ public class VariantConfiguration {
 
     private ProductFlavor mMergedFlavor;
 
-    private List<JarDependency> mJars;
+    private final List<JarDependency> mJars = Lists.newArrayList();
 
     /** List of direct library dependencies. Each object defines its own dependencies. */
     private final List<AndroidDependency> mDirectLibraries = Lists.newArrayList();
@@ -154,7 +154,7 @@ public class VariantConfiguration {
     }
 
     public void setJarDependencies(List<JarDependency> jars) {
-        mJars = jars;
+        mJars.addAll(jars);
     }
 
     public List<JarDependency> getJars() {
@@ -229,6 +229,26 @@ public class VariantConfiguration {
      */
     public List<AndroidDependency> getAllLibraries() {
         return mFlatLibraries;
+    }
+
+    public List<File> getPackagedJars() {
+        List<File> jars = Lists.newArrayListWithCapacity(mJars.size() + mFlatLibraries.size());
+
+        for (JarDependency jar : mJars) {
+            File jarFile = new File(jar.getLocation());
+            if (jarFile.exists()) {
+                jars.add(jarFile);
+            }
+        }
+
+        for (AndroidDependency androidDependency : mFlatLibraries) {
+            File libJar = androidDependency.getJarFile();
+            if (libJar.exists()) {
+                jars.add(libJar);
+            }
+        }
+
+        return jars;
     }
 
     public Type getType() {
@@ -341,7 +361,6 @@ public class VariantConfiguration {
 
     /**
      * Reads the package name from the manifest.
-     * @return
      */
     public String getPackageFromManifest() {
         File manifestLocation = mDefaultSourceSet.getAndroidManifest();
@@ -351,7 +370,6 @@ public class VariantConfiguration {
     /**
      * Returns a list of object that represents the configuration. This can be used to compare
      * 2 different list of config objects to know whether the build is up to date or not.
-     * @return
      */
     public Iterable<Object> getConfigObjects() {
         List<Object> list = Lists.newArrayListWithExpectedSize(mFlavorConfigs.size() + 2);
@@ -437,8 +455,6 @@ public class VariantConfiguration {
 
     /**
      * Returns all the aidl import folder that are outside of the current project.
-     *
-     * @return
      */
     public List<File> getAidlImports() {
         List<File> list = Lists.newArrayList();
@@ -456,7 +472,6 @@ public class VariantConfiguration {
     /**
      * Returns the compile classpath for this config. If the config tests a library, this
      * will include the classpath of the tested config
-     * @return
      */
     public Set<File> getCompileClasspath() {
         Set<File> classpath = Sets.newHashSet();
@@ -481,12 +496,7 @@ public class VariantConfiguration {
             classpath.add(lib.getJarFile());
         }
 
-        if (mType == Type.TEST && mTestedConfig.mType == Type.LIBRARY) {
-            // the tested library is added to the main app so we need its compile classpath as well.
-            // which starts with its output
-            classpath.add(mTestedConfig.mOutput.getJarFile());
-            classpath.addAll(mTestedConfig.getCompileClasspath());
-        }
+        // TODO: add jar list when we move to our own sourceset
 
         return classpath;
     }
