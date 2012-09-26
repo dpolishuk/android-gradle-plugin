@@ -537,6 +537,9 @@ abstract class AndroidBasePlugin {
                       Collection<JarDependency> jars, Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
                       Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
         def id = moduleVersion.id
+        if (excluded(id)) {
+            return
+        }
         List<AndroidDependency> bundlesForThisModule = modules[id]
         if (bundlesForThisModule == null) {
             bundlesForThisModule = []
@@ -567,4 +570,15 @@ abstract class AndroidBasePlugin {
         bundles.addAll(bundlesForThisModule)
     }
 
+    private boolean excluded(ModuleVersionIdentifier id) {
+        if (id.group == 'com.google.android' && id.name == 'android') {
+            return true
+        }
+        if (id.group == 'org.apache.httpcomponents' && id.name == 'httpclient') {
+            return true
+        }
+        // TODO - need to exclude everything that is included in the Android API
+        return false
+    }
 }
+
