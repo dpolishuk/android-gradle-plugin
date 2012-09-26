@@ -15,16 +15,21 @@
  */
 package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
+import com.android.utils.Pair
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.TaskAction
 
-class PrepareDependenciesTask extends DefaultTask {
+class PrepareDependenciesTask extends BaseAndroidTask {
     final Map<File, File> bundles = [:]
+    final Set<Pair<Integer, String>> androidDependencies = []
 
     void add(File bundle, File explodedDir) {
         bundles[bundle] = explodedDir
+    }
+
+    void addDependency(Pair<Integer, String> api) {
+        androidDependencies.add(api)
     }
 
     @InputFiles
@@ -44,6 +49,26 @@ class PrepareDependenciesTask extends DefaultTask {
             project.copy {
                 from project.zipTree(bundle)
                 into explodedDir
+            }
+        }
+
+        // TODO check against variant's minSdkVersion
+        if (!androidDependencies.isEmpty()) {
+            def builder = getBuilder();
+            def target = builder.getTargetApiLevel()
+            for (Pair<Integer, String> dependency : androidDependencies) {
+                if (dependency.getFirst() > target) {
+                    String parentDependency = dependency.getSecond()
+                    if (parentDependency != null) {
+                        throw new RuntimeException(String.format(
+                                "ERROR: %s depends on Android API level %d, but project target is API level %d",
+                                parentDependency, dependency.getFirst(), target))
+                    } else {
+                        throw new RuntimeException(String.format(
+                                "ERROR: project depends on Android API level %d, but project target is API level %d",
+                                dependency.getFirst(), target))
+                    }
+                }
             }
         }
     }
