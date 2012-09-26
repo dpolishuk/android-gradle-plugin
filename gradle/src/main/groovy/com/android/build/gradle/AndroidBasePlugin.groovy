@@ -41,8 +41,8 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.compile.Compile
 import com.android.SdkConstants
+import org.gradle.api.tasks.compile.JavaCompile
 
 /**
  * Base class for all Android plugins
@@ -286,7 +286,7 @@ abstract class AndroidBasePlugin {
                                      ProcessResourcesTask processResources,
                                      GenerateBuildConfigTask generateBuildConfigTask,
                                      CompileAidlTask aidlTask) {
-        def compileTask = project.tasks.add("compile${variant.name}", Compile)
+        def compileTask = project.tasks.add("compile${variant.name}", JavaCompile)
         compileTask.dependsOn processResources, generateBuildConfigTask, aidlTask
 
         VariantConfiguration config = variant.config
@@ -319,6 +319,9 @@ abstract class AndroidBasePlugin {
 
         compileTask.conventionMapping.destinationDir = {
             project.file("$project.buildDir/classes/$variant.dirName")
+        }
+        compileTask.conventionMapping.dependencyCacheDir = {
+            project.file("$project.buildDir/dependency-cache/$variant.dirName")
         }
         compileTask.doFirst {
             compileTask.options.bootClasspath = getRuntimeJars(variant)

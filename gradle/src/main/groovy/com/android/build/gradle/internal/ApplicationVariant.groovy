@@ -21,7 +21,7 @@ import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
-import org.gradle.api.tasks.compile.Compile
+import org.gradle.api.tasks.compile.JavaCompile
 
 /**
  * Represents something that can be packaged into an APK and installed.
@@ -32,7 +32,7 @@ public abstract class ApplicationVariant {
     FileCollection runtimeClasspath
     FileCollection packagedClasspath
     FileCollection resourcePackage
-    Compile compileTask
+    JavaCompile compileTask
     Iterable<Object> configObjects
     Task assembleTask
     Task installTask
