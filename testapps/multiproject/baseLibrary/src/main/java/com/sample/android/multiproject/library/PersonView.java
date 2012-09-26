@@ -1,4 +1,4 @@
-package com.example.android.multiproject;
+package com.example.android.multiproject.library;
 
 import android.widget.TextView;
 import android.content.Context;
