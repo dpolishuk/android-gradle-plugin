@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class VariantConfiguration {
 
-    private final static ManifestParser sManifestParser = new DefaultManifestParser();
+    final static ManifestParser sManifestParser = new DefaultManifestParser();
 
     private final ProductFlavor mDefaultConfig;
     private final SourceSet mDefaultSourceSet;
@@ -174,26 +174,6 @@ public class VariantConfiguration {
         resolveIndirectLibraryDependencies(mDirectLibraries, mFlatLibraries);
     }
 
-    public String getLibraryPackages() {
-        if (mFlatLibraries.isEmpty()) {
-            return null;
-        }
-
-        StringBuilder sb = new StringBuilder();
-
-        for (AndroidDependency dep : mFlatLibraries) {
-            File manifest = dep.getManifest();
-            String packageName = sManifestParser.getPackage(manifest);
-            if (sb.length() > 0) {
-                sb.append(':');
-            }
-            sb.append(packageName);
-        }
-
-        return sb.toString();
-    }
-
-
     public void setOutput(AndroidDependency output) {
         mOutput = output;
     }
@@ -237,8 +217,18 @@ public class VariantConfiguration {
         return !mDirectLibraries.isEmpty();
     }
 
+    /**
+     * Returns the direct library dependencies
+     */
     public List<AndroidDependency> getDirectLibraries() {
         return mDirectLibraries;
+    }
+
+    /**
+     * Returns all the library dependencies, direct and transitive.
+     */
+    public List<AndroidDependency> getAllLibraries() {
+        return mFlatLibraries;
     }
 
     public Type getType() {

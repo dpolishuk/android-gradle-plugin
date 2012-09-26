@@ -39,6 +39,9 @@ class ProcessResourcesTask extends BaseAndroidTask {
     @OutputDirectory @Optional
     File sourceOutputDir
 
+    @OutputDirectory @Optional
+    File textSymbolDir
+
     @OutputFile @Optional
     File packageFile
 
@@ -56,6 +59,7 @@ class ProcessResourcesTask extends BaseAndroidTask {
                 getCrunchDir()?.absolutePath,
                 getResDirectories(),
                 getSourceOutputDir()?.absolutePath,
+                getTextSymbolDir()?.absolutePath,
                 getPackageFile()?.absolutePath,
                 getProguardFile()?.absolutePath,
                 getAaptOptions())

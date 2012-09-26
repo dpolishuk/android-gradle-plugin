@@ -16,6 +16,7 @@
 
 package com.android.builder;
 
+import com.android.SdkConstants;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 import com.android.annotations.VisibleForTesting;
@@ -63,7 +64,7 @@ import static com.google.common.base.Preconditions.checkState;
  * then build steps can be done with
  * {@link #generateBuildConfig(String, java.util.List)}
  * {@link #processManifest(String)}
- * {@link #processResources(String, String, String, String, String, AaptOptions)}
+ * {@link #processResources(String, String, java.util.List, String, String, String, String, AaptOptions)}
  * {@link #convertBytecode(java.util.List, java.util.List, String, DexOptions)}
  * {@link #packageApk(String, String, String, String)}
  *
@@ -429,7 +430,7 @@ public class AndroidBuilder {
      * Call this directly if you don't care about checking whether the inputs have changed.
      * Otherwise, get the input first to check with {@link VariantConfiguration#getResourceInputs()}
      * and then call (or not),
-     * {@link #processResources(String, String, java.util.List, String, String, String, AaptOptions)}.
+     * {@link #processResources(String, String, java.util.List, String, String, String, String, AaptOptions)}.
 
      * @param manifestFile the location of the manifest file
      * @param preprocessResDir the pre-processed folder
@@ -444,11 +445,12 @@ public class AndroidBuilder {
             @NonNull String manifestFile,
             @Nullable String preprocessResDir,
             @Nullable String sourceOutputDir,
+            @Nullable String symbolOutputDir,
             @Nullable String resPackageOutput,
             @Nullable String proguardOutput,
             @NonNull AaptOptions options) throws IOException, InterruptedException {
         List<File> inputs = mVariant.getResourceInputs();
-        processResources(manifestFile, preprocessResDir, inputs, sourceOutputDir,
+        processResources(manifestFile, preprocessResDir, inputs, sourceOutputDir, symbolOutputDir,
                 resPackageOutput, proguardOutput, options);
     }
 
@@ -471,6 +473,7 @@ public class AndroidBuilder {
             @Nullable String preprocessResDir,
             @NonNull List<File> resInputs,
             @Nullable String sourceOutputDir,
+            @Nullable String symbolOutputDir,
             @Nullable String resPackageOutput,
             @Nullable String proguardOutput,
             @NonNull AaptOptions options) throws IOException, InterruptedException {
@@ -620,13 +623,6 @@ public class AndroidBuilder {
         // library specific options
         if (mVariant.getType() == VariantConfiguration.Type.LIBRARY) {
             command.add("--non-constant-id");
-        } else {
-            // only create the R class from library dependencies if this is not a library itself.
-            String extraPackages = mVariant.getLibraryPackages();
-            if (extraPackages != null) {
-                command.add("--extra-packages");
-                command.add(extraPackages);
-            }
         }
 
         // AAPT options
@@ -644,9 +640,38 @@ public class AndroidBuilder {
             }
         }
 
+        List<AndroidDependency> fullLibs = mVariant.getAllLibraries();
+
+        if (symbolOutputDir != null &&
+                (mVariant.getType() == VariantConfiguration.Type.LIBRARY ||
+                        (fullLibs != null && !fullLibs.isEmpty()))) {
+            command.add("--output-text-symbols");
+            command.add(symbolOutputDir);
+        }
+
         mLogger.info("aapt command: %s", command.toString());
 
         mCmdLineRunner.runCmdLine(command);
+
+        // now if the project has libraries, R needs to be created for each libraries,
+        // but only if the current project is not a library.
+        if (mVariant.getType() != VariantConfiguration.Type.LIBRARY &&
+                fullLibs != null && !fullLibs.isEmpty()) {
+            SymbolLoader symbolValues = new SymbolLoader(new File(symbolOutputDir, "R.txt"));
+            symbolValues.load();
+
+            for (AndroidDependency lib : fullLibs) {
+                SymbolLoader symbols = new SymbolLoader(new File(lib.getFolder(), "R.txt"));
+                symbols.load();
+
+                String packageName = VariantConfiguration.sManifestParser.getPackage(
+                        new File(lib.getFolder(), SdkConstants.FN_ANDROID_MANIFEST_XML));
+
+                SymbolWriter writer = new SymbolWriter(sourceOutputDir, packageName,
+                        symbols, symbolValues);
+                writer.write();
+            }
+        }
     }
 
     /**

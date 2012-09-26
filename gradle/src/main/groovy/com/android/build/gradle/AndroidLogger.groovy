@@ -32,26 +32,43 @@ class AndroidLogger implements ILogger {
 
     @Override
     void error(Throwable throwable, String s, Object... objects) {
+        if (objects != null && objects.length > 0) {
+            s = String.format(s, objects)
+        }
+
         if (throwable == null) {
-            logger.log(LogLevel.ERROR, String.format(s, objects))
+            logger.log(LogLevel.ERROR, s)
 
         } else {
-            logger.log(LogLevel.ERROR, String.format(s, objects), throwable)
+            logger.log(LogLevel.ERROR, s, throwable)
         }
     }
 
     @Override
     void warning(String s, Object... objects) {
-        logger.log(LogLevel.WARN, String.format(s, objects))
+        if (objects == null || objects.length == 0) {
+            logger.log(LogLevel.WARN, s)
+        } else {
+            logger.log(LogLevel.WARN, String.format(s, objects))
+        }
     }
 
     @Override
     void info(String s, Object... objects) {
-        logger.log(LogLevel.INFO, String.format(s, objects))
+        if (objects == null || objects.length == 0) {
+            logger.log(LogLevel.INFO, s)
+        } else {
+            logger.log(LogLevel.INFO, String.format(s, objects))
+        }
     }
 
     @Override
     void verbose(String s, Object... objects) {
-        logger.log(LogLevel.INFO, String.format(s, objects))
+        if (objects == null || objects.length == 0) {
+            logger.log(LogLevel.INFO, s)
+
+        } else {
+            logger.log(LogLevel.INFO, String.format(s, objects))
+        }
     }
 }
