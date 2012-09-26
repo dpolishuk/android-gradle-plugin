@@ -1,4 +1,4 @@
-package com.example.android.multiproject;
+package com.example.android.multiproject.library;
 
 import android.app.Activity;
 import android.os.Bundle;
