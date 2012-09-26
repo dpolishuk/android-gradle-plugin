@@ -606,8 +606,7 @@ public class AndroidBuilder {
             }
 
             if (forceErrorOnReplace) {
-                // TODO: force aapt to fail if replace of versionCode/Name or min/targetSdkVersion fails
-                // Need to add the options to aapt first.
+                command.add("--error-on-failed-insert");
             }
         }
 

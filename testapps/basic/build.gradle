@@ -16,6 +16,11 @@ android {
     testBuildType = "debug"
 
     defaultConfig {
+        versionCode = 12
+        versionName = "2.0"
+        minSdkVersion = 16
+        targetSdkVersion = 16
+
         signingStoreLocation = "debug.keystore"
         signingStorePassword = "android"
         signingKeyAlias = "androiddebugkey"
