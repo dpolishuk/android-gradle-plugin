@@ -29,8 +29,6 @@ import org.gradle.api.tasks.compile.JavaCompile
 public abstract class ApplicationVariant {
 
     final VariantConfiguration config
-    FileCollection runtimeClasspath
-    FileCollection packagedClasspath
     FileCollection resourcePackage
     JavaCompile compileTask
     Iterable<Object> configObjects

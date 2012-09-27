@@ -217,7 +217,7 @@ public final class Packager implements IArchiveBuilder {
      * @param resLocation the file representing the packaged resource file.
      * @param dexLocation the file representing the dex file. This can be null for apk with no code.
      * @param signingInfo the signing information used to sign the package. Optional the OS path to the debug keystore, if needed or null.
-     * @param ILogger the logger.
+     * @param logger the logger.
      * @throws PackagerException
      */
     public Packager(
@@ -399,7 +399,7 @@ public final class Packager implements IArchiveBuilder {
      * @throws DuplicateFileException if a file conflicts with another already added to the APK
      *                                   at the same location inside the APK archive.
      *
-     * @see #setDebugMode(boolean)
+     * @see #setDebugJniMode(boolean)
      */
     public void addNativeLibraries(String jniLibLocation)
             throws PackagerException, SealedPackageException, DuplicateFileException {

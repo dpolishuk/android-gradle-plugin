@@ -50,7 +50,7 @@ public class DebugKeyHelper {
 
     /**
      * Creates a new store
-     * @param osKeyStorePath the location of the store
+     * @param keyStoreLocation the location of the store
      * @param storeType an optional keystore type, or <code>null</code> if the default is to
      * be used.
      * @param logger a logger object to receive the log of the creation.

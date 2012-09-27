@@ -310,15 +310,12 @@ abstract class AndroidBasePlugin {
         }
         compileTask.source = sourceList.toArray()
 
-        // if the test is for a full app, the tested runtimeClasspath is added to the classpath for
-        // compilation only, not for packaging
-        variant.packagedClasspath = project.files({config.compileClasspath})
-        if (testedVariant != null &&
-                testedVariant.config.type != VariantConfiguration.Type.LIBRARY) {
-            compileTask.classpath = variant.packagedClasspath + testedVariant.runtimeClasspath
+        if (testedVariant != null) {
+            compileTask.classpath = project.files({config.compileClasspath}) + testedVariant.compileTask.classpath + testedVariant.compileTask.outputs.files
         } else {
-            compileTask.classpath = variant.packagedClasspath
+            compileTask.classpath = project.files({config.compileClasspath})
         }
+
         // TODO - dependency information for the compile classpath is being lost.
         // Add a temporary approximation
         compileTask.dependsOn project.configurations.compile.buildDependencies
@@ -334,7 +331,6 @@ abstract class AndroidBasePlugin {
         }
 
         // Wire up the outputs
-        variant.runtimeClasspath = compileTask.outputs.files + compileTask.classpath
         variant.resourcePackage = project.files({processResources.packageFile}) {
             builtBy processResources
         }
@@ -411,7 +407,7 @@ abstract class AndroidBasePlugin {
         dexTask.dependsOn variant.compileTask
         dexTask.plugin = this
         dexTask.variant = variant
-        dexTask.conventionMapping.libraries = { variant.packagedClasspath }
+        dexTask.conventionMapping.libraries = { project.files({ variant.config.packagedJars }) }
         dexTask.conventionMapping.sourceFiles = { variant.compileTask.outputs.files }
         dexTask.conventionMapping.outputFile = {
             project.file(
@@ -594,12 +590,40 @@ abstract class AndroidBasePlugin {
             prepareDependenciesTask.addDependency(
                 Pair.of(getApiLevelFromMavenArtifact(id.version), parentName))
 
-            logger.info("Ignoring Android dependency " + id)
+            logger.info("Ignoring Android API artifact: " + id)
             return true
         }
         if (id.group == 'org.apache.httpcomponents' && id.name == 'httpclient') {
+            logger.info(String.format(
+                    "Ignoring artifact %s as it is part of the Android API", id))
             return true
         }
+        if (id.group == 'xpp3' && id.name == 'xpp3') {
+            logger.info(String.format(
+                    "Ignoring artifact %s as it is part of the Android API", id))
+            return true
+        }
+        if (id.group == 'commons-logging' && id.name == 'commons-logging') {
+            logger.info(String.format(
+                    "Ignoring artifact %s as it is part of the Android API", id))
+            return true
+        }
+        if (id.group == 'xerces' && id.name == 'xmlParserAPIs') {
+            logger.info(String.format(
+                    "Ignoring artifact %s as it is part of the Android API", id))
+            return true
+        }
+        if (id.group == 'org.json' && id.name == 'json') {
+            logger.info(String.format(
+                    "Ignoring artifact %s as it is part of the Android API", id))
+            return true
+        }
+        if (id.group == 'org.khronos' && id.name == 'opengl-api') {
+            logger.info(String.format(
+                    "Ignoring artifact %s as it is part of the Android API", id))
+            return true
+        }
+
         // TODO - need to exclude everything that is included in the Android API
         return false
     }

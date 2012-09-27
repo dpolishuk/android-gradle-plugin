@@ -657,19 +657,30 @@ public class AndroidBuilder {
         // but only if the current project is not a library.
         if (mVariant.getType() != VariantConfiguration.Type.LIBRARY &&
                 fullLibs != null && !fullLibs.isEmpty()) {
-            SymbolLoader symbolValues = new SymbolLoader(new File(symbolOutputDir, "R.txt"));
-            symbolValues.load();
+            SymbolLoader symbolValues = null;
 
             for (AndroidDependency lib : fullLibs) {
-                SymbolLoader symbols = new SymbolLoader(new File(lib.getFolder(), "R.txt"));
-                symbols.load();
+                File rFile = new File(lib.getFolder(), "R.txt");
+                // if the library has no resource, this file won't exist.
+                if (rFile.isFile()) {
+                    // load the values if that's not already been done.
+                    // Doing it lazily allow us to support the case where there's no
+                    // resources anywhere.
+                    if (symbolValues == null) {
+                        symbolValues = new SymbolLoader(new File(symbolOutputDir, "R.txt"));
+                        symbolValues.load();
+                    }
 
-                String packageName = VariantConfiguration.sManifestParser.getPackage(
-                        new File(lib.getFolder(), SdkConstants.FN_ANDROID_MANIFEST_XML));
+                    SymbolLoader symbols = new SymbolLoader(rFile);
+                    symbols.load();
 
-                SymbolWriter writer = new SymbolWriter(sourceOutputDir, packageName,
-                        symbols, symbolValues);
-                writer.write();
+                    String packageName = VariantConfiguration.sManifestParser.getPackage(
+                            new File(lib.getFolder(), SdkConstants.FN_ANDROID_MANIFEST_XML));
+
+                    SymbolWriter writer = new SymbolWriter(sourceOutputDir, packageName,
+                            symbols, symbolValues);
+                    writer.write();
+                }
             }
         }
     }
