@@ -30,7 +30,6 @@ import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
-import com.android.utils.Pair
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -497,6 +496,8 @@ abstract class AndroidBasePlugin {
         // TODO - should be able to infer this
         prepareDependenciesTask.dependsOn compileClasspath
 
+        def checker = new DependencyChecker(variant, logger)
+
         // TODO - defer downloading until required
         // TODO - build the library dependency graph
         List<AndroidDependency> bundles = []
@@ -505,7 +506,8 @@ abstract class AndroidBasePlugin {
         Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts = [:]
         collectArtifacts(compileClasspath, artifacts)
         compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
-            addDependency(dep.selected, null, prepareDependenciesTask, bundles, jars, modules, artifacts)
+            addDependency(dep.selected, prepareDependenciesTask, checker,
+                    bundles, jars, modules, artifacts)
         }
 
         variant.config.androidDependencies = bundles
@@ -537,16 +539,17 @@ abstract class AndroidBasePlugin {
     }
 
     def addDependency(ResolvedModuleVersionResult moduleVersion,
-                      ResolvedModuleVersionResult parentModule,
                       PrepareDependenciesTask prepareDependenciesTask,
+                      DependencyChecker checker,
                       Collection<AndroidDependency> bundles,
                       Collection<JarDependency> jars,
                       Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
                       Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
         def id = moduleVersion.id
-        if (excluded(id, parentModule, prepareDependenciesTask)) {
+        if (checker.excluded(id)) {
             return
         }
+
         List<AndroidDependency> bundlesForThisModule = modules[id]
         if (bundlesForThisModule == null) {
             bundlesForThisModule = []
@@ -554,7 +557,7 @@ abstract class AndroidBasePlugin {
 
             def nestedBundles = []
             moduleVersion.dependencies.each { ResolvedDependencyResult dep ->
-                addDependency(dep.selected, moduleVersion, prepareDependenciesTask, nestedBundles,
+                addDependency(dep.selected, prepareDependenciesTask, checker, nestedBundles,
                         jars, modules, artifacts)
             }
 
@@ -577,78 +580,6 @@ abstract class AndroidBasePlugin {
         }
 
         bundles.addAll(bundlesForThisModule)
-    }
-
-    private boolean excluded(ModuleVersionIdentifier id, ResolvedModuleVersionResult parentModule,
-                             PrepareDependenciesTask prepareDependenciesTask) {
-        if (id.group == 'com.google.android' && id.name == 'android') {
-            String parentName = null;
-            if (parentModule != null) {
-                def parentId = parentModule.id
-                parentName = parentId.group + ":" + parentId.name + ":" + parentId.version
-            }
-            prepareDependenciesTask.addDependency(
-                Pair.of(getApiLevelFromMavenArtifact(id.version), parentName))
-
-            logger.info("Ignoring Android API artifact: " + id)
-            return true
-        }
-        if (id.group == 'org.apache.httpcomponents' && id.name == 'httpclient') {
-            logger.info(String.format(
-                    "Ignoring artifact %s as it is part of the Android API", id))
-            return true
-        }
-        if (id.group == 'xpp3' && id.name == 'xpp3') {
-            logger.info(String.format(
-                    "Ignoring artifact %s as it is part of the Android API", id))
-            return true
-        }
-        if (id.group == 'commons-logging' && id.name == 'commons-logging') {
-            logger.info(String.format(
-                    "Ignoring artifact %s as it is part of the Android API", id))
-            return true
-        }
-        if (id.group == 'xerces' && id.name == 'xmlParserAPIs') {
-            logger.info(String.format(
-                    "Ignoring artifact %s as it is part of the Android API", id))
-            return true
-        }
-        if (id.group == 'org.json' && id.name == 'json') {
-            logger.info(String.format(
-                    "Ignoring artifact %s as it is part of the Android API", id))
-            return true
-        }
-        if (id.group == 'org.khronos' && id.name == 'opengl-api') {
-            logger.info(String.format(
-                    "Ignoring artifact %s as it is part of the Android API", id))
-            return true
-        }
-
-        // TODO - need to exclude everything that is included in the Android API
-        return false
-    }
-
-    private int getApiLevelFromMavenArtifact(String version) {
-        switch (version) {
-            case "1.5_r3":
-            case "1.5_r4":
-                return 3;
-            case "1.6_r2":
-                return 4;
-            case "2.1_r1":
-            case "2.1.2":
-                return 7;
-            case "2.2.1":
-                return 8;
-            case "2.3.1":
-                return 9;
-            case "2.3.3":
-                return 10;
-            case "4.0.1.2":
-                return 14;
-            case "4.1.1.4":
-                return 15;
-        }
     }
 }
 
