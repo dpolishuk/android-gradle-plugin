@@ -367,6 +367,17 @@ public class VariantConfiguration {
         return sManifestParser.getPackage(manifestLocation);
     }
 
+    public int getMinSdkVersion() {
+        int minSdkVersion = mMergedFlavor.getMinSdkVersion();
+        if (minSdkVersion == -1) {
+            // read it from the main manifest
+            File manifestLocation = mDefaultSourceSet.getAndroidManifest();
+            minSdkVersion = sManifestParser.getMinSdkVersion(manifestLocation);
+        }
+
+        return minSdkVersion;
+    }
+
     /**
      * Returns a list of object that represents the configuration. This can be used to compare
      * 2 different list of config objects to know whether the build is up to date or not.

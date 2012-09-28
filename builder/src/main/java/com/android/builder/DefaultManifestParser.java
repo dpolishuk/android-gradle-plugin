@@ -16,6 +16,10 @@
 
 package com.android.builder;
 
+import com.android.annotations.NonNull;
+import com.android.io.FileWrapper;
+import com.android.io.StreamException;
+import com.android.xml.AndroidManifest;
 import com.android.xml.AndroidXPathFactory;
 import org.xml.sax.InputSource;
 
@@ -41,5 +45,24 @@ public class DefaultManifestParser implements ManifestParser {
         }
 
         return null;
+    }
+
+    @Override
+    public int getMinSdkVersion(@NonNull File manifestFile) {
+        try {
+            Object value = AndroidManifest.getMinSdkVersion(new FileWrapper(manifestFile));
+            if (value instanceof Integer) {
+                return ((Integer)value).intValue();
+            } else if (value instanceof String) {
+                // TODO: support codename
+            }
+
+        } catch (XPathExpressionException e) {
+            // won't happen.
+        } catch (StreamException e) {
+            throw new RuntimeException(e);
+        }
+
+        return 1;
     }
 }

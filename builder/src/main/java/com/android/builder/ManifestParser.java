@@ -23,4 +23,5 @@ import java.io.File;
 public interface ManifestParser {
 
     String getPackage(@NonNull File manifestFile);
+    int getMinSdkVersion(@NonNull File manifestFile);
 }
