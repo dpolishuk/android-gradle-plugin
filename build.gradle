@@ -5,5 +5,9 @@ allprojects {
         mavenCentral()
     }
 
-    version = '0.1-SNAPSHOT'
+    project.ext {
+        baseVersion = '0.1'
+    }
+
+    group = 'com.android.tools.build'
 }

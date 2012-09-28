@@ -14,7 +14,15 @@ dependencies {
     compile project(':builder')
 }
 
-group = 'com.android.build'
+def getVersion() {
+    if (project.has("release")) {
+        return project.ext.baseVersion
+    }
+
+    return project.ext.baseVersion + '-SNAPSHOT'
+}
+
+version = getVersion()
 archivesBaseName = 'gradle-android'
 
 
@@ -22,6 +30,43 @@ uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: uri("$rootDir/repo"))
+
+            pom.project {
+                name 'Gradle Plug-in for Android'
+                description 'Gradle plug-in to build Android applications.'
+                url 'http://tools.android.com'
+                inceptionYear '2007'
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                scm {
+                    url "https://android.googlesource.com/platform/tools/build"
+                    connection "git://android.googlesource.com/platform/tools/build.git"
+                }
+            }
         }
     }
+}
+
+// custom tasks for creating source/javadoc jars
+task sourcesJar(type: Jar, dependsOn:classes) {
+     classifier = 'sources'
+     from sourceSets.main.allSource
+}
+ 
+task javadocJar(type: Jar, dependsOn:groovydoc) {
+     classifier = 'javadoc'
+     from groovydoc.destinationDir
+}
+ 
+// add javadoc/source jar tasks as artifacts
+artifacts {
+     archives sourcesJar
+     archives javadocJar
 }
