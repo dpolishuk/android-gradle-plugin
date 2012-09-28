@@ -1,6 +1,7 @@
 apply plugin: 'groovy'
 apply plugin: 'idea'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 configurations {
     gradleApi
@@ -23,13 +24,17 @@ def getVersion() {
 }
 
 version = getVersion()
-archivesBaseName = 'gradle-android'
+archivesBaseName = 'gradle'
 
 
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: uri("$rootDir/repo"))
+            beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
 
             pom.project {
                 name 'Gradle Plug-in for Android'
@@ -67,6 +72,11 @@ task javadocJar(type: Jar, dependsOn:groovydoc) {
  
 // add javadoc/source jar tasks as artifacts
 artifacts {
+     archives jar
      archives sourcesJar
      archives javadocJar
+}
+
+signing {
+    sign configurations.archives
 }

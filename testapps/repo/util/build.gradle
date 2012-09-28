@@ -12,12 +12,3 @@ dependencies {
 group = 'com.example.android.multiproject'
 archivesBaseName = 'util'
 version = '1.0'
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri("../../../repo"))
-        }
-    }
-}
-
