@@ -8,5 +8,5 @@ dependencies {
 }
 
 android {
-	target = "android-15"
+    target = "android-15"
 }

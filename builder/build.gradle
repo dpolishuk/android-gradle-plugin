@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 dependencies {
     // this is temporary
@@ -21,7 +22,7 @@ def getVersion() {
 }
 
 version = getVersion()
-archivesBaseName = 'android-builder'
+archivesBaseName = 'builder'
 
 jar {
     from { configurations.runtime.collect { it.directory ? it : zipTree(it) } }
@@ -55,10 +56,16 @@ configure(install.repositories.mavenInstaller) {
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: uri("$rootDir/repo"))
+            beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
         }
     }
 }
+
+
 
 // custom tasks for creating source/javadoc jars
 task sourcesJar(type: Jar, dependsOn:classes) {
@@ -73,6 +80,11 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
  
 // add javadoc/source jar tasks as artifacts
 artifacts {
+     archives jar
      archives sourcesJar
      archives javadocJar
+}
+
+signing {
+    sign configurations.archives
 }

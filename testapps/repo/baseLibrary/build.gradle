@@ -3,7 +3,7 @@ buildscript {
         maven { url '../../../repo' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle-android:0.1'
+        classpath 'com.android.tools.build:gradle:0.1'
     }
 }
 apply plugin: 'android-library'
@@ -25,11 +25,3 @@ android {
 group = 'com.example.android.multiproject'
 archivesBaseName = 'baseLib'
 version = '1.0'
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri("../../../repo"))
-        }
-    }
-}
