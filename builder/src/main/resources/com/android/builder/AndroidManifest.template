@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="#PACKAGE#">
 
+    <uses-sdk android:minSdkVersion="#MINSDKVERSION#" />
+
     <application>
         <uses-library android:name="android.test.runner" />
     </application>

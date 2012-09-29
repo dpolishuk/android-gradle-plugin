@@ -29,20 +29,24 @@ public class TestManifestGenerator {
 
     private final static String TEMPLATE = "AndroidManifest.template";
     private final static String PH_PACKAGE = "#PACKAGE#";
+    private final static String PH_MIN_SDK_VERSION = "#MINSDKVERSION#";
     private final static String PH_TESTED_PACKAGE = "#TESTEDPACKAGE#";
     private final static String PH_TEST_RUNNER = "#TESTRUNNER#";
 
     private final String mOutputFile;
     private final String mPackageName;
+    private final int mMinSdkVersion;
     private final String mTestedPackageName;
     private final String mTestRunnerName;
 
     TestManifestGenerator(@NonNull String outputFile,
                           @NonNull String packageName,
+                          int minSdkVersion,
                           @NonNull String testedPackageName,
                           @NonNull String testRunnerName) {
         mOutputFile = outputFile;
         mPackageName = packageName;
+        mMinSdkVersion = minSdkVersion;
         mTestedPackageName = testedPackageName;
         mTestRunnerName = testRunnerName;
     }
@@ -50,6 +54,7 @@ public class TestManifestGenerator {
     public void generate() throws IOException {
         Map<String, String> map = new HashMap<String, String>();
         map.put(PH_PACKAGE, mPackageName);
+        map.put(PH_MIN_SDK_VERSION, Integer.toString(mMinSdkVersion));
         map.put(PH_TESTED_PACKAGE, mTestedPackageName);
         map.put(PH_TEST_RUNNER, mTestRunnerName);
 
@@ -58,6 +63,5 @@ public class TestManifestGenerator {
                 map);
 
         processor.generate(new File(mOutputFile));
-
     }
 }

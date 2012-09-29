@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        mavenLocal()
+        maven { url '../../repo' }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:0.1-SNAPSHOT'

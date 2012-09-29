@@ -38,6 +38,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.IAndroidTarget.IOptionalLibrary;
 import com.android.utils.ILogger;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 
 import java.io.File;
@@ -45,6 +46,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -301,7 +303,8 @@ public class AndroidBuilder {
                     mergeLibraryManifests(
                             generatedTestManifest,
                             mVariant.getDirectLibraries(),
-                            new File(outManifestLocation));
+                            new File(outManifestLocation),
+                            null);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -314,11 +317,13 @@ public class AndroidBuilder {
     }
 
     private void generateTestManifest(String outManifestLocation) {
+        VariantConfiguration testedConfig = mVariant.getTestedConfig();
+
         TestManifestGenerator generator = new TestManifestGenerator(outManifestLocation,
                 mVariant.getPackageName(),
+                testedConfig.getMinSdkVersion(),
                 mVariant.getTestedPackageName(),
                 mVariant.getInstrumentationRunner());
-
         try {
             generator.generate();
         } catch (IOException e) {
@@ -345,9 +350,23 @@ public class AndroidBuilder {
                 }
             }
 
-            // if no manifest to merge, just copy to location
+            Map<String, String> attributeInjection = getAttributeInjectionMap();
+
             if (subManifests.isEmpty() && !config.hasLibraries()) {
-                Files.copy(mainManifest, new File(outManifestLocation));
+                // if no manifest to merge, just copy to location, unless we have to inject
+                // attributes
+                if (attributeInjection.isEmpty()) {
+                    Files.copy(mainManifest, new File(outManifestLocation));
+                } else {
+                    ManifestMerger merger = new ManifestMerger(MergerLog.wrapSdkLog(mLogger), null);
+                    if (merger.process(
+                            new File(outManifestLocation),
+                            mainManifest,
+                            new File[0],
+                            attributeInjection) == false) {
+                        throw new RuntimeException();
+                    }
+                }
             } else {
                 File outManifest = new File(outManifestLocation);
 
@@ -366,24 +385,61 @@ public class AndroidBuilder {
                     if (merger.process(
                             mainManifestOut,
                             mainManifest,
-                            subManifests.toArray(new File[subManifests.size()])) == false) {
+                            subManifests.toArray(new File[subManifests.size()]),
+                            attributeInjection) == false) {
                         throw new RuntimeException();
                     }
 
                     // now the main manifest is the newly merged one
                     mainManifest = mainManifestOut;
+                    // and the attributes have been inject, no need to do it below
+                    attributeInjection = null;
                 }
 
                 if (config.hasLibraries()) {
                     // recursively merge all manifests starting with the leaves and up toward the
                     // root (the app)
                     mergeLibraryManifests(mainManifest, config.getDirectLibraries(),
-                            new File(outManifestLocation));
+                            new File(outManifestLocation), attributeInjection);
                 }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Map<String, String> getAttributeInjectionMap() {
+        Map<String, String> attributeInjection = Maps.newHashMap();
+        ProductFlavor mergedFlavor = mVariant.getMergedFlavor();
+
+        int versionCode = mergedFlavor.getVersionCode();
+        if (versionCode != -1) {
+            attributeInjection.put(
+                    "/manifest|http://schemas.android.com/apk/res/android versionCode",
+                    Integer.toString(versionCode));
+        }
+
+        String versionName = mergedFlavor.getVersionName();
+        if (versionName != null) {
+            attributeInjection.put(
+                    "/manifest|http://schemas.android.com/apk/res/android versionName",
+                    versionName);
+        }
+
+        int minSdkVersion = mergedFlavor.getMinSdkVersion();
+        if (minSdkVersion != -1) {
+            attributeInjection.put(
+                    "/manifest/uses-sdk|http://schemas.android.com/apk/res/android minSdkVersion",
+                    Integer.toString(minSdkVersion));
+        }
+
+        int targetSdkVersion = mergedFlavor.getTargetSdkVersion();
+        if (targetSdkVersion != -1) {
+            attributeInjection.put(
+                    "/manifest/uses-sdk|http://schemas.android.com/apk/res/android targetSdkVersion",
+                    Integer.toString(targetSdkVersion));
+        }
+        return attributeInjection;
     }
 
     /**
@@ -396,7 +452,7 @@ public class AndroidBuilder {
     private void mergeLibraryManifests(
             File mainManifest,
             Iterable<AndroidDependency> directLibraries,
-            File outManifest) throws IOException {
+            File outManifest, Map<String, String> attributeInjection) throws IOException {
 
         List<File> manifests = Lists.newArrayList();
         for (AndroidDependency library : directLibraries) {
@@ -407,8 +463,9 @@ public class AndroidBuilder {
                 File mergeLibManifest = File.createTempFile("manifestMerge", ".xml");
                 mergeLibManifest.deleteOnExit();
 
+                // don't insert the attribute injection into libraries
                 mergeLibraryManifests(
-                        library.getManifest(), subLibraries, mergeLibManifest);
+                        library.getManifest(), subLibraries, mergeLibManifest, null);
 
                 manifests.add(mergeLibManifest);
             }
@@ -418,7 +475,7 @@ public class AndroidBuilder {
         if (merger.process(
                 outManifest,
                 mainManifest,
-                manifests.toArray(new File[manifests.size()])) == false) {
+                manifests.toArray(new File[manifests.size()]), attributeInjection) == false) {
             throw new RuntimeException();
         }
     }
@@ -575,48 +632,6 @@ public class AndroidBuilder {
                 command.add("--rename-manifest-package");
                 command.add(packageOverride);
                 mLogger.verbose("Inserting package '%s' in AndroidManifest.xml", packageOverride);
-            }
-
-            boolean forceErrorOnReplace = false;
-
-            ProductFlavor mergedFlavor = mVariant.getMergedFlavor();
-
-            int versionCode = mergedFlavor.getVersionCode();
-            if (versionCode != -1) {
-                command.add("--version-code");
-                command.add(Integer.toString(versionCode));
-                mLogger.verbose("Inserting versionCode '%d' in AndroidManifest.xml", versionCode);
-                forceErrorOnReplace = true;
-            }
-
-            String versionName = mergedFlavor.getVersionName();
-            if (versionName != null) {
-                command.add("--version-name");
-                command.add(versionName);
-                mLogger.verbose("Inserting versionName '%s' in AndroidManifest.xml", versionName);
-                forceErrorOnReplace = true;
-            }
-
-            int minSdkVersion = mergedFlavor.getMinSdkVersion();
-            if (minSdkVersion != -1) {
-                command.add("--min-sdk-version");
-                command.add(Integer.toString(minSdkVersion));
-                mLogger.verbose("Inserting minSdkVersion '%d' in AndroidManifest.xml",
-                        minSdkVersion);
-                forceErrorOnReplace = true;
-            }
-
-            int targetSdkVersion = mergedFlavor.getTargetSdkVersion();
-            if (targetSdkVersion != -1) {
-                command.add("--target-sdk-version");
-                command.add(Integer.toString(targetSdkVersion));
-                mLogger.verbose("Inserting targetSdkVersion '%d' in AndroidManifest.xml",
-                        targetSdkVersion);
-                forceErrorOnReplace = true;
-            }
-
-            if (forceErrorOnReplace) {
-                command.add("--error-on-failed-insert");
             }
         }
 

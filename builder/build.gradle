@@ -31,40 +31,43 @@ jar {
 configure(install.repositories.mavenInstaller) {
     // Discard all the dependencies from the POM, as they are packaged in the JAR.
     pom.scopeMappings.mappings.clear()
-
-    pom.project {
-        name 'Android Builder library'
-        description 'library to build Android applications.'
-        url 'http://tools.android.com'
-        inceptionYear '2007'
-
-        licenses {
-            license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                distribution 'repo'
-            }
-        }
-
-        scm {
-            url "https://android.googlesource.com/platform/tools/build"
-            connection "git://android.googlesource.com/platform/tools/build.git"
-        }
-    }
 }
 
 uploadArchives {
     repositories {
         mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+            //beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            //repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            //    authentication(userName: sonatypeUsername, password: sonatypePassword)
+            //}
+            repository(url: uri("$rootDir/repo"))
+
+            // Discard all the dependencies from the POM, as they are packaged in the JAR.
+            pom.scopeMappings.mappings.clear()
+
+            pom.project {
+                name 'Android Builder library'
+                description 'library to build Android applications.'
+                url 'http://tools.android.com'
+                inceptionYear '2007'
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                scm {
+                    url "https://android.googlesource.com/platform/tools/build"
+                    connection "git://android.googlesource.com/platform/tools/build.git"
+                }
             }
         }
     }
 }
-
 
 
 // custom tasks for creating source/javadoc jars
