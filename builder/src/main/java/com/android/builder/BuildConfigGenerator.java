@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 class BuildConfigGenerator {
 
-    private final static String TEMPLATE = "/com/android/builder/BuildConfig.template";
+    private final static String TEMPLATE = "BuildConfig.template";
     private final static String PH_PACKAGE = "#PACKAGE#";
     private final static String PH_DEBUG = "#DEBUG#";
     private final static String PH_LINES = "#ADDITIONAL_LINES#";
@@ -97,9 +97,7 @@ class BuildConfigGenerator {
         File buildConfigJava = new File(pkgFolder, BUILD_CONFIG_NAME);
 
         TemplateProcessor processor = new TemplateProcessor(
-                BuildConfigGenerator.class.getResourceAsStream(TEMPLATE),
-                map);
-
+                BuildConfigGenerator.class.getResourceAsStream(TEMPLATE), map);
         processor.generate(buildConfigJava);
     }
 }

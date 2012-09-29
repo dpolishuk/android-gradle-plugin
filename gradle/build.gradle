@@ -30,11 +30,12 @@ archivesBaseName = 'gradle'
 uploadArchives {
     repositories {
         mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+            //beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
+            //repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+            //    authentication(userName: sonatypeUsername, password: sonatypePassword)
+            //}
+            repository(url: uri("$rootDir/repo"))
 
             pom.project {
                 name 'Gradle Plug-in for Android'
