@@ -26,16 +26,30 @@ def getVersion() {
 version = getVersion()
 archivesBaseName = 'gradle'
 
+task publishLocal(type: Upload) {
+    configuration = configurations.archives
+    repositories {
+        mavenDeployer {
+            repository(url: uri("$rootDir/repo"))
+
+        }
+    }
+}
 
 uploadArchives {
     repositories {
         mavenDeployer {
-            //beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+            beforeDeployment { MavenDeployment deployment ->
+                if (!project.has("release")) {
+                    throw new StopExecutionException("uploadArchives must be called with the release.gradle init script")
+                }
 
-            //repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-            //    authentication(userName: sonatypeUsername, password: sonatypePassword)
-            //}
-            repository(url: uri("$rootDir/repo"))
+                signing.signPom(deployment)
+            }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
 
             pom.project {
                 name 'Gradle Plug-in for Android'
