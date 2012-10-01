@@ -3,6 +3,6 @@ buildscript {
         maven { url '../../repo' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.1-SNAPSHOT'
+        classpath 'com.android.tools.build:gradle:0.2-SNAPSHOT'
     }
 }
