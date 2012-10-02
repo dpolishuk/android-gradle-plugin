@@ -81,6 +81,11 @@ uploadArchives {
                     url "https://android.googlesource.com/platform/tools/build"
                     connection "git://android.googlesource.com/platform/tools/build.git"
                 }
+                developers {
+                    developer {
+                        name 'The Android Open Source Project'
+                    }
+                }
             }
         }
     }
