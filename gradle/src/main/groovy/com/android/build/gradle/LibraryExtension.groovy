@@ -15,21 +15,24 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.ApplicationVariant
-import com.android.builder.AndroidBuilder
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
+import com.android.build.gradle.internal.BuildTypeDsl
+import com.android.builder.BuildType
+import org.gradle.api.Action
 
-abstract class BaseAndroidTask extends DefaultTask {
+class LibraryExtension extends BaseExtension {
 
-    AndroidBasePlugin plugin
-    ApplicationVariant variant
+    final BuildTypeDsl debug = new BuildTypeDsl(BuildType.DEBUG)
+    final BuildTypeDsl release = new BuildTypeDsl(BuildType.RELEASE)
 
-    @Input @Optional
-    Iterable<Object> configObjects
+    LibraryExtension() {
+        super()
+    }
 
-    protected AndroidBuilder getBuilder() {
-        return plugin.getAndroidBuilder(variant);
+    void debug(Action<BuildTypeDsl> action) {
+        action.execute(debug);
+    }
+
+    void release(Action<BuildTypeDsl> action) {
+        action.execute(release);
     }
 }

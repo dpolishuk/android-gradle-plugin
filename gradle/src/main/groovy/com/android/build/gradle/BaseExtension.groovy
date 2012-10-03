@@ -23,7 +23,7 @@ import org.gradle.api.Action
 /**
  * Base android extension for all android plugins.
  */
-class BaseAndroidExtension {
+class BaseExtension {
 
     String target
     final ProductFlavorDsl defaultConfig = new ProductFlavorDsl("main");
@@ -31,7 +31,7 @@ class BaseAndroidExtension {
     final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
     final DexOptionsImpl dexOptions = new DexOptionsImpl()
 
-    BaseAndroidExtension() {
+    BaseExtension() {
     }
 
     void defaultConfig(Action<ProductFlavorDsl> action) {

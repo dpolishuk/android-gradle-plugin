@@ -21,7 +21,7 @@ import org.gradle.api.tasks.InputFiles
 
 /**
  */
-class ProcessManifestTask extends BaseAndroidTask {
+class ProcessManifestTask extends BaseTask {
 
     // this is not actually used by the task because it needs a graph more than a list
     // but we need it here with the @InputFiles annotation to properly trigger recompiles.

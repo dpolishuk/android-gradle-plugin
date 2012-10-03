@@ -15,9 +15,9 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
 import com.android.builder.VariantConfiguration
+import com.android.build.gradle.BasePlugin
 
 class ProductionAppVariant extends ApplicationVariant {
     final String name
@@ -81,7 +81,7 @@ class ProductionAppVariant extends ApplicationVariant {
     }
 
     @Override
-    AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin) {
+    AndroidBuilder createBuilder(BasePlugin androidBasePlugin) {
         AndroidBuilder androidBuilder = new AndroidBuilder(
                 androidBasePlugin.sdkParser,
                 androidBasePlugin.logger,

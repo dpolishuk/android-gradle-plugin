@@ -22,7 +22,7 @@ import org.gradle.api.tasks.TaskAction
 
 /**
  */
-class CompileAidlTask extends BaseAndroidTask {
+class CompileAidlTask extends BaseTask {
 
     @InputFiles
     List<File> sourceDirs

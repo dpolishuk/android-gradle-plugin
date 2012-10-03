@@ -20,7 +20,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class GenerateBuildConfigTask extends BaseAndroidTask {
+class GenerateBuildConfigTask extends BaseTask {
 
     @OutputDirectory
     File sourceOutputDir

@@ -15,13 +15,13 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.build.gradle.AndroidBasePlugin
 import com.android.builder.AndroidBuilder
 import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.compile.JavaCompile
+import com.android.build.gradle.BasePlugin
 
 /**
  * Represents something that can be packaged into an APK and installed.
@@ -69,7 +69,7 @@ public abstract class ApplicationVariant {
 
     abstract String getPackage()
 
-    abstract AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin)
+    abstract AndroidBuilder createBuilder(BasePlugin androidBasePlugin)
 
     protected String getFlavoredName(boolean capitalized) {
         StringBuilder builder = new StringBuilder()

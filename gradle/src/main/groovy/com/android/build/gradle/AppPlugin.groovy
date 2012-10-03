@@ -25,16 +25,16 @@ import com.android.builder.BuildType
 import com.android.builder.VariantConfiguration
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
-import org.gradle.api.Plugin
+
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.BasePlugin
 
-class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
+class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
     private final Map<String, BuildTypeData> buildTypes = [:]
     private final Map<String, ProductFlavorData> productFlavors = [:]
 
-    private AndroidExtension extension
+    private AppExtension extension
 
     @Override
     void apply(Project project) {
@@ -43,7 +43,7 @@ class AndroidPlugin extends AndroidBasePlugin implements Plugin<Project> {
         def buildTypeContainer = project.container(BuildTypeDsl)
         def productFlavorContainer = project.container(ProductFlavorDsl)
 
-        extension = project.extensions.create('android', AndroidExtension,
+        extension = project.extensions.create('android', AppExtension,
                 buildTypeContainer, productFlavorContainer)
         setDefaultConfig(extension.defaultConfig)
 
