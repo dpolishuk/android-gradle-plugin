@@ -22,11 +22,11 @@ import org.gradle.api.logging.Logger
 /**
  * Implementation of Android's {@link ILogger} over gradle's {@link Logger}.
  */
-class AndroidLogger implements ILogger {
+class LoggerWrapper implements ILogger {
 
     private final Logger logger
 
-    AndroidLogger(Logger logger) {
+    LoggerWrapper(Logger logger) {
         this.logger = logger;
     }
 

@@ -41,7 +41,6 @@ import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.artifacts.result.ResolvedModuleVersionResult
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.JavaCompile
@@ -49,7 +48,7 @@ import org.gradle.api.tasks.compile.JavaCompile
 /**
  * Base class for all Android plugins
  */
-abstract class AndroidBasePlugin {
+abstract class BasePlugin {
 
     public final static String INSTALL_GROUP = "Install"
 
@@ -58,7 +57,7 @@ abstract class AndroidBasePlugin {
     protected Project project
     protected File sdkDir
     private DefaultSdkParser androidSdkParser
-    private AndroidLogger androidLogger
+    private LoggerWrapper loggerWrapper
 
     private ProductFlavorData defaultConfigData
     protected SourceSet mainSourceSet
@@ -112,11 +111,11 @@ abstract class AndroidBasePlugin {
     }
 
     ILogger getLogger() {
-        if (androidLogger == null) {
-            androidLogger = new AndroidLogger(project.logger)
+        if (loggerWrapper == null) {
+            loggerWrapper = new LoggerWrapper(project.logger)
         }
 
-        return androidLogger
+        return loggerWrapper
     }
 
     boolean isVerbose() {
@@ -465,7 +464,7 @@ abstract class AndroidBasePlugin {
         if (assembleTask == null) {
             assembleTask = project.tasks.add("assemble${variant.name}")
             assembleTask.description = "Assembles the " + variant.description
-            assembleTask.group = BasePlugin.BUILD_GROUP
+            assembleTask.group = org.gradle.api.plugins.BasePlugin.BUILD_GROUP
         }
         assembleTask.dependsOn appTask
         variant.assembleTask = assembleTask

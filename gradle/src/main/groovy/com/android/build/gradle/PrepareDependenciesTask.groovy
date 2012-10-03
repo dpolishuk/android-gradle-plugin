@@ -20,7 +20,7 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.TaskAction
 
-class PrepareDependenciesTask extends BaseAndroidTask {
+class PrepareDependenciesTask extends BaseTask {
     final Map<File, File> bundles = [:]
     final Set<Pair<Integer, String>> androidDependencies = []
 

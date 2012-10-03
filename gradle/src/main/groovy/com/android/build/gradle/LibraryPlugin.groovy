@@ -31,11 +31,11 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
 import com.android.builder.BundleDependency
 
-class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> {
+class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
     private final static String DIR_BUNDLES = "bundles";
 
-    AndroidLibraryExtension extension
+    LibraryExtension extension
     BuildTypeData debugBuildTypeData
     BuildTypeData releaseBuildTypeData
 
@@ -43,7 +43,7 @@ class AndroidLibraryPlugin extends AndroidBasePlugin implements Plugin<Project> 
     void apply(Project project) {
         super.apply(project)
 
-        extension = project.extensions.create('android', AndroidLibraryExtension)
+        extension = project.extensions.create('android', LibraryExtension)
         setDefaultConfig(extension.defaultConfig)
 
         // create the source sets for the build type.

@@ -21,7 +21,7 @@ import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class DexTask extends BaseAndroidTask {
+class DexTask extends BaseTask {
     @OutputFile
     File outputFile
 

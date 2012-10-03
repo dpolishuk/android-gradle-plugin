@@ -21,7 +21,7 @@ import org.gradle.api.tasks.TaskAction
 /**
  * Run tests for a given variant
  */
-class RunTestsTask extends BaseAndroidTask {
+class RunTestsTask extends BaseTask {
 
     @Input
     File sdkDir

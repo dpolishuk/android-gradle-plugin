@@ -19,7 +19,7 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class CrunchResourcesTask extends BaseAndroidTask {
+class CrunchResourcesTask extends BaseTask {
     @OutputDirectory
     File outputDir
 

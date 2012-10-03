@@ -15,7 +15,7 @@
  */
 package com.android.build.gradle.internal
 
-import com.android.build.gradle.AndroidBasePlugin
+import com.android.build.gradle.BasePlugin
 import com.android.builder.AndroidBuilder
 import com.android.builder.VariantConfiguration
 
@@ -85,7 +85,7 @@ class TestAppVariant extends ApplicationVariant {
     }
 
     @Override
-    AndroidBuilder createBuilder(AndroidBasePlugin androidBasePlugin) {
+    AndroidBuilder createBuilder(BasePlugin androidBasePlugin) {
         AndroidBuilder androidBuilder = new AndroidBuilder(
                 androidBasePlugin.sdkParser,
                 androidBasePlugin.logger,
