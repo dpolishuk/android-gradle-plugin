@@ -16,6 +16,7 @@
 
 package com.android.builder;
 
+import com.android.annotations.NonNull;
 import junit.framework.TestCase;
 
 import java.io.File;
@@ -36,6 +37,11 @@ public class VariantConfigurationTest extends TestCase {
 
         public String getPackage(File manifestFile) {
             return mPackageName;
+        }
+
+        @Override
+        public int getMinSdkVersion(@NonNull File manifestFile) {
+            return 0;
         }
     }
 
