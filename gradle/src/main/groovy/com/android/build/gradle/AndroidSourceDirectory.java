@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
 
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.TaskAction
+package com.android.build.gradle;
 
-class UninstallTask extends BaseTask {
-    @Input
-    File sdkDir
+import org.gradle.tooling.model.SourceDirectory;
 
-    @TaskAction
-    void generate() {
-        String packageName = variant.package
-        logger.info("Uninstalling app: " + packageName)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args "uninstall"
-            args packageName
-        }
-    }
+/**
+ */
+public interface AndroidSourceDirectory extends SourceDirectory {
+
+    /**
+     * A concise name for the source directory (typically used to identify it in a collection).
+     */
+    String getName();
+
+    AndroidSourceDirectory srcDir(java.lang.Object o);
 }

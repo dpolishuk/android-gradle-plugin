@@ -16,6 +16,7 @@
 package com.android.build.gradle
 
 import com.android.builder.packaging.DuplicateFileException
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
@@ -32,6 +33,9 @@ class PackageApplicationTask extends BaseTask {
     @InputFile
     File dexFile
 
+    @Input
+    File javaResourceDir
+
     @InputDirectory @Optional
     File jniDir
 
@@ -42,6 +46,7 @@ class PackageApplicationTask extends BaseTask {
             getBuilder().packageApk(
                     getResourceFile().absolutePath,
                     getDexFile().absolutePath,
+                    getJavaResourceDir()?.absolutePath,
                     getJniDir()?.absolutePath,
                     getOutputFile().absolutePath)
         } catch (DuplicateFileException e) {

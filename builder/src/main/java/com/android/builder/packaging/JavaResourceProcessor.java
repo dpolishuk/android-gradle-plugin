@@ -73,8 +73,6 @@ public class JavaResourceProcessor {
             // not a directory? check if it's a file or doesn't exist
             if (sourceFolder.exists()) {
                 throw new PackagerException("%s is not a folder", sourceFolder);
-            } else {
-                throw new PackagerException("%s does not exist", sourceFolder);
             }
         }
     }

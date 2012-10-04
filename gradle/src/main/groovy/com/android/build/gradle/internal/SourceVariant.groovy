@@ -16,7 +16,7 @@
 package com.android.build.gradle.internal
 
 /**
- * Represents something that contains source and resources.
+ * Represents something that contains source and javaResources.
  */
 public interface SourceVariant {
     String getName()

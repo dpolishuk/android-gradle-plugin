@@ -17,7 +17,6 @@ package com.android.build.gradle
 
 import com.android.SdkConstants
 import com.android.build.gradle.internal.AndroidDependencyImpl
-import com.android.build.gradle.internal.AndroidSourceSet
 import com.android.build.gradle.internal.ApplicationVariant
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
@@ -28,10 +27,12 @@ import com.android.builder.DefaultSdkParser
 import com.android.builder.JarDependency
 import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
+import com.android.builder.SourceProvider
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
@@ -40,9 +41,11 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.artifacts.result.ResolvedModuleVersionResult
+import org.gradle.api.internal.plugins.ProcessResources
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.tasks.SourceSet
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.compile.JavaCompile
 
 /**
@@ -60,8 +63,8 @@ abstract class BasePlugin {
     private LoggerWrapper loggerWrapper
 
     private ProductFlavorData defaultConfigData
-    protected SourceSet mainSourceSet
-    protected SourceSet testSourceSet
+    protected AndroidSourceSet mainSourceSet
+    protected AndroidSourceSet testSourceSet
 
     protected Task uninstallAll
     protected Task assembleTest
@@ -71,17 +74,6 @@ abstract class BasePlugin {
     protected void apply(Project project) {
         this.project = project
         project.apply plugin: JavaBasePlugin
-
-        mainSourceSet = project.sourceSets.add("main")
-        testSourceSet = project.sourceSets.add("test")
-
-        // TODO remove when moving to custom source sets
-        project.tasks.remove(project.tasks.getByName("classes"))
-        project.tasks.remove(project.tasks.getByName("compileJava"))
-        project.tasks.remove(project.tasks.getByName("processResources"))
-        project.tasks.remove(project.tasks.getByName("testClasses"))
-        project.tasks.remove(project.tasks.getByName("compileTestJava"))
-        project.tasks.remove(project.tasks.getByName("processTestResources"))
 
         project.tasks.assemble.description =
             "Assembles all variants of all applications and secondary packages."
@@ -93,7 +85,11 @@ abstract class BasePlugin {
         uninstallAll.group = INSTALL_GROUP
     }
 
-    protected setDefaultConfig(ProductFlavor defaultConfig) {
+    protected setDefaultConfig(ProductFlavor defaultConfig,
+                               NamedDomainObjectContainer<AndroidSourceSet> sourceSets) {
+        mainSourceSet = sourceSets.create("main")
+        testSourceSet = sourceSets.create("test")
+
         defaultConfigData = new ProductFlavorData(defaultConfig, mainSourceSet,
                 testSourceSet, project)
     }
@@ -167,7 +163,7 @@ abstract class BasePlugin {
     protected String getRuntimeJars(ApplicationVariant variant) {
         AndroidBuilder androidBuilder = getAndroidBuilder(variant)
 
-        return androidBuilder.runtimeClasspath.join(":")
+        return androidBuilder.runtimeClasspath.join(File.pathSeparator)
     }
 
     protected ProcessManifestTask createProcessManifestTask(ApplicationVariant variant,
@@ -255,6 +251,31 @@ abstract class BasePlugin {
         return processResources
     }
 
+    protected void createProcessJavaResTask(ApplicationVariant variant) {
+        VariantConfiguration config = variant.config
+
+        Copy processResources = project.getTasks().add("process${variant.name}JavaRes",
+                ProcessResources.class);
+
+        // set the input
+        processResources.from(((AndroidSourceSet) config.defaultSourceSet).javaResources)
+
+        if (config.getType() != VariantConfiguration.Type.TEST) {
+            processResources.from(((AndroidSourceSet) config.buildTypeSourceSet).javaResources)
+        }
+        if (config.hasFlavors()) {
+            for (SourceProvider flavorSourceSet : config.flavorSourceSets) {
+                processResources.from(((AndroidSourceSet) flavorSourceSet).javaResources)
+            }
+        }
+
+        processResources.conventionMapping.destinationDir = {
+            project.file("$project.buildDir/javaResources/$variant.dirName")
+        }
+
+        variant.processJavaResources = processResources
+    }
+
     protected CompileAidlTask createAidlTask(ApplicationVariant variant) {
 
         VariantConfiguration config = variant.config
@@ -265,13 +286,13 @@ abstract class BasePlugin {
         compileTask.configObjects = variant.configObjects
 
         List<Object> sourceList = new ArrayList<Object>();
-        sourceList.add(config.defaultSourceSet.aidlSource)
+        sourceList.add(config.defaultSourceSet.aidlDir)
         if (config.getType() != VariantConfiguration.Type.TEST) {
-            sourceList.add(config.buildTypeSourceSet.aidlSource)
+            sourceList.add(config.buildTypeSourceSet.aidlDir)
         }
         if (config.hasFlavors()) {
-            for (com.android.builder.SourceSet flavorSourceSet : config.flavorSourceSets) {
-                sourceList.add(flavorSourceSet.aidlSource)
+            for (SourceProvider flavorSourceSet : config.flavorSourceSets) {
+                sourceList.add(flavorSourceSet.aidlDir)
             }
         }
 
@@ -296,14 +317,14 @@ abstract class BasePlugin {
         VariantConfiguration config = variant.config
 
         List<Object> sourceList = new ArrayList<Object>();
-        sourceList.add(((AndroidSourceSet) config.defaultSourceSet).sourceSet.java)
+        sourceList.add(((AndroidSourceSet) config.defaultSourceSet).java)
         sourceList.add({ processResources.sourceOutputDir })
         if (config.getType() != VariantConfiguration.Type.TEST) {
-            sourceList.add(((AndroidSourceSet) config.buildTypeSourceSet).sourceSet.java)
+            sourceList.add(((AndroidSourceSet) config.buildTypeSourceSet).java)
         }
         if (config.hasFlavors()) {
-            for (com.android.builder.SourceSet flavorSourceSet : config.flavorSourceSets) {
-                sourceList.add(((AndroidSourceSet) flavorSourceSet).sourceSet.java)
+            for (SourceProvider flavorSourceSet : config.flavorSourceSets) {
+                sourceList.add(((AndroidSourceSet) flavorSourceSet).java)
             }
         }
         compileTask.source = sourceList.toArray()
@@ -324,6 +345,20 @@ abstract class BasePlugin {
         compileTask.conventionMapping.dependencyCacheDir = {
             project.file("$project.buildDir/dependency-cache/$variant.dirName")
         }
+
+        // set source/target compatibility
+        // TODO: fix?
+        JavaPluginConvention convention = project.convention.getPlugin(JavaPluginConvention.class);
+
+        compileTask.conventionMapping.sourceCompatibility = {
+            convention.sourceCompatibility.toString()
+        }
+        compileTask.conventionMapping.targetCompatibility = {
+            convention.targetCompatibility.toString()
+        }
+
+        // setup the bootclasspath just before the task actually runs since this will
+        // force the sdk to be parsed.
         compileTask.doFirst {
             compileTask.options.bootClasspath = getRuntimeJars(variant)
         }
@@ -355,6 +390,9 @@ abstract class BasePlugin {
 
         // Add a task to generate resource source files
         def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+
+        // process java resources
+        createProcessJavaResTask(variant)
 
         def compileAidl = createAidlTask(variant)
 
@@ -415,7 +453,7 @@ abstract class BasePlugin {
 
         // Add a task to generate application package
         def packageApp = project.tasks.add("package${variant.name}", PackageApplicationTask)
-        packageApp.dependsOn variant.resourcePackage, dexTask
+        packageApp.dependsOn variant.resourcePackage, dexTask, variant.processJavaResources
         packageApp.plugin = this
         packageApp.variant = variant
         packageApp.configObjects = variant.configObjects
@@ -431,6 +469,9 @@ abstract class BasePlugin {
         }
         packageApp.conventionMapping.resourceFile = { variant.resourcePackage.singleFile }
         packageApp.conventionMapping.dexFile = { dexTask.outputFile }
+        packageApp.conventionMapping.javaResourceDir = {
+            variant.processJavaResources.destinationDir
+        }
 
         def appTask = packageApp
 

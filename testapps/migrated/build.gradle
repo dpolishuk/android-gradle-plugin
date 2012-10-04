@@ -1,0 +1,50 @@
+//
+// A basic Android application that follows all the conventions
+//
+buildscript {
+    repositories {
+        maven { url '../../repo' }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.2-SNAPSHOT'
+    }
+}
+apply plugin: 'android'
+
+android {
+    target = "android-15"
+
+    sourceSets {
+        main {
+            manifest {
+                srcFile 'AndroidManifest.xml'
+            }
+            java {
+                srcDir 'src'
+                exclude 'some/unwanted/package/**'
+            }
+            resources {
+                srcDir 'res'
+            }
+            assets {
+                srcDir 'assets'
+            }
+            javaResources {
+                srcDir 'src'
+            }
+        }
+        test {
+            java {
+                srcDir 'tests/src'
+            }
+        }
+
+        // Could also be done with:
+        //main.manifest.srcFile 'AndroidManifest.xml'
+        //main.java.srcDir 'src'
+        //main.resources.srcDir 'res'
+        //main.assets.srcDir 'assets'
+        //main.javaResources.srcDir 'src'
+        //test.java.srcDir 'tests/src'
+    }
+}

@@ -16,9 +16,14 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.AaptOptionsImpl
+import com.android.build.gradle.internal.AndroidSourceSetFactory
 import com.android.build.gradle.internal.DexOptionsImpl
 import com.android.build.gradle.internal.ProductFlavorDsl
 import org.gradle.api.Action
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ConfigurationContainer
+import org.gradle.api.internal.project.ProjectInternal
 
 /**
  * Base android extension for all android plugins.
@@ -31,7 +36,53 @@ class BaseExtension {
     final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
     final DexOptionsImpl dexOptions = new DexOptionsImpl()
 
-    BaseExtension() {
+    /**
+     * The source sets container.
+     */
+    final NamedDomainObjectContainer<AndroidSourceSet> sourceSetsContainer
+
+    BaseExtension(ProjectInternal project) {
+        sourceSetsContainer = project.container(AndroidSourceSet,
+                new AndroidSourceSetFactory(project.fileResolver))
+
+        sourceSetsContainer.whenObjectAdded { AndroidSourceSet sourceSet ->
+            ConfigurationContainer configurations = project.getConfigurations();
+
+            Configuration compileConfiguration = configurations.findByName(
+                    sourceSet.getCompileConfigurationName());
+            if (compileConfiguration == null) {
+                compileConfiguration = configurations.add(sourceSet.getCompileConfigurationName());
+            }
+            compileConfiguration.setVisible(false);
+            compileConfiguration.setDescription(
+                    String.format("Classpath for compiling the %s sources.", sourceSet.getName()));
+
+            Configuration packageConfiguration = configurations.findByName(
+                    sourceSet.getPackageConfigurationName());
+            if (packageConfiguration == null) {
+                packageConfiguration = configurations.add(sourceSet.getPackageConfigurationName());
+            }
+            packageConfiguration.setVisible(false);
+            packageConfiguration.extendsFrom(compileConfiguration);
+            packageConfiguration.setDescription(
+                    String.format("Classpath packaged with the compiled %s classes.",
+                            sourceSet.getName()));
+
+            sourceSet.getJava().srcDir(String.format("src/%s/java", sourceSet.getName()));
+            sourceSet.getJavaResources().srcDir(
+                    String.format("src/%s/resources", sourceSet.getName()));
+            sourceSet.getResources().srcDir(String.format("src/%s/res", sourceSet.getName()));
+            sourceSet.getAssets().srcDir(String.format("src/%s/assets", sourceSet.getName()));
+            sourceSet.getManifest().srcFile(
+                    String.format("src/%s/AndroidManifest.xml", sourceSet.getName()));
+            sourceSet.getAidl().srcDir(String.format("src/%s/aidl", sourceSet.getName()));
+            sourceSet.getRenderscript().srcDir(String.format("src/%s/rs", sourceSet.getName()));
+            sourceSet.getJni().srcDir(String.format("src/%s/jni", sourceSet.getName()));
+        }
+    }
+
+    void sourceSets(Action<NamedDomainObjectContainer<AndroidSourceSet>> action) {
+        action.execute(sourceSetsContainer)
     }
 
     void defaultConfig(Action<ProductFlavorDsl> action) {
@@ -45,4 +96,6 @@ class BaseExtension {
     void dexOptions(Action<DexOptionsImpl> action) {
         action.execute(dexOptions)
     }
+
+
 }

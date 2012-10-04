@@ -33,7 +33,7 @@ class InstallTask extends DefaultTask {
     @TaskAction
     void generate() {
         project.exec {
-            executable = new File(getSdkDir(), "platform-tools/adb")
+            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
             args 'install'
             args '-r'
             args getPackageFile()

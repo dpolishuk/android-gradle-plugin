@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
 
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.TaskAction
+package com.android.build.gradle.internal
 
-class UninstallTask extends BaseTask {
-    @Input
-    File sdkDir
+import com.android.build.gradle.AndroidSourceSet
+import org.gradle.api.NamedDomainObjectFactory
+import org.gradle.api.internal.file.FileResolver
 
-    @TaskAction
-    void generate() {
-        String packageName = variant.package
-        logger.info("Uninstalling app: " + packageName)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args "uninstall"
-            args packageName
-        }
+/**
+ */
+public class AndroidSourceSetFactory implements NamedDomainObjectFactory<AndroidSourceSet> {
+
+    final FileResolver fileResolver
+
+    public AndroidSourceSetFactory(FileResolver fileResolver) {
+        this.fileResolver = fileResolver
+    }
+
+    @Override
+    AndroidSourceSet create(String name) {
+        return new DefaultAndroidSourceSet(name, fileResolver)
     }
 }

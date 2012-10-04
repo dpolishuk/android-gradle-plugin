@@ -95,8 +95,8 @@ public class VariantConfigurationTest extends TestCase {
 
     private VariantConfiguration getVariant() {
         VariantConfiguration variant = new VariantConfiguration(
-                mDefaultConfig, new MockSourceSet("main"),
-                mBuildType, new MockSourceSet("debug"),
+                mDefaultConfig, new MockSourceProvider("main"),
+                mBuildType, new MockSourceProvider("debug"),
                 VariantConfiguration.Type.DEFAULT) {
             // don't do validation.
             @Override
@@ -105,15 +105,15 @@ public class VariantConfigurationTest extends TestCase {
             }
         };
 
-        variant.addProductFlavor(mFlavorConfig, new MockSourceSet("custom"));
+        variant.addProductFlavor(mFlavorConfig, new MockSourceProvider("custom"));
 
         return variant;
     }
 
     private VariantConfiguration getVariantWithManifestPackage(final String packageName) {
         VariantConfiguration variant = new VariantConfiguration(
-                mDefaultConfig, new MockSourceSet("main"),
-                mBuildType, new MockSourceSet("debug"),
+                mDefaultConfig, new MockSourceProvider("main"),
+                mBuildType, new MockSourceProvider("debug"),
                 VariantConfiguration.Type.DEFAULT) {
             @Override
             public String getPackageFromManifest() {
@@ -126,7 +126,7 @@ public class VariantConfigurationTest extends TestCase {
             }
         };
 
-        variant.addProductFlavor(mFlavorConfig, new MockSourceSet("custom"));
+        variant.addProductFlavor(mFlavorConfig, new MockSourceProvider("custom"));
         return variant;
     }
 }
