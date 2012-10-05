@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -858,7 +859,7 @@ public class AndroidBuilder {
             }
 
             // add the resources from the jar files.
-            List<JarDependency> jars = mVariant.getJars();
+            Collection<JarDependency> jars = mVariant.getJars();
             if (jars != null) {
                 for (JarDependency jar : jars) {
                     packager.addResourcesFromJar(new File(jar.getLocation()));
@@ -866,8 +867,11 @@ public class AndroidBuilder {
             }
 
             // add the resources from the libs jar files
-            List<AndroidDependency> libs = mVariant.getDirectLibraries();
-            addLibJavaResourcesToPackager(packager, libs);
+            List<AndroidDependency> libs = mVariant.getAllLibraries();
+
+            for (AndroidDependency lib : libs) {
+                packager.addResourcesFromJar(lib.getJarFile());
+            }
 
             // also add resources from library projects and jars
             if (jniLibsLocation != null) {
@@ -879,18 +883,6 @@ public class AndroidBuilder {
             throw new RuntimeException(e);
         } catch (SealedPackageException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private void addLibJavaResourcesToPackager(Packager packager, List<AndroidDependency> libs)
-            throws PackagerException, SealedPackageException, DuplicateFileException {
-        if (libs != null) {
-            for (AndroidDependency lib : libs) {
-                packager.addResourcesFromJar(lib.getJarFile());
-
-                // recursively add the dependencies of this library.
-                addLibJavaResourcesToPackager(packager, lib.getDependencies());
-            }
         }
     }
 }

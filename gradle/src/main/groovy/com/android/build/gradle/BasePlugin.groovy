@@ -18,6 +18,7 @@ package com.android.build.gradle
 import com.android.SdkConstants
 import com.android.build.gradle.internal.AndroidDependencyImpl
 import com.android.build.gradle.internal.ApplicationVariant
+import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
@@ -56,6 +57,8 @@ abstract class BasePlugin {
     public final static String INSTALL_GROUP = "Install"
 
     private final Map<Object, AndroidBuilder> builders = [:]
+
+    final List<ApplicationVariant> variants = []
 
     protected Project project
     protected File sdkDir
@@ -370,9 +373,15 @@ abstract class BasePlugin {
         variant.compileTask = compileTask
     }
 
-    protected void createTestTasks(TestAppVariant variant, ProductionAppVariant testedVariant) {
+    protected void createTestTasks(TestAppVariant variant, ProductionAppVariant testedVariant,
+                                   List<ConfigurationDependencies> configDependencies) {
+
+        def prepareDependenciesTask = createPrepareDependenciesTask(variant, configDependencies)
+
         // Add a task to process the manifest
         def processManifestTask = createProcessManifestTask(variant, "manifests")
+        // TODO - move this
+        processManifestTask.dependsOn prepareDependenciesTask
 
         // Add a task to crunch resource files
         def crunchTask = createCrunchResTask(variant)
@@ -395,6 +404,8 @@ abstract class BasePlugin {
         createProcessJavaResTask(variant)
 
         def compileAidl = createAidlTask(variant)
+        // TODO - move this
+        compileAidl.dependsOn prepareDependenciesTask
 
         // Add a task to compile the test application
         createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask,
@@ -521,41 +532,82 @@ abstract class BasePlugin {
         uninstallAll.dependsOn uninstallTask
     }
 
-    PrepareDependenciesTask createPrepareDependenciesTask(ProductionAppVariant variant) {
-        // TODO - include variant specific dependencies too
-        def compileClasspath = project.configurations.compile
+    protected void createDependencyReportTask() {
+        def androidDependencyTask = project.tasks.add("androidDependencies", AndroidDependencyTask)
+        androidDependencyTask.setDescription("Displays the Android dependencies of the project")
+        androidDependencyTask.setVariants(variants)
+        androidDependencyTask.setGroup("Help")
+    }
 
-        // TODO - shouldn't need to do this - fix this in Gradle
-        ensureConfigured(compileClasspath)
-
+    PrepareDependenciesTask createPrepareDependenciesTask(ApplicationVariant variant,
+            List<ConfigurationDependencies> configDependenciesList) {
         def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies",
                 PrepareDependenciesTask)
         prepareDependenciesTask.plugin = this
         prepareDependenciesTask.variant = variant
 
-        // TODO - should be able to infer this
-        prepareDependenciesTask.dependsOn compileClasspath
+        // look at all the flavors/build types of the variant and get all the libraries
+        // to make sure they are unarchived before the build runs.
+        for (ConfigurationDependencies configDependencies : configDependenciesList) {
+            prepareDependenciesTask.dependsOn configDependencies.configuration.buildDependencies
+            for (AndroidDependencyImpl lib : configDependencies.libraries) {
+                addDependencyToPrepareTask(prepareDependenciesTask, lib)
+                prepareDependenciesTask.add(lib.bundle, lib.bundleFolder)
+            }
+        }
 
-        def checker = new DependencyChecker(variant, logger)
+        return prepareDependenciesTask
+    }
 
-        // TODO - defer downloading until required
-        // TODO - build the library dependency graph
+    def resolveDependencies(List<ConfigurationDependencies> configs) {
+        // start with the default config and its test
+        resolveDependencyForConfig(defaultConfigData)
+        resolveDependencyForConfig(defaultConfigData.testConfigDependencies)
+
+        // and then loop on all the other configs
+        for (ConfigurationDependencies config : configs) {
+            resolveDependencyForConfig(config)
+            if (config.testConfigDependencies != null) {
+                resolveDependencyForConfig(config.testConfigDependencies)
+            }
+        }
+    }
+
+    def resolveDependencyForConfig(
+            ConfigurationDependencies configDependencies) {
+
+        def compileClasspath = configDependencies.configuration
+
+        // TODO - shouldn't need to do this - fix this in Gradle
+        ensureConfigured(compileClasspath)
+
+        def checker = new DependencyChecker(logger)
+
+        // TODO - defer downloading until required -- This is hard to do as we need the info to build the variant config.
         List<AndroidDependency> bundles = []
         List<JarDependency> jars = []
         Map<ModuleVersionIdentifier, List<AndroidDependency>> modules = [:]
         Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts = [:]
         collectArtifacts(compileClasspath, artifacts)
         compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
-            addDependency(dep.selected, prepareDependenciesTask, checker,
-                    bundles, jars, modules, artifacts)
+            addDependency(dep.selected, checker, bundles, jars, modules, artifacts)
         }
 
-        variant.config.androidDependencies = bundles
-        variant.config.jarDependencies = jars
+        configDependencies.libraries = bundles
+        configDependencies.jars = jars
 
         // TODO - filter bundles out of source set classpath
 
-        return prepareDependenciesTask
+        configureBuild(configDependencies)
+    }
+
+    def addDependencyToPrepareTask(PrepareDependenciesTask prepareDependenciesTask,
+                                   AndroidDependencyImpl lib) {
+        prepareDependenciesTask.add(lib.bundle, lib.bundleFolder)
+
+        for (AndroidDependencyImpl childLib : lib.dependencies) {
+            addDependencyToPrepareTask(prepareDependenciesTask, childLib)
+        }
     }
 
     def ensureConfigured(Configuration config) {
@@ -579,7 +631,6 @@ abstract class BasePlugin {
     }
 
     def addDependency(ResolvedModuleVersionResult moduleVersion,
-                      PrepareDependenciesTask prepareDependenciesTask,
                       DependencyChecker checker,
                       Collection<AndroidDependency> bundles,
                       Collection<JarDependency> jars,
@@ -597,7 +648,7 @@ abstract class BasePlugin {
 
             def nestedBundles = []
             moduleVersion.dependencies.each { ResolvedDependencyResult dep ->
-                addDependency(dep.selected, prepareDependenciesTask, checker, nestedBundles,
+                addDependency(dep.selected, checker, nestedBundles,
                         jars, modules, artifacts)
             }
 
@@ -606,8 +657,9 @@ abstract class BasePlugin {
                 if (artifact.type == 'alb') {
                     def explodedDir = project.file(
                             "$project.buildDir/exploded-bundles/$artifact.file.name")
-                    bundlesForThisModule << new AndroidDependencyImpl(explodedDir, nestedBundles)
-                    prepareDependenciesTask.add(artifact.file, explodedDir)
+                    bundlesForThisModule << new AndroidDependencyImpl(
+                            id.group + ":" + id.name + ":" + id.version,
+                            explodedDir, nestedBundles, artifact.file)
                 } else {
                     // TODO - need the correct values for the boolean flags
                     jars << new JarDependency(artifact.file.absolutePath, true, true, true)
@@ -620,6 +672,37 @@ abstract class BasePlugin {
         }
 
         bundles.addAll(bundlesForThisModule)
+    }
+
+    private void configureBuild(ConfigurationDependencies configurationDependencies) {
+        def configuration = configurationDependencies.configuration
+
+        addDependsOnTaskInOtherProjects(
+                project.getTasks().getByName(JavaBasePlugin.BUILD_NEEDED_TASK_NAME), true,
+                JavaBasePlugin.BUILD_NEEDED_TASK_NAME, configuration);
+        addDependsOnTaskInOtherProjects(
+                project.getTasks().getByName(JavaBasePlugin.BUILD_DEPENDENTS_TASK_NAME), false,
+                JavaBasePlugin.BUILD_DEPENDENTS_TASK_NAME, configuration);
+    }
+
+    /**
+     * Adds a dependency on tasks with the specified name in other projects.  The other projects
+     * are determined from project lib dependencies using the specified configuration name.
+     * These may be projects this project depends on or projects that depend on this project
+     * based on the useDependOn argument.
+     *
+     * @param task Task to add dependencies to
+     * @param useDependedOn if true, add tasks from projects this project depends on, otherwise
+     * use projects that depend on this one.
+     * @param otherProjectTaskName name of task in other projects
+     * @param configurationName name of configuration to use to find the other projects
+     */
+    private void addDependsOnTaskInOtherProjects(final Task task, boolean useDependedOn,
+                                                 String otherProjectTaskName,
+                                                 Configuration configuration) {
+        Project project = task.getProject();
+        task.dependsOn(configuration.getTaskDependencyFromProjectDependency(
+                useDependedOn, otherProjectTaskName));
     }
 }
 

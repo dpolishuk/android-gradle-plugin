@@ -15,7 +15,6 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.ApplicationVariant
 import com.android.utils.ILogger
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 
@@ -24,25 +23,18 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier
  */
 class DependencyChecker {
 
-    final ApplicationVariant variant
     final logger
-    final int minSdkVersion
+    final List<Integer> mFoundAndroidApis = []
+    final List<String> mFoundBouncyCastle = []
 
-    DependencyChecker(ApplicationVariant variant, ILogger logger) {
-        this.variant = variant
+    DependencyChecker(ILogger logger) {
         this.logger = logger;
-        this.minSdkVersion = variant.config.getMinSdkVersion()
     }
 
-    private boolean excluded(ModuleVersionIdentifier id) {
+    boolean excluded(ModuleVersionIdentifier id) {
         if (id.group == 'com.google.android' && id.name == 'android') {
             int moduleLevel = getApiLevelFromMavenArtifact(id.version)
-
-            if (minSdkVersion < moduleLevel) {
-                throw new RuntimeException(String.format(
-                        "ERROR: Android API level %d is in the dependency graph, but minSdkVersion for '%s' is %d",
-                        moduleLevel, variant.name, minSdkVersion))
-            }
+            mFoundAndroidApis.add(moduleLevel)
 
             logger.info("Ignoring Android API artifact: " + id)
             return true
@@ -77,16 +69,7 @@ class DependencyChecker {
         }
 
         if (id.group == 'org.bouncycastle' && id.name.startsWith("bcprov")) {
-            if (minSdkVersion >= 11) {
-                // this is when the version of BouncyCastle inside Android was jarjar'ed so this
-                // is fine
-                return false;
-            }
-
-            // TODO check which version of BC is used by the platform and the app.
-            throw new RuntimeException(String.format(
-                    "ERROR: Dependency %s is conflicting with the internal version provided by Android. To use, please repackage with jarjar to change the class packages",
-                    id))
+            mFoundBouncyCastle.add(id.version)
         }
 
         return false
