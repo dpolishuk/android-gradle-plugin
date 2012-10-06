@@ -15,23 +15,21 @@
  */
 package com.android.build.gradle.internal
 
+import com.android.build.gradle.AndroidSourceSet
 import com.android.builder.BuildType
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.tasks.SourceSet
 
 class BuildTypeData {
     final BuildType buildType
 
-    final SourceSet mainSource
-    final AndroidSourceSet androidSourceSet
+    final AndroidSourceSet sourceSet
 
     final Task assembleTask
 
-    BuildTypeData(BuildType buildType, SourceSet mainSource, Project project) {
+    BuildTypeData(BuildType buildType, AndroidSourceSet sourceSet, Project project) {
         this.buildType = buildType
-        this.mainSource = mainSource
-        androidSourceSet = new AndroidSourceSet(mainSource, project)
+        this.sourceSet = sourceSet
 
         assembleTask = project.tasks.add("assemble${buildType.name.capitalize()}")
         assembleTask.description = "Assembles all ${buildType.name.capitalize()} builds"

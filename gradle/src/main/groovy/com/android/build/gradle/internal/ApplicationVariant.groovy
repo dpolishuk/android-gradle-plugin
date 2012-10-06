@@ -15,13 +15,14 @@
  */
 package com.android.build.gradle.internal
 
+import com.android.build.gradle.BasePlugin
 import com.android.builder.AndroidBuilder
 import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Task
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.compile.JavaCompile
-import com.android.build.gradle.BasePlugin
 
 /**
  * Represents something that can be packaged into an APK and installed.
@@ -29,9 +30,12 @@ import com.android.build.gradle.BasePlugin
 public abstract class ApplicationVariant {
 
     final VariantConfiguration config
+    Iterable<Object> configObjects
+
     FileCollection resourcePackage
     JavaCompile compileTask
-    Iterable<Object> configObjects
+    Copy processJavaResources
+
     Task assembleTask
     Task installTask
     Task uninstallTask
@@ -51,6 +55,8 @@ public abstract class ApplicationVariant {
     List<String> getBuildConfigLines() {
         return config.buildConfigLines
     }
+
+    abstract String getName()
 
     abstract String getDescription()
 

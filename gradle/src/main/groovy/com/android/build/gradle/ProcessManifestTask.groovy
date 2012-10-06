@@ -15,9 +15,9 @@
  */
 package com.android.build.gradle
 
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.InputFiles
 
 /**
  */

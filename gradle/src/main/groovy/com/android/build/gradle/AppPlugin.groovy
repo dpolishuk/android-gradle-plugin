@@ -25,9 +25,9 @@ import com.android.builder.BuildType
 import com.android.builder.VariantConfiguration
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.ListMultimap
-
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.BasePlugin
 
 class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
@@ -44,8 +44,8 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         def productFlavorContainer = project.container(ProductFlavorDsl)
 
         extension = project.extensions.create('android', AppExtension,
-                buildTypeContainer, productFlavorContainer)
-        setDefaultConfig(extension.defaultConfig)
+                (ProjectInternal) project, buildTypeContainer, productFlavorContainer)
+        setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         buildTypeContainer.whenObjectAdded { BuildType buildType ->
             addBuildType(buildType)
@@ -79,12 +79,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
             throw new RuntimeException("BuildType names cannot collide with ProductFlavor names")
         }
 
-        def sourceSet = project.sourceSets.add(buildType.name)
-
-        // TODO remove when moving to custom source sets
-        project.tasks.remove(project.tasks.getByName("${buildType.name}Classes"))
-        project.tasks.remove(project.tasks.getByName("compile${buildType.name.capitalize()}Java"))
-        project.tasks.remove(project.tasks.getByName("process${buildType.name.capitalize()}Resources"))
+        def sourceSet = extension.sourceSetsContainer.create(buildType.name)
 
         BuildTypeData buildTypeData = new BuildTypeData(buildType, sourceSet, project)
         project.tasks.assemble.dependsOn buildTypeData.assembleTask
@@ -100,17 +95,9 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
             throw new RuntimeException("ProductFlavor names cannot collide with BuildType names")
         }
 
-        def mainSourceSet = project.sourceSets.add(productFlavor.name)
+        def mainSourceSet = extension.sourceSetsContainer.create(productFlavor.name)
         String testName = "test${productFlavor.name.capitalize()}"
-        def testSourceSet = project.sourceSets.add(testName)
-
-        // TODO remove when moving to custom source sets
-        project.tasks.remove(project.tasks.getByName("${productFlavor.name}Classes"))
-        project.tasks.remove(project.tasks.getByName("compile${productFlavor.name.capitalize()}Java"))
-        project.tasks.remove(project.tasks.getByName("process${productFlavor.name.capitalize()}Resources"))
-        project.tasks.remove(project.tasks.getByName("${testName}Classes"))
-        project.tasks.remove(project.tasks.getByName("compile${testName.capitalize()}Java"))
-        project.tasks.remove(project.tasks.getByName("process${testName.capitalize()}Resources"))
+        def testSourceSet = extension.sourceSetsContainer.create(testName)
 
         ProductFlavorData productFlavorData = new ProductFlavorData(
                 productFlavor, mainSourceSet, testSourceSet, project)
@@ -192,8 +179,8 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         for (BuildTypeData buildTypeData : buildTypes.values()) {
 
             def variantConfig = new VariantConfiguration(
-                    defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
-                    buildTypeData.buildType, buildTypeData.androidSourceSet)
+                    defaultConfigData.productFlavor, defaultConfigData.sourceSet,
+                    buildTypeData.buildType, buildTypeData.sourceSet)
 
             ProductionAppVariant productionAppVariant = addVariant(variantConfig,
                     buildTypeData.assembleTask)
@@ -206,7 +193,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         assert testedVariant != null
 
         def testVariantConfig = new VariantConfiguration(
-                defaultConfigData.productFlavor, defaultConfigData.androidTestSourceSet,
+                defaultConfigData.productFlavor, defaultConfigData.testSourceSet,
                 testData.buildType, null,
                 VariantConfiguration.Type.TEST, testedVariant.config)
 
@@ -237,11 +224,11 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         for (BuildTypeData buildTypeData : buildTypes.values()) {
 
             def variantConfig = new VariantConfiguration(
-                    extension.defaultConfig, getDefaultConfigData().androidSourceSet,
-                    buildTypeData.buildType, buildTypeData.androidSourceSet)
+                    extension.defaultConfig, getDefaultConfigData().sourceSet,
+                    buildTypeData.buildType, buildTypeData.sourceSet)
 
             for (ProductFlavorData data : flavorDataList) {
-                variantConfig.addProductFlavor(data.productFlavor, data.androidSourceSet)
+                variantConfig.addProductFlavor(data.productFlavor, data.sourceSet)
             }
 
             ProductionAppVariant productionAppVariant = addVariant(variantConfig, null)
@@ -263,12 +250,12 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         assert testedVariant != null
 
         def testVariantConfig = new VariantConfiguration(
-                extension.defaultConfig, getDefaultConfigData().androidTestSourceSet,
+                extension.defaultConfig, getDefaultConfigData().testSourceSet,
                 testData.buildType, null,
                 VariantConfiguration.Type.TEST, testedVariant.config)
 
         for (ProductFlavorData data : flavorDataList) {
-            testVariantConfig.addProductFlavor(data.productFlavor, data.androidTestSourceSet)
+            testVariantConfig.addProductFlavor(data.productFlavor, data.testSourceSet)
         }
 
         // TODO: add actual dependencies
@@ -313,6 +300,9 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
 
         // Add a task to generate resource source files
         def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+
+        // Add a task to process the java resources
+        createProcessJavaResTask(variant)
 
         def compileAidl = createAidlTask(variant)
         // TODO - move this

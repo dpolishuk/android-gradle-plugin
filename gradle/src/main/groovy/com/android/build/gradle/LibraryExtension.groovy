@@ -18,14 +18,15 @@ package com.android.build.gradle
 import com.android.build.gradle.internal.BuildTypeDsl
 import com.android.builder.BuildType
 import org.gradle.api.Action
+import org.gradle.api.internal.project.ProjectInternal
 
 class LibraryExtension extends BaseExtension {
 
     final BuildTypeDsl debug = new BuildTypeDsl(BuildType.DEBUG)
     final BuildTypeDsl release = new BuildTypeDsl(BuildType.RELEASE)
 
-    LibraryExtension() {
-        super()
+    LibraryExtension(ProjectInternal project) {
+        super(project)
     }
 
     void debug(Action<BuildTypeDsl> action) {

@@ -19,6 +19,7 @@ import com.android.build.gradle.internal.BuildTypeDsl
 import com.android.build.gradle.internal.ProductFlavorDsl
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.internal.project.ProjectInternal
 
 class AppExtension extends BaseExtension {
     final NamedDomainObjectContainer<ProductFlavorDsl> productFlavors
@@ -28,8 +29,10 @@ class AppExtension extends BaseExtension {
 
     String testBuildType = "debug"
 
-    AppExtension(NamedDomainObjectContainer<BuildTypeDsl> buildTypes,
-                     NamedDomainObjectContainer<ProductFlavorDsl> productFlavors) {
+    AppExtension(ProjectInternal project,
+                 NamedDomainObjectContainer<BuildTypeDsl> buildTypes,
+                 NamedDomainObjectContainer<ProductFlavorDsl> productFlavors) {
+        super(project)
         this.buildTypes = buildTypes
         this.productFlavors = productFlavors
     }

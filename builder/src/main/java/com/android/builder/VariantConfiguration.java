@@ -37,14 +37,14 @@ public class VariantConfiguration {
     final static ManifestParser sManifestParser = new DefaultManifestParser();
 
     private final ProductFlavor mDefaultConfig;
-    private final SourceSet mDefaultSourceSet;
+    private final SourceProvider mDefaultSourceProvider;
 
     private final BuildType mBuildType;
-    /** SourceSet for the BuildType. Can be null */
-    private final SourceSet mBuildTypeSourceSet;
+    /** SourceProvider for the BuildType. Can be null */
+    private final SourceProvider mBuildTypeSourceProvider;
 
     private final List<ProductFlavor> mFlavorConfigs = Lists.newArrayList();
-    private final List<SourceSet> mFlavorSourceSets = Lists.newArrayList();
+    private final List<SourceProvider> mFlavorSourceProviders = Lists.newArrayList();
 
     private final Type mType;
     /** Optional tested config in case type is Type#TEST */
@@ -75,15 +75,15 @@ public class VariantConfiguration {
      * This creates a config with a {@link Type#DEFAULT} type.
      *
      * @param defaultConfig
-     * @param defaultSourceSet
+     * @param defaultSourceProvider
      * @param buildType
-     * @param buildTypeSourceSet
+     * @param buildTypeSourceProvider
      */
     public VariantConfiguration(
-            @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
-            @NonNull BuildType buildType, @NonNull SourceSet buildTypeSourceSet) {
-        this(defaultConfig, defaultSourceSet,
-                buildType, buildTypeSourceSet,
+            @NonNull ProductFlavor defaultConfig, @NonNull SourceProvider defaultSourceProvider,
+            @NonNull BuildType buildType, @NonNull SourceProvider buildTypeSourceProvider) {
+        this(defaultConfig, defaultSourceProvider,
+                buildType, buildTypeSourceProvider,
                 Type.DEFAULT, null /*testedConfig*/);
     }
 
@@ -91,37 +91,37 @@ public class VariantConfiguration {
      * Creates the configuration with the base source set for a given {@link Type}.
      *
      * @param defaultConfig
-     * @param defaultSourceSet
+     * @param defaultSourceProvider
      * @param buildType
-     * @param buildTypeSourceSet
+     * @param buildTypeSourceProvider
      * @param type
      */
     public VariantConfiguration(
-            @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
-            @NonNull BuildType buildType, @NonNull SourceSet buildTypeSourceSet,
+            @NonNull ProductFlavor defaultConfig, @NonNull SourceProvider defaultSourceProvider,
+            @NonNull BuildType buildType, @NonNull SourceProvider buildTypeSourceProvider,
             @NonNull Type type) {
-        this(defaultConfig, defaultSourceSet,
-                buildType, buildTypeSourceSet,
+        this(defaultConfig, defaultSourceProvider,
+                buildType, buildTypeSourceProvider,
                 type, null /*testedConfig*/);
     }
 
     /**
      * Creates the configuration with the base source set, and whether it is a library.
      * @param defaultConfig
-     * @param defaultSourceSet
+     * @param defaultSourceProvider
      * @param buildType
-     * @param buildTypeSourceSet
+     * @param buildTypeSourceProvider
      * @param type
      * @param testedConfig
      */
     public VariantConfiguration(
-            @NonNull ProductFlavor defaultConfig, @NonNull SourceSet defaultSourceSet,
-            @NonNull BuildType buildType, SourceSet buildTypeSourceSet,
+            @NonNull ProductFlavor defaultConfig, @NonNull SourceProvider defaultSourceProvider,
+            @NonNull BuildType buildType, SourceProvider buildTypeSourceProvider,
             @NonNull Type type, @Nullable VariantConfiguration testedConfig) {
         mDefaultConfig = checkNotNull(defaultConfig);
-        mDefaultSourceSet = checkNotNull(defaultSourceSet);
+        mDefaultSourceProvider = checkNotNull(defaultSourceProvider);
         mBuildType = checkNotNull(buildType);
-        mBuildTypeSourceSet = buildTypeSourceSet;
+        mBuildTypeSourceProvider = buildTypeSourceProvider;
         mType = checkNotNull(type);
         mTestedConfig = testedConfig;
         checkState(mType != Type.TEST || mTestedConfig != null);
@@ -144,12 +144,12 @@ public class VariantConfiguration {
      * comes to resolving Android resources overlays (ie earlier added flavors supersedes
      * latter added ones).
      *
-     * @param sourceSet the configured product flavor
+     * @param sourceProvider the configured product flavor
      */
     public void addProductFlavor(@NonNull ProductFlavor productFlavor,
-                                 @NonNull SourceSet sourceSet) {
+                                 @NonNull SourceProvider sourceProvider) {
         mFlavorConfigs.add(productFlavor);
-        mFlavorSourceSets.add(sourceSet);
+        mFlavorSourceProviders.add(sourceProvider);
         mMergedFlavor = productFlavor.mergeOver(mMergedFlavor);
     }
 
@@ -182,8 +182,8 @@ public class VariantConfiguration {
         return mDefaultConfig;
     }
 
-    public SourceSet getDefaultSourceSet() {
-        return mDefaultSourceSet;
+    public SourceProvider getDefaultSourceSet() {
+        return mDefaultSourceProvider;
     }
 
     public ProductFlavor getMergedFlavor() {
@@ -195,10 +195,10 @@ public class VariantConfiguration {
     }
 
     /**
-     * The SourceSet for the BuildType. Can be null.
+     * The SourceProvider for the BuildType. Can be null.
      */
-    public SourceSet getBuildTypeSourceSet() {
-        return mBuildTypeSourceSet;
+    public SourceProvider getBuildTypeSourceSet() {
+        return mBuildTypeSourceProvider;
     }
 
     public boolean hasFlavors() {
@@ -209,8 +209,8 @@ public class VariantConfiguration {
         return mFlavorConfigs;
     }
 
-    public Iterable<SourceSet> getFlavorSourceSets() {
-        return mFlavorSourceSets;
+    public Iterable<SourceProvider> getFlavorSourceSets() {
+        return mFlavorSourceProviders;
     }
 
     public boolean hasLibraries() {
@@ -363,7 +363,7 @@ public class VariantConfiguration {
      * Reads the package name from the manifest.
      */
     public String getPackageFromManifest() {
-        File manifestLocation = mDefaultSourceSet.getAndroidManifest();
+        File manifestLocation = mDefaultSourceProvider.getManifestFile();
         return sManifestParser.getPackage(manifestLocation);
     }
 
@@ -371,7 +371,7 @@ public class VariantConfiguration {
         int minSdkVersion = mMergedFlavor.getMinSdkVersion();
         if (minSdkVersion == -1) {
             // read it from the main manifest
-            File manifestLocation = mDefaultSourceSet.getAndroidManifest();
+            File manifestLocation = mDefaultSourceProvider.getManifestFile();
             minSdkVersion = sManifestParser.getMinSdkVersion(manifestLocation);
         }
 
@@ -396,21 +396,21 @@ public class VariantConfiguration {
     public List<File> getManifestInputs() {
         List<File> inputs = Lists.newArrayList();
 
-        File defaultManifest = mDefaultSourceSet.getAndroidManifest();
+        File defaultManifest = mDefaultSourceProvider.getManifestFile();
         // this could not exist in a test project.
         if (defaultManifest != null && defaultManifest.isFile()) {
             inputs.add(defaultManifest);
         }
 
-        if (mBuildTypeSourceSet != null) {
-            File typeLocation = mBuildTypeSourceSet.getAndroidManifest();
+        if (mBuildTypeSourceProvider != null) {
+            File typeLocation = mBuildTypeSourceProvider.getManifestFile();
             if (typeLocation != null && typeLocation.isFile()) {
                 inputs.add(typeLocation);
             }
         }
 
-        for (SourceSet sourceSet : mFlavorSourceSets) {
-            File f = sourceSet.getAndroidManifest();
+        for (SourceProvider sourceProvider : mFlavorSourceProviders) {
+            File f = sourceProvider.getManifestFile();
             if (f != null && f.isFile()) {
                 inputs.add(f);
             }
@@ -435,21 +435,21 @@ public class VariantConfiguration {
     public List<File> getResourceInputs() {
         List<File> inputs = Lists.newArrayList();
 
-        if (mBuildTypeSourceSet != null) {
-            File typeResLocation = mBuildTypeSourceSet.getAndroidResources();
+        if (mBuildTypeSourceProvider != null) {
+            File typeResLocation = mBuildTypeSourceProvider.getResourcesDir();
             if (typeResLocation != null) {
                 inputs.add(typeResLocation);
             }
         }
 
-        for (SourceSet sourceSet : mFlavorSourceSets) {
-            File flavorResLocation = sourceSet.getAndroidResources();
+        for (SourceProvider sourceProvider : mFlavorSourceProviders) {
+            File flavorResLocation = sourceProvider.getResourcesDir();
             if (flavorResLocation != null) {
                 inputs.add(flavorResLocation);
             }
         }
 
-        File mainResLocation = mDefaultSourceSet.getAndroidResources();
+        File mainResLocation = mDefaultSourceProvider.getResourcesDir();
         if (mainResLocation != null) {
             inputs.add(mainResLocation);
         }
@@ -487,27 +487,13 @@ public class VariantConfiguration {
     public Set<File> getCompileClasspath() {
         Set<File> classpath = Sets.newHashSet();
 
-        for (File f : mDefaultSourceSet.getCompileClasspath()) {
-            classpath.add(f);
-        }
-
-        if (mBuildTypeSourceSet != null) {
-            for (File f : mBuildTypeSourceSet.getCompileClasspath()) {
-                classpath.add(f);
-            }
-        }
-
-        for (SourceSet sourceSet : mFlavorSourceSets) {
-            for (File f : sourceSet.getCompileClasspath()) {
-                classpath.add(f);
-            }
-        }
-
         for (AndroidDependency lib : mFlatLibraries) {
             classpath.add(lib.getJarFile());
         }
 
-        // TODO: add jar list when we move to our own sourceset
+        for (JarDependency jar : mJars) {
+            classpath.add(new File(jar.getLocation()));
+        }
 
         return classpath;
     }
@@ -540,7 +526,7 @@ public class VariantConfiguration {
 
     protected void validate() {
         if (mType != Type.TEST) {
-            File manifest = mDefaultSourceSet.getAndroidManifest();
+            File manifest = mDefaultSourceProvider.getManifestFile();
             if (!manifest.isFile()) {
                 throw new IllegalArgumentException(
                         "Main Manifest missing from " + manifest.getAbsolutePath());

@@ -21,15 +21,15 @@ import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
-
+import com.android.builder.BundleDependency
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.MavenPlugin
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
-import com.android.builder.BundleDependency
 
 class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
@@ -43,21 +43,14 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
     void apply(Project project) {
         super.apply(project)
 
-        extension = project.extensions.create('android', LibraryExtension)
-        setDefaultConfig(extension.defaultConfig)
+        extension = project.extensions.create('android', LibraryExtension,
+                (ProjectInternal) project)
+        setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         // create the source sets for the build type.
         // the ones for the main product flavors are handled by the base plugin.
-        def debugSourceSet = project.sourceSets.add(BuildType.DEBUG)
-        def releaseSourceSet = project.sourceSets.add(BuildType.RELEASE)
-
-        // TODO remove when moving to custom source sets
-        project.tasks.remove(project.tasks.getByName("debugClasses"))
-        project.tasks.remove(project.tasks.getByName("compileDebugJava"))
-        project.tasks.remove(project.tasks.getByName("processDebugResources"))
-        project.tasks.remove(project.tasks.getByName("releaseClasses"))
-        project.tasks.remove(project.tasks.getByName("compileReleaseJava"))
-        project.tasks.remove(project.tasks.getByName("processReleaseResources"))
+        def debugSourceSet = extension.sourceSetsContainer.create(BuildType.DEBUG)
+        def releaseSourceSet = extension.sourceSetsContainer.create(BuildType.RELEASE)
 
         debugBuildTypeData = new BuildTypeData(extension.debug, debugSourceSet, project)
         releaseBuildTypeData = new BuildTypeData(extension.release, releaseSourceSet, project)
@@ -74,15 +67,15 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
     void createConfigurations() {
         def debugConfig = project.configurations.add(BuildType.DEBUG)
         def releaseConfig = project.configurations.add(BuildType.RELEASE)
-        debugConfig.extendsFrom(project.configurations.runtime)
-        releaseConfig.extendsFrom(project.configurations.runtime)
+        debugConfig.extendsFrom(project.configurations["package"])
+        releaseConfig.extendsFrom(project.configurations["package"])
         project.configurations["default"].extendsFrom(releaseConfig)
 
         // Adjust the pom scope mappings
         // TODO - this should be part of JavaBase plugin. Fix this in Gradle
         project.plugins.withType(MavenPlugin) {
             project.conf2ScopeMappings.addMapping(300, project.configurations.compile, "runtime")
-            project.conf2ScopeMappings.addMapping(300, project.configurations.runtime, "runtime")
+            project.conf2ScopeMappings.addMapping(300, project.configurations["package"], "runtime")
             project.conf2ScopeMappings.addMapping(300, releaseConfig, "runtime")
         }
     }
@@ -97,8 +90,8 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         def variantConfig = new VariantConfiguration(
-                defaultConfigData.productFlavor, defaultConfigData.androidSourceSet,
-                buildTypeData.buildType, buildTypeData.androidSourceSet,
+                defaultConfigData.productFlavor, defaultConfigData.sourceSet,
+                buildTypeData.buildType, buildTypeData.sourceSet,
                 VariantConfiguration.Type.LIBRARY)
 
         ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
@@ -117,6 +110,9 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         def processResources = createProcessResTask(variant, processManifestTask,
                 null /*crunchTask*/)
 
+        // process java resources
+        createProcessJavaResTask(variant)
+
         def compileAidl = createAidlTask(variant)
         // TODO - move this
         compileAidl.dependsOn prepareDependenciesTask
@@ -126,11 +122,10 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
                 compileAidl)
 
         // jar the classes.
-        Jar jar = project.tasks.add("package${buildTypeData.buildType.name}Jar", Jar);
+        Jar jar = project.tasks.add("package${buildTypeData.buildType.name.capitalize()}Jar", Jar);
+        jar.dependsOn variant.compileTask, variant.processJavaResources
         jar.from(variant.compileTask.outputs);
-        // TODO: replace with proper ProcessResources task with properly configured SourceDirectorySet
-        jar.from(defaultConfigData.androidSourceSet.javaResources);
-        jar.from(buildTypeData.androidSourceSet.javaResources);
+        jar.from(variant.processJavaResources.destinationDir)
 
         jar.destinationDir = project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")
         jar.archiveName = "classes.jar"
@@ -138,22 +133,22 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         jar.exclude(packageName + "/R.class")
         jar.exclude(packageName + "/R\$*.class")
 
-        // package the resources into the bundle folder
+        // package the android resources into the bundle folder
         Copy packageRes = project.tasks.add("package${variant.name}Res", Copy)
         // packageRes from 3 sources. the order is important to make sure the override works well.
         // TODO: fix the case of values -- need to merge the XML!
-        packageRes.from(defaultConfigData.androidSourceSet.androidResources,
-                buildTypeData.androidSourceSet.androidResources)
+        packageRes.from(defaultConfigData.sourceSet.resources.directory,
+                buildTypeData.sourceSet.resources.directory)
         packageRes.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/res"))
 
         // package the aidl files into the bundle folder
         Copy packageAidl = project.tasks.add("package${variant.name}Aidl", Copy)
         // packageAidl from 3 sources. the order is important to make sure the override works well.
-        packageAidl.from(defaultConfigData.androidSourceSet.aidlSource,
-                buildTypeData.androidSourceSet.aidlSource)
+        packageAidl.from(defaultConfigData.sourceSet.aidl.directory,
+                buildTypeData.sourceSet.aidl.directory)
         packageAidl.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/aidl"))
 
-        // package the resources into the bundle folder
+        // package the R symbol test file into the bundle folder
         Copy packageSymbol = project.tasks.add("package${variant.name}Symbols", Copy)
         packageSymbol.dependsOn processResources
         packageSymbol.from(processResources.textSymbolDir)
@@ -191,7 +186,7 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         def testVariantConfig = new VariantConfiguration(
-                defaultConfigData.productFlavor, defaultConfigData.androidTestSourceSet,
+                defaultConfigData.productFlavor, defaultConfigData.testSourceSet,
                 debugBuildTypeData.buildType, null,
                 VariantConfiguration.Type.TEST, testedVariant.config)
         // TODO: add actual dependencies

@@ -15,30 +15,26 @@
  */
 package com.android.build.gradle.internal
 
+import com.android.build.gradle.AndroidSourceSet
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.tasks.SourceSet
 
 class ProductFlavorData {
     final ProductFlavorDsl productFlavor
 
-    final SourceSet mainSource
-    final AndroidSourceSet androidSourceSet
+    final AndroidSourceSet sourceSet
 
-    final SourceSet testSource
-    final AndroidSourceSet androidTestSourceSet
+    final AndroidSourceSet testSourceSet
 
     Task assembleTask
 
-    ProductFlavorData(ProductFlavorDsl productFlavor, SourceSet mainSource, SourceSet testSource,
-                           Project project) {
+    ProductFlavorData(ProductFlavorDsl productFlavor,
+                      AndroidSourceSet sourceSet, AndroidSourceSet testSourceSet,
+                      Project project) {
         this.productFlavor = productFlavor
 
-        this.mainSource = mainSource
-        androidSourceSet = new AndroidSourceSet(mainSource, project)
-
-        this.testSource = testSource
-        androidTestSourceSet = new AndroidSourceSet(testSource, project)
+        this.sourceSet = sourceSet
+        this.testSourceSet = testSourceSet
     }
 
 

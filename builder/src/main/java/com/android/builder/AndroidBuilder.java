@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -68,7 +67,7 @@ import static com.google.common.base.Preconditions.checkState;
  * {@link #processManifest(String)}
  * {@link #processResources(String, String, java.util.List, String, String, String, String, AaptOptions)}
  * {@link #convertBytecode(java.util.List, java.util.List, String, DexOptions)}
- * {@link #packageApk(String, String, String, String)}
+ * {@link #packageApk(String, String, String, String, String)}
  *
  * Java compilation is not handled but the builder provides the runtime classpath with
  * {@link #getRuntimeClasspath()}.
@@ -334,17 +333,17 @@ public class AndroidBuilder {
     private void mergeManifest(VariantConfiguration config, String outManifestLocation) {
         try {
             // gather the app manifests: main + buildType and Flavors.
-            File mainManifest = config.getDefaultSourceSet().getAndroidManifest();
+            File mainManifest = config.getDefaultSourceSet().getManifestFile();
 
             List<File> subManifests = Lists.newArrayList();
 
-            File typeLocation = config.getBuildTypeSourceSet().getAndroidManifest();
+            File typeLocation = config.getBuildTypeSourceSet().getManifestFile();
             if (typeLocation != null && typeLocation.isFile()) {
                 subManifests.add(typeLocation);
             }
 
-            for (SourceSet sourceSet : config.getFlavorSourceSets()) {
-                File f = sourceSet.getAndroidManifest();
+            for (SourceProvider sourceProvider : config.getFlavorSourceSets()) {
+                File f = sourceProvider.getManifestFile();
                 if (f != null && f.isFile()) {
                     subManifests.add(f);
                 }
@@ -596,7 +595,7 @@ public class AndroidBuilder {
 //            command.add(flavorAssetsLocation);
 //        }
 
-        File mainAssetsLocation = mVariant.getDefaultSourceSet().getAndroidAssets();
+        File mainAssetsLocation = mVariant.getDefaultSourceSet().getAssetsDir();
         if (mainAssetsLocation != null && mainAssetsLocation.isDirectory()) {
             command.add("-A");
             command.add(mainAssetsLocation.getAbsolutePath());
@@ -797,6 +796,7 @@ public class AndroidBuilder {
     public void packageApk(
             @NonNull String androidResPkgLocation,
             @NonNull String classesDexLocation,
+            @Nullable String javaResourcesLocation,
             @Nullable String jniLibsLocation,
             @NonNull String outApkLocation) throws DuplicateFileException {
         checkState(mVariant != null, "No Variant Configuration has been set.");
@@ -853,32 +853,8 @@ public class AndroidBuilder {
             // figure out conflicts!
             JavaResourceProcessor resProcessor = new JavaResourceProcessor(packager);
 
-            if (mVariant.getBuildTypeSourceSet() != null) {
-                Set<File> buildTypeJavaResLocations =
-                        mVariant.getBuildTypeSourceSet().getJavaResources();
-                for (File buildTypeJavaResLocation : buildTypeJavaResLocations) {
-                    if (buildTypeJavaResLocation != null &&
-                            buildTypeJavaResLocation.isDirectory()) {
-                        resProcessor.addSourceFolder(buildTypeJavaResLocation.getAbsolutePath());
-                    }
-                }
-            }
-
-            for (SourceSet sourceSet : mVariant.getFlavorSourceSets()) {
-
-                Set<File> flavorJavaResLocations = sourceSet.getJavaResources();
-                for (File flavorJavaResLocation : flavorJavaResLocations) {
-                    if (flavorJavaResLocation != null && flavorJavaResLocation.isDirectory()) {
-                        resProcessor.addSourceFolder(flavorJavaResLocation.getAbsolutePath());
-                    }
-                }
-            }
-
-            Set<File> mainJavaResLocations = mVariant.getDefaultSourceSet().getJavaResources();
-            for (File mainJavaResLocation : mainJavaResLocations) {
-                if (mainJavaResLocation != null && mainJavaResLocation.isDirectory()) {
-                    resProcessor.addSourceFolder(mainJavaResLocation.getAbsolutePath());
-                }
+            if (javaResourcesLocation != null) {
+                resProcessor.addSourceFolder(javaResourcesLocation);
             }
 
             // add the resources from the jar files.
