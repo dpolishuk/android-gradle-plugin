@@ -10,7 +10,7 @@ apply plugin: 'android-library'
 apply plugin: 'maven'
 
 repositories {
-    maven { url '../../../repo' }
+    mavenLocal()
     mavenCentral()
 }
 
@@ -25,3 +25,11 @@ android {
 group = 'com.example.android.multiproject'
 archivesBaseName = 'baseLib'
 version = '1.0'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri("../testrepo"))
+        }
+    }
+}

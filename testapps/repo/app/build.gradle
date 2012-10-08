@@ -10,7 +10,7 @@ apply plugin: 'android'
 apply plugin: 'maven'
 
 repositories {
-    maven { url '../../../repo' }
+    mavenLocal()
     mavenCentral()
 }
 
@@ -21,3 +21,4 @@ dependencies {
 android {
     target 'android-15'
 }
+

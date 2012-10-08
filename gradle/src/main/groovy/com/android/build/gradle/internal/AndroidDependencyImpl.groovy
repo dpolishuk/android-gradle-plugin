@@ -20,9 +20,12 @@ import com.android.builder.BundleDependency
 
 class AndroidDependencyImpl extends BundleDependency {
     final List<AndroidDependency> dependencies;
+    final File bundle
 
-    AndroidDependencyImpl(File explodedBundle, List<AndroidDependency> dependencies) {
-        super(explodedBundle)
+    AndroidDependencyImpl(String name, File explodedBundle, List<AndroidDependency> dependencies,
+                          File bundle) {
+        super(explodedBundle, name)
         this.dependencies = dependencies
+        this.bundle = bundle
     }
 }

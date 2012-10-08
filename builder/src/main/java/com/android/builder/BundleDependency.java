@@ -17,6 +17,8 @@
 package com.android.builder;
 
 import com.android.SdkConstants;
+import com.android.annotations.NonNull;
+import com.android.annotations.Nullable;
 
 import java.io.File;
 
@@ -26,11 +28,30 @@ import java.io.File;
  */
 public abstract class BundleDependency implements AndroidDependency {
 
+    private final String mName;
     private final File mBundleFolder;
 
-    protected BundleDependency(File bundleFolder) {
-
+    /**
+     * Creates the bundle dependency with an optional name
+     * @param bundleFolder the folder containing the library
+     * @param name an optional name
+     */
+    protected BundleDependency(@NonNull File bundleFolder, @Nullable String name) {
+        mName = name;
         mBundleFolder = bundleFolder;
+    }
+
+    protected BundleDependency(@NonNull File bundleFolder) {
+        this(bundleFolder, null);
+    }
+
+    public String getName() {
+        return mName;
+    }
+
+    @Override
+    public String toString() {
+        return mName;
     }
 
     @Override
@@ -76,5 +97,26 @@ public abstract class BundleDependency implements AndroidDependency {
     @Override
     public File getLintJar() {
         return new File(mBundleFolder, "lint.jar");
+    }
+
+    public File getBundleFolder() {
+        return mBundleFolder;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BundleDependency that = (BundleDependency) o;
+
+        if (mName != null ? !mName.equals(that.mName) : that.mName != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return mName != null ? mName.hashCode() : 0;
     }
 }

@@ -56,6 +56,10 @@ public abstract class ApplicationVariant {
         return config.buildConfigLines
     }
 
+    public VariantConfiguration getVariantConfiguration() {
+        return config
+    }
+
     abstract String getName()
 
     abstract String getDescription()

@@ -16,12 +16,14 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.BuildTypeData
+import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
 import com.android.builder.BundleDependency
+import com.android.builder.JarDependency
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -81,22 +83,48 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
     }
 
     void createAndroidTasks() {
+        // resolve dependencies for all config
+        List<ConfigurationDependencies> dependencies = []
+        dependencies.add(debugBuildTypeData)
+        dependencies.add(releaseBuildTypeData)
+        resolveDependencies(dependencies)
+
         ProductionAppVariant testedVariant = createLibraryTasks(debugBuildTypeData)
         createLibraryTasks(releaseBuildTypeData)
         createTestTasks(testedVariant)
+        createDependencyReportTask()
     }
 
     ProductionAppVariant createLibraryTasks(BuildTypeData buildTypeData) {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
+
+        List<ConfigurationDependencies> configDependencies = []
+        configDependencies.add(defaultConfigData)
+        configDependencies.add(buildTypeData)
+
+        // list of dependency to set on the variantConfig
+        List<JarDependency> jars = []
+        jars.addAll(defaultConfigData.jars)
+        jars.addAll(buildTypeData.jars)
+
+        // the order of the libraries is important. In descending order:
+        // build types, defaultConfig.
+        List<AndroidDependency> libs = []
+        libs.addAll(buildTypeData.libraries)
+        libs.addAll(defaultConfigData.libraries)
 
         def variantConfig = new VariantConfiguration(
                 defaultConfigData.productFlavor, defaultConfigData.sourceSet,
                 buildTypeData.buildType, buildTypeData.sourceSet,
                 VariantConfiguration.Type.LIBRARY)
 
-        ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
+        variantConfig.setJarDependencies(jars)
+        variantConfig.setAndroidDependencies(libs)
 
-        def prepareDependenciesTask = createPrepareDependenciesTask(variant)
+        ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
+        variants.add(variant)
+
+        def prepareDependenciesTask = createPrepareDependenciesTask(variant, configDependencies)
 
         // Add a task to process the manifest(s)
         ProcessManifestTask processManifestTask = createProcessManifestTask(variant, DIR_BUNDLES)
@@ -171,7 +199,8 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
         // configure the variant to be testable.
         variantConfig.output = new BundleDependency(
-                project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")) {
+                project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"),
+                variant.getName()) {
 
             @Override
             List<AndroidDependency> getDependencies() {
@@ -185,15 +214,29 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
     void createTestTasks(ProductionAppVariant testedVariant) {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
+        List<ConfigurationDependencies> configDependencies = []
+        configDependencies.add(defaultConfigData.testConfigDependencies)
+
+        // list of dependency to set on the variantConfig
+        List<JarDependency> jars = []
+        jars.addAll(defaultConfigData.testConfigDependencies.jars)
+
+        // the order of the libraries is important. In descending order:
+        // build types, defaultConfig.
+        List<AndroidDependency> libs = []
+        libs.addAll(defaultConfigData.testConfigDependencies.libraries)
+
         def testVariantConfig = new VariantConfiguration(
                 defaultConfigData.productFlavor, defaultConfigData.testSourceSet,
                 debugBuildTypeData.buildType, null,
                 VariantConfiguration.Type.TEST, testedVariant.config)
-        // TODO: add actual dependencies
-        testVariantConfig.setAndroidDependencies(null)
+
+        testVariantConfig.setJarDependencies(jars)
+        testVariantConfig.setAndroidDependencies(libs)
 
         def testVariant = new TestAppVariant(testVariantConfig,)
-        createTestTasks(testVariant, testedVariant)
+        variants.add(testVariant)
+        createTestTasks(testVariant, testedVariant, configDependencies)
     }
 
     @Override

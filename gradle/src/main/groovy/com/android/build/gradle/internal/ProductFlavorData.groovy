@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidSourceSet
 import org.gradle.api.Project
 import org.gradle.api.Task
 
-class ProductFlavorData {
-    final ProductFlavorDsl productFlavor
+class ProductFlavorData extends ConfigurationDependencies {
 
-    final AndroidSourceSet sourceSet
+    final ProductFlavorDsl productFlavor
 
     final AndroidSourceSet testSourceSet
 
@@ -31,10 +31,12 @@ class ProductFlavorData {
     ProductFlavorData(ProductFlavorDsl productFlavor,
                       AndroidSourceSet sourceSet, AndroidSourceSet testSourceSet,
                       Project project) {
-        this.productFlavor = productFlavor
+        super(project, sourceSet)
 
-        this.sourceSet = sourceSet
+        this.productFlavor = productFlavor
         this.testSourceSet = testSourceSet
+
+        setTestConfigDependencies(new ConfigurationDependencies(project, testSourceSet))
     }
 
 

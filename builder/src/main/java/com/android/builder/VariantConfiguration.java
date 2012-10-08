@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +56,7 @@ public class VariantConfiguration {
 
     private ProductFlavor mMergedFlavor;
 
-    private final List<JarDependency> mJars = Lists.newArrayList();
+    private final Set<JarDependency> mJars = Sets.newHashSet();
 
     /** List of direct library dependencies. Each object defines its own dependencies. */
     private final List<AndroidDependency> mDirectLibraries = Lists.newArrayList();
@@ -157,7 +158,7 @@ public class VariantConfiguration {
         mJars.addAll(jars);
     }
 
-    public List<JarDependency> getJars() {
+    public Collection<JarDependency> getJars() {
         return mJars;
     }
 

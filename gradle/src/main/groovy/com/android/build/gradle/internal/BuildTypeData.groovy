@@ -20,16 +20,16 @@ import com.android.builder.BuildType
 import org.gradle.api.Project
 import org.gradle.api.Task
 
-class BuildTypeData {
-    final BuildType buildType
+class BuildTypeData extends ConfigurationDependencies {
 
-    final AndroidSourceSet sourceSet
+    final BuildType buildType
 
     final Task assembleTask
 
     BuildTypeData(BuildType buildType, AndroidSourceSet sourceSet, Project project) {
+        super(project, sourceSet)
+
         this.buildType = buildType
-        this.sourceSet = sourceSet
 
         assembleTask = project.tasks.add("assemble${buildType.name.capitalize()}")
         assembleTask.description = "Assembles all ${buildType.name.capitalize()} builds"

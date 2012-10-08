@@ -37,7 +37,6 @@ class PrepareDependenciesTask extends BaseTask {
         return bundles.keySet()
     }
 
-
     @OutputDirectories
     Iterable<File> getExplodedBundles() {
         return bundles.values()

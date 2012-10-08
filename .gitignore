@@ -10,6 +10,7 @@ testapps/*/build
 testapps/multiproject/*/build
 testapps/tictactoe/*/build
 testapps/applibtest/*/build
+testapps/flavorlib/*/build
 testapps/libsTest/*/build
 testapps/repo/*/build
 /repo
