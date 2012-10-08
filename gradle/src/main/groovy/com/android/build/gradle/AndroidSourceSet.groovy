@@ -30,24 +30,26 @@ public interface AndroidSourceSet {
     String getName();
 
     /**
-     * Returns the Java javaResources which are to be copied into the javaResources output directory.
+     * Returns the Java resources which are to be copied into the javaResources output directory.
      *
-     * @return the javaResources. Never returns null.
+     * @return the java resources. Never returns null.
      */
-    SourceDirectorySet getJavaResources();
+    SourceDirectorySet getResources();
 
     /**
-     * Configures the Java javaResources for this set.
+     * Configures the Java resources for this set.
      *
-     * <p>The given closure is used to configure the {@link SourceDirectorySet} which contains the javaResources.
+     * <p>The given closure is used to configure the {@link SourceDirectorySet} which contains the
+     * java resources.
      *
      * @param configureClosure The closure to use to configure the javaResources.
      * @return this
      */
-    AndroidSourceSet javaResources(Closure configureClosure);
+    AndroidSourceSet resources(Closure configureClosure);
 
     /**
-     * Returns the Java source which is to be compiled by the Java compiler into the class output directory.
+     * Returns the Java source which is to be compiled by the Java compiler into the class output
+     * directory.
      *
      * @return the Java source. Never returns null.
      */
@@ -56,7 +58,8 @@ public interface AndroidSourceSet {
     /**
      * Configures the Java source for this set.
      *
-     * <p>The given closure is used to configure the {@link SourceDirectorySet} which contains the Java source.
+     * <p>The given closure is used to configure the {@link SourceDirectorySet} which contains the
+     * Java source.
      *
      * @param configureClosure The closure to use to configure the Java source.
      * @return this
@@ -64,8 +67,8 @@ public interface AndroidSourceSet {
     AndroidSourceSet java(Closure configureClosure);
 
     /**
-     * All Java source files for this source set. This includes, for example, source which is directly compiled, and
-     * source which is indirectly compiled through joint compilation.
+     * All Java source files for this source set. This includes, for example, source which is
+     * directly compiled, and source which is indirectly compiled through joint compilation.
      *
      * @return the Java source. Never returns null.
      */
@@ -93,8 +96,8 @@ public interface AndroidSourceSet {
     AndroidSourceFile getManifest();
     AndroidSourceSet manifest(Closure configureClosure);
 
-    AndroidSourceDirectory getResources();
-    AndroidSourceSet resources(Closure configureClosure);
+    AndroidSourceDirectory getRes();
+    AndroidSourceSet res(Closure configureClosure);
 
     AndroidSourceDirectory getAssets();
     AndroidSourceSet assets(Closure configureClosure);

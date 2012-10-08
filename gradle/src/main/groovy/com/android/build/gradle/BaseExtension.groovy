@@ -69,9 +69,9 @@ class BaseExtension {
                             sourceSet.getName()));
 
             sourceSet.getJava().srcDir(String.format("src/%s/java", sourceSet.getName()));
-            sourceSet.getJavaResources().srcDir(
+            sourceSet.getResources().srcDir(
                     String.format("src/%s/resources", sourceSet.getName()));
-            sourceSet.getResources().srcDir(String.format("src/%s/res", sourceSet.getName()));
+            sourceSet.getRes().srcDir(String.format("src/%s/res", sourceSet.getName()));
             sourceSet.getAssets().srcDir(String.format("src/%s/assets", sourceSet.getName()));
             sourceSet.getManifest().srcFile(
                     String.format("src/%s/AndroidManifest.xml", sourceSet.getName()));

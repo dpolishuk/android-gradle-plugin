@@ -23,13 +23,13 @@ android {
                 srcDir 'src'
                 exclude 'some/unwanted/package/**'
             }
-            resources {
+            res {
                 srcDir 'res'
             }
             assets {
                 srcDir 'assets'
             }
-            javaResources {
+            resources {
                 srcDir 'src'
             }
         }
@@ -42,9 +42,9 @@ android {
         // Could also be done with:
         //main.manifest.srcFile 'AndroidManifest.xml'
         //main.java.srcDir 'src'
-        //main.resources.srcDir 'res'
+        //main.res.srcDir 'res'
         //main.assets.srcDir 'assets'
-        //main.javaResources.srcDir 'src'
+        //main.resources.srcDir 'src'
         //test.java.srcDir 'tests/src'
     }
 }
