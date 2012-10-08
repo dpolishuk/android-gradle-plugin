@@ -31,7 +31,7 @@ import org.gradle.api.internal.project.ProjectInternal
 class BaseExtension {
 
     String target
-    final ProductFlavorDsl defaultConfig = new ProductFlavorDsl("main");
+    final ProductFlavorDsl defaultConfig = new ProductFlavorDsl("main")
 
     final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
     final DexOptionsImpl dexOptions = new DexOptionsImpl()
@@ -46,38 +46,38 @@ class BaseExtension {
                 new AndroidSourceSetFactory(project.fileResolver))
 
         sourceSetsContainer.whenObjectAdded { AndroidSourceSet sourceSet ->
-            ConfigurationContainer configurations = project.getConfigurations();
+            ConfigurationContainer configurations = project.getConfigurations()
 
             Configuration compileConfiguration = configurations.findByName(
-                    sourceSet.getCompileConfigurationName());
+                    sourceSet.getCompileConfigurationName())
             if (compileConfiguration == null) {
-                compileConfiguration = configurations.add(sourceSet.getCompileConfigurationName());
+                compileConfiguration = configurations.add(sourceSet.getCompileConfigurationName())
             }
             compileConfiguration.setVisible(false);
             compileConfiguration.setDescription(
-                    String.format("Classpath for compiling the %s sources.", sourceSet.getName()));
+                    String.format("Classpath for compiling the %s sources.", sourceSet.getName()))
 
             Configuration packageConfiguration = configurations.findByName(
-                    sourceSet.getPackageConfigurationName());
+                    sourceSet.getPackageConfigurationName())
             if (packageConfiguration == null) {
-                packageConfiguration = configurations.add(sourceSet.getPackageConfigurationName());
+                packageConfiguration = configurations.add(sourceSet.getPackageConfigurationName())
             }
-            packageConfiguration.setVisible(false);
-            packageConfiguration.extendsFrom(compileConfiguration);
+            packageConfiguration.setVisible(false)
+            packageConfiguration.extendsFrom(compileConfiguration)
             packageConfiguration.setDescription(
                     String.format("Classpath packaged with the compiled %s classes.",
                             sourceSet.getName()));
 
-            sourceSet.getJava().srcDir(String.format("src/%s/java", sourceSet.getName()));
+            sourceSet.getJava().srcDir(String.format("src/%s/java", sourceSet.getName()))
             sourceSet.getResources().srcDir(
-                    String.format("src/%s/resources", sourceSet.getName()));
-            sourceSet.getRes().srcDir(String.format("src/%s/res", sourceSet.getName()));
-            sourceSet.getAssets().srcDir(String.format("src/%s/assets", sourceSet.getName()));
+                    String.format("src/%s/resources", sourceSet.getName()))
+            sourceSet.getRes().srcDir(String.format("src/%s/res", sourceSet.getName()))
+            sourceSet.getAssets().srcDir(String.format("src/%s/assets", sourceSet.getName()))
             sourceSet.getManifest().srcFile(
-                    String.format("src/%s/AndroidManifest.xml", sourceSet.getName()));
-            sourceSet.getAidl().srcDir(String.format("src/%s/aidl", sourceSet.getName()));
-            sourceSet.getRenderscript().srcDir(String.format("src/%s/rs", sourceSet.getName()));
-            sourceSet.getJni().srcDir(String.format("src/%s/jni", sourceSet.getName()));
+                    String.format("src/%s/AndroidManifest.xml", sourceSet.getName()))
+            sourceSet.getAidl().srcDir(String.format("src/%s/aidl", sourceSet.getName()))
+            sourceSet.getRenderscript().srcDir(String.format("src/%s/rs", sourceSet.getName()))
+            sourceSet.getJni().srcDir(String.format("src/%s/jni", sourceSet.getName()))
         }
     }
 

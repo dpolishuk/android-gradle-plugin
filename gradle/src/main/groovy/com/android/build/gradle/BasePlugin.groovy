@@ -42,6 +42,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.ResolvedArtifact
+import org.gradle.api.artifacts.SelfResolvingDependency
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.artifacts.result.ResolvedModuleVersionResult
 import org.gradle.api.internal.plugins.ProcessResources
@@ -640,6 +641,17 @@ abstract class BasePlugin {
         compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
             addDependency(dep.selected, checker, configDependencies, bundles, jars, modules,
                     artifacts, reverseMap)
+        }
+        // also need to process local jar files, as they are not processed by the
+        // resolvedConfiguration result
+        compileClasspath.allDependencies.each { dep ->
+            if (dep instanceof SelfResolvingDependency &&
+                    (dep instanceof ProjectDependency) == false) {
+                Set<File> files = ((SelfResolvingDependency) dep).resolve()
+                for (File f : files) {
+                    jars << new JarDependency(f.absolutePath, true, true, true)
+                }
+            }
         }
 
         configDependencies.libraries = bundles
