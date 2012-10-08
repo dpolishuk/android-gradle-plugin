@@ -165,8 +165,8 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         Copy packageRes = project.tasks.add("package${variant.name}Res", Copy)
         // packageRes from 3 sources. the order is important to make sure the override works well.
         // TODO: fix the case of values -- need to merge the XML!
-        packageRes.from(defaultConfigData.sourceSet.resources.directory,
-                buildTypeData.sourceSet.resources.directory)
+        packageRes.from(defaultConfigData.sourceSet.res.directory,
+                buildTypeData.sourceSet.res.directory)
         packageRes.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/res"))
 
         // package the aidl files into the bundle folder

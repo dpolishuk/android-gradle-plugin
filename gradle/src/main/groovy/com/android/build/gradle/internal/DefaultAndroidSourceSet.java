@@ -41,7 +41,7 @@ public class DefaultAndroidSourceSet implements AndroidSourceSet, SourceProvider
     private final SourceDirectorySet javaResources;
     private final AndroidSourceFile manifest;
     private final AndroidSourceDirectory assets;
-    private final AndroidSourceDirectory resources;
+    private final AndroidSourceDirectory res;
     private final AndroidSourceDirectory aidl;
     private final AndroidSourceDirectory renderscript;
     private final AndroidSourceDirectory jni;
@@ -81,7 +81,7 @@ public class DefaultAndroidSourceSet implements AndroidSourceSet, SourceProvider
         assets = new DefaultAndroidSourceDirectory(assetsDisplayName, fileResolver);
 
         String resourcesDisplayName = String.format("%s resources", displayName);
-        resources = new DefaultAndroidSourceDirectory(resourcesDisplayName, fileResolver);
+        res = new DefaultAndroidSourceDirectory(resourcesDisplayName, fileResolver);
 
         String aidlDisplayName = String.format("%s aidl", displayName);
         aidl = new DefaultAndroidSourceDirectory(aidlDisplayName, fileResolver);
@@ -137,13 +137,13 @@ public class DefaultAndroidSourceSet implements AndroidSourceSet, SourceProvider
     }
 
     @Override
-    public AndroidSourceDirectory getResources() {
-        return resources;
+    public AndroidSourceDirectory getRes() {
+        return res;
     }
 
     @Override
-    public AndroidSourceSet resources(Closure configureClosure) {
-        ConfigureUtil.configure(configureClosure, getResources());
+    public AndroidSourceSet res(Closure configureClosure) {
+        ConfigureUtil.configure(configureClosure, getRes());
         return this;
     }
 
@@ -208,13 +208,13 @@ public class DefaultAndroidSourceSet implements AndroidSourceSet, SourceProvider
     }
 
     @Override
-    public SourceDirectorySet getJavaResources() {
+    public SourceDirectorySet getResources() {
         return javaResources;
     }
 
     @Override
-    public AndroidSourceSet javaResources(Closure configureClosure) {
-        ConfigureUtil.configure(configureClosure, getJavaResources());
+    public AndroidSourceSet resources(Closure configureClosure) {
+        ConfigureUtil.configure(configureClosure, getResources());
         return this;
     }
 
@@ -247,7 +247,7 @@ public class DefaultAndroidSourceSet implements AndroidSourceSet, SourceProvider
 
     @Override
     public File getResourcesDir() {
-        return getResources().getDirectory();
+        return getRes().getDirectory();
     }
 
     @Override

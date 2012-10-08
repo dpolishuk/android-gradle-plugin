@@ -265,14 +265,14 @@ abstract class BasePlugin {
                 ProcessResources.class);
 
         // set the input
-        processResources.from(((AndroidSourceSet) config.defaultSourceSet).javaResources)
+        processResources.from(((AndroidSourceSet) config.defaultSourceSet).resources)
 
         if (config.getType() != VariantConfiguration.Type.TEST) {
-            processResources.from(((AndroidSourceSet) config.buildTypeSourceSet).javaResources)
+            processResources.from(((AndroidSourceSet) config.buildTypeSourceSet).resources)
         }
         if (config.hasFlavors()) {
             for (SourceProvider flavorSourceSet : config.flavorSourceSets) {
-                processResources.from(((AndroidSourceSet) flavorSourceSet).javaResources)
+                processResources.from(((AndroidSourceSet) flavorSourceSet).resources)
             }
         }
 
