@@ -16,41 +16,17 @@
 package com.android.build.gradle
 
 import com.android.utils.Pair
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.TaskAction
 
 class PrepareDependenciesTask extends BaseTask {
-    final Map<File, File> bundles = [:]
     final Set<Pair<Integer, String>> androidDependencies = []
-
-    void add(File bundle, File explodedDir) {
-        bundles[bundle] = explodedDir
-    }
 
     void addDependency(Pair<Integer, String> api) {
         androidDependencies.add(api)
     }
 
-    @InputFiles
-    Iterable<File> getBundles() {
-        return bundles.keySet()
-    }
-
-    @OutputDirectories
-    Iterable<File> getExplodedBundles() {
-        return bundles.values()
-    }
-
     @TaskAction
     def prepare() {
-        bundles.each { bundle, explodedDir ->
-            project.copy {
-                from project.zipTree(bundle)
-                into explodedDir
-            }
-        }
-
         // TODO check against variant's minSdkVersion
         if (!androidDependencies.isEmpty()) {
             def builder = getBuilder();

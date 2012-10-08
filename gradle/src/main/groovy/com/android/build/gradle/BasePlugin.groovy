@@ -31,6 +31,8 @@ import com.android.builder.SdkParser
 import com.android.builder.SourceProvider
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.Multimap
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.NamedDomainObjectContainer
@@ -48,6 +50,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.util.GUtil
 
 /**
  * Base class for all Android plugins
@@ -59,6 +62,7 @@ abstract class BasePlugin {
     private final Map<Object, AndroidBuilder> builders = [:]
 
     final List<ApplicationVariant> variants = []
+    final Map<AndroidDependencyImpl, PrepareLibraryTask> prepareTaskMap = [:]
 
     protected Project project
     protected File sdkDir
@@ -546,35 +550,81 @@ abstract class BasePlugin {
         prepareDependenciesTask.plugin = this
         prepareDependenciesTask.variant = variant
 
-        // look at all the flavors/build types of the variant and get all the libraries
-        // to make sure they are unarchived before the build runs.
+        // for all libraries required by the configurations of this variant, make this task
+        // depend on all the tasks preparing these libraries.
         for (ConfigurationDependencies configDependencies : configDependenciesList) {
-            prepareDependenciesTask.dependsOn configDependencies.configuration.buildDependencies
+
             for (AndroidDependencyImpl lib : configDependencies.libraries) {
                 addDependencyToPrepareTask(prepareDependenciesTask, lib)
-                prepareDependenciesTask.add(lib.bundle, lib.bundleFolder)
             }
         }
 
         return prepareDependenciesTask
     }
 
+    def addDependencyToPrepareTask(PrepareDependenciesTask prepareDependenciesTask,
+                                   AndroidDependencyImpl lib) {
+        def prepareLibTask = prepareTaskMap.get(lib)
+        if (prepareLibTask != null) {
+            prepareDependenciesTask.dependsOn prepareLibTask
+        }
+
+        for (AndroidDependencyImpl childLib : lib.dependencies) {
+            addDependencyToPrepareTask(prepareDependenciesTask, childLib)
+        }
+    }
+
     def resolveDependencies(List<ConfigurationDependencies> configs) {
+        Map<ModuleVersionIdentifier, List<AndroidDependency>> modules = [:]
+        Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts = [:]
+        Multimap<AndroidDependency, ConfigurationDependencies> reverseMap = ArrayListMultimap.create()
+
         // start with the default config and its test
-        resolveDependencyForConfig(defaultConfigData)
-        resolveDependencyForConfig(defaultConfigData.testConfigDependencies)
+        resolveDependencyForConfig(defaultConfigData, modules, artifacts, reverseMap)
+        resolveDependencyForConfig(defaultConfigData.testConfigDependencies, modules, artifacts,
+                reverseMap)
 
         // and then loop on all the other configs
         for (ConfigurationDependencies config : configs) {
-            resolveDependencyForConfig(config)
+            resolveDependencyForConfig(config, modules, artifacts, reverseMap)
             if (config.testConfigDependencies != null) {
-                resolveDependencyForConfig(config.testConfigDependencies)
+                resolveDependencyForConfig(config.testConfigDependencies, modules, artifacts,
+                        reverseMap)
+            }
+        }
+
+        modules.values().each { List list ->
+            if (!list.isEmpty()) {
+                // get the first item only
+                AndroidDependencyImpl androidDependency = (AndroidDependencyImpl) list.get(0)
+
+                String bundleName = GUtil.toCamelCase(androidDependency.name.replaceAll("\\:", " "))
+
+                def prepareLibraryTask = project.tasks.add("prepare${bundleName}Library",
+                        PrepareLibraryTask)
+                prepareLibraryTask.description = "Prepare ${androidDependency.name}"
+                prepareLibraryTask.bundle = androidDependency.bundle
+                prepareLibraryTask.explodedDir = androidDependency.bundleFolder
+
+                // Use the reverse map to find all the configurations that included this android
+                // library so that we can make sure they are built.
+                List<ConfigurationDependencies> configDepList = reverseMap.get(androidDependency)
+                if (configDepList != null && !configDepList.isEmpty()) {
+                    for (ConfigurationDependencies configDependencies: configDepList) {
+                        prepareLibraryTask.dependsOn configDependencies.configuration.buildDependencies
+                    }
+                }
+
+                prepareTaskMap.put(androidDependency, prepareLibraryTask)
             }
         }
     }
 
     def resolveDependencyForConfig(
-            ConfigurationDependencies configDependencies) {
+            ConfigurationDependencies configDependencies,
+            Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
+            Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts,
+            Multimap<AndroidDependency, ConfigurationDependencies> reverseMap) {
 
         def compileClasspath = configDependencies.configuration
 
@@ -586,11 +636,10 @@ abstract class BasePlugin {
         // TODO - defer downloading until required -- This is hard to do as we need the info to build the variant config.
         List<AndroidDependency> bundles = []
         List<JarDependency> jars = []
-        Map<ModuleVersionIdentifier, List<AndroidDependency>> modules = [:]
-        Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts = [:]
         collectArtifacts(compileClasspath, artifacts)
         compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
-            addDependency(dep.selected, checker, bundles, jars, modules, artifacts)
+            addDependency(dep.selected, checker, configDependencies, bundles, jars, modules,
+                    artifacts, reverseMap)
         }
 
         configDependencies.libraries = bundles
@@ -599,15 +648,6 @@ abstract class BasePlugin {
         // TODO - filter bundles out of source set classpath
 
         configureBuild(configDependencies)
-    }
-
-    def addDependencyToPrepareTask(PrepareDependenciesTask prepareDependenciesTask,
-                                   AndroidDependencyImpl lib) {
-        prepareDependenciesTask.add(lib.bundle, lib.bundleFolder)
-
-        for (AndroidDependencyImpl childLib : lib.dependencies) {
-            addDependencyToPrepareTask(prepareDependenciesTask, childLib)
-        }
     }
 
     def ensureConfigured(Configuration config) {
@@ -632,10 +672,12 @@ abstract class BasePlugin {
 
     def addDependency(ResolvedModuleVersionResult moduleVersion,
                       DependencyChecker checker,
+                      ConfigurationDependencies configDependencies,
                       Collection<AndroidDependency> bundles,
                       Collection<JarDependency> jars,
                       Map<ModuleVersionIdentifier, List<AndroidDependency>> modules,
-                      Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts) {
+                      Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts,
+                      Multimap<AndroidDependency, ConfigurationDependencies> reverseMap) {
         def id = moduleVersion.id
         if (checker.excluded(id)) {
             return
@@ -648,8 +690,8 @@ abstract class BasePlugin {
 
             def nestedBundles = []
             moduleVersion.dependencies.each { ResolvedDependencyResult dep ->
-                addDependency(dep.selected, checker, nestedBundles,
-                        jars, modules, artifacts)
+                addDependency(dep.selected, checker, configDependencies, nestedBundles,
+                        jars, modules, artifacts, reverseMap)
             }
 
             def moduleArtifacts = artifacts[id]
@@ -657,9 +699,11 @@ abstract class BasePlugin {
                 if (artifact.type == 'alb') {
                     def explodedDir = project.file(
                             "$project.buildDir/exploded-bundles/$artifact.file.name")
-                    bundlesForThisModule << new AndroidDependencyImpl(
+                    AndroidDependencyImpl adep = new AndroidDependencyImpl(
                             id.group + ":" + id.name + ":" + id.version,
                             explodedDir, nestedBundles, artifact.file)
+                    bundlesForThisModule << adep
+                    reverseMap.put(adep, configDependencies)
                 } else {
                     // TODO - need the correct values for the boolean flags
                     jars << new JarDependency(artifact.file.absolutePath, true, true, true)
@@ -668,6 +712,10 @@ abstract class BasePlugin {
 
             if (bundlesForThisModule.empty && !nestedBundles.empty) {
                 throw new GradleException("Module version $id depends on libraries but is not a library itself")
+            }
+        } else {
+            for (AndroidDependency adep : bundlesForThisModule) {
+                reverseMap.put(adep, configDependencies)
             }
         }
 
@@ -679,10 +727,10 @@ abstract class BasePlugin {
 
         addDependsOnTaskInOtherProjects(
                 project.getTasks().getByName(JavaBasePlugin.BUILD_NEEDED_TASK_NAME), true,
-                JavaBasePlugin.BUILD_NEEDED_TASK_NAME, configuration);
+                JavaBasePlugin.BUILD_NEEDED_TASK_NAME, "compile");
         addDependsOnTaskInOtherProjects(
                 project.getTasks().getByName(JavaBasePlugin.BUILD_DEPENDENTS_TASK_NAME), false,
-                JavaBasePlugin.BUILD_DEPENDENTS_TASK_NAME, configuration);
+                JavaBasePlugin.BUILD_DEPENDENTS_TASK_NAME, "compile");
     }
 
     /**
@@ -699,8 +747,10 @@ abstract class BasePlugin {
      */
     private void addDependsOnTaskInOtherProjects(final Task task, boolean useDependedOn,
                                                  String otherProjectTaskName,
-                                                 Configuration configuration) {
+                                                 String configurationName) {
         Project project = task.getProject();
+        final Configuration configuration = project.getConfigurations().getByName(
+                configurationName);
         task.dependsOn(configuration.getTaskDependencyFromProjectDependency(
                 useDependedOn, otherProjectTaskName));
     }
