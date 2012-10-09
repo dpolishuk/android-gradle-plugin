@@ -99,7 +99,7 @@ abstract class BasePlugin {
         testSourceSet = sourceSets.create("test")
 
         defaultConfigData = new ProductFlavorData(defaultConfig, mainSourceSet,
-                testSourceSet, project)
+                testSourceSet, project, ConfigurationDependencies.ConfigType.DEFAULT)
     }
 
     ProductFlavorData getDefaultConfigData() {
@@ -554,6 +554,7 @@ abstract class BasePlugin {
         // for all libraries required by the configurations of this variant, make this task
         // depend on all the tasks preparing these libraries.
         for (ConfigurationDependencies configDependencies : configDependenciesList) {
+            prepareDependenciesTask.addChecker(configDependencies.checker)
 
             for (AndroidDependencyImpl lib : configDependencies.libraries) {
                 addDependencyToPrepareTask(prepareDependenciesTask, lib)
@@ -632,21 +633,21 @@ abstract class BasePlugin {
         // TODO - shouldn't need to do this - fix this in Gradle
         ensureConfigured(compileClasspath)
 
-        def checker = new DependencyChecker(logger)
+        configDependencies.checker = new DependencyChecker(configDependencies, logger)
 
         // TODO - defer downloading until required -- This is hard to do as we need the info to build the variant config.
         List<AndroidDependency> bundles = []
         List<JarDependency> jars = []
         collectArtifacts(compileClasspath, artifacts)
         compileClasspath.resolvedConfiguration.resolutionResult.root.dependencies.each { ResolvedDependencyResult dep ->
-            addDependency(dep.selected, checker, configDependencies, bundles, jars, modules,
+            addDependency(dep.selected, configDependencies, bundles, jars, modules,
                     artifacts, reverseMap)
         }
         // also need to process local jar files, as they are not processed by the
         // resolvedConfiguration result
         compileClasspath.allDependencies.each { dep ->
             if (dep instanceof SelfResolvingDependency &&
-                    (dep instanceof ProjectDependency) == false) {
+                    !(dep instanceof ProjectDependency)) {
                 Set<File> files = ((SelfResolvingDependency) dep).resolve()
                 for (File f : files) {
                     jars << new JarDependency(f.absolutePath, true, true, true)
@@ -683,7 +684,6 @@ abstract class BasePlugin {
     }
 
     def addDependency(ResolvedModuleVersionResult moduleVersion,
-                      DependencyChecker checker,
                       ConfigurationDependencies configDependencies,
                       Collection<AndroidDependency> bundles,
                       Collection<JarDependency> jars,
@@ -691,7 +691,7 @@ abstract class BasePlugin {
                       Map<ModuleVersionIdentifier, List<ResolvedArtifact>> artifacts,
                       Multimap<AndroidDependency, ConfigurationDependencies> reverseMap) {
         def id = moduleVersion.id
-        if (checker.excluded(id)) {
+        if (configDependencies.checker.excluded(id)) {
             return
         }
 
@@ -702,7 +702,7 @@ abstract class BasePlugin {
 
             def nestedBundles = []
             moduleVersion.dependencies.each { ResolvedDependencyResult dep ->
-                addDependency(dep.selected, checker, configDependencies, nestedBundles,
+                addDependency(dep.selected, configDependencies, nestedBundles,
                         jars, modules, artifacts, reverseMap)
             }
 

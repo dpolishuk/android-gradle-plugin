@@ -19,6 +19,7 @@ import com.android.utils.Pair
 import org.gradle.api.tasks.TaskAction
 
 class PrepareDependenciesTask extends BaseTask {
+    final List<DependencyChecker> checkers = []
     final Set<Pair<Integer, String>> androidDependencies = []
 
     void addDependency(Pair<Integer, String> api) {
@@ -27,24 +28,21 @@ class PrepareDependenciesTask extends BaseTask {
 
     @TaskAction
     def prepare() {
-        // TODO check against variant's minSdkVersion
-        if (!androidDependencies.isEmpty()) {
-            def builder = getBuilder();
-            def target = builder.getTargetApiLevel()
-            for (Pair<Integer, String> dependency : androidDependencies) {
-                if (dependency.getFirst() > target) {
-                    String parentDependency = dependency.getSecond()
-                    if (parentDependency != null) {
-                        throw new RuntimeException(String.format(
-                                "ERROR: %s depends on Android API level %d, but project target is API level %d",
-                                parentDependency, dependency.getFirst(), target))
-                    } else {
-                        throw new RuntimeException(String.format(
-                                "ERROR: project depends on Android API level %d, but project target is API level %d",
-                                dependency.getFirst(), target))
-                    }
+        def minSdkVersion = variant.config.minSdkVersion
+
+        for (DependencyChecker checker : checkers) {
+            for (Integer api : checker.foundAndroidApis) {
+                if (api > minSdkVersion) {
+                    throw new RuntimeException(String.format(
+                            "ERROR: %s has an indirect dependency on Android API level %d, but minSdkVersion for variant '%s' is API level %d",
+                            checker.configName.capitalize(), api, variant.name, minSdkVersion))
                 }
             }
+
         }
+    }
+
+    def addChecker(DependencyChecker checker) {
+        checkers.add(checker)
     }
 }
