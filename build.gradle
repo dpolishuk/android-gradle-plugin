@@ -6,7 +6,7 @@ allprojects {
     }
 
     project.ext {
-        baseVersion = '0.2'
+        baseVersion = '0.3'
     }
 
     group = 'com.android.tools.build'
