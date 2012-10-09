@@ -10,7 +10,7 @@ apply plugin: 'android'
 apply plugin: 'maven'
 
 repositories {
-    mavenLocal()
+    maven { url '../testrepo' }
     mavenCentral()
 }
 

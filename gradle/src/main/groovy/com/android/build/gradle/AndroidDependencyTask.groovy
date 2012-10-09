@@ -16,13 +16,12 @@
 
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.AndroidAsciiReportRenderer
 import com.android.build.gradle.internal.ApplicationVariant
-
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.TaskAction
 import org.gradle.logging.StyledTextOutputFactory
-import com.android.build.gradle.internal.AndroidAsciiReportRenderer
 
 /**
  */
