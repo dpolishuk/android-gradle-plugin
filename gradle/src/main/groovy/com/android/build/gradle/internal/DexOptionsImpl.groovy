@@ -16,7 +16,20 @@
 
 package com.android.build.gradle.internal
 
-import com.android.builder.DexOptions;
+import com.android.builder.DexOptions
+import org.gradle.api.tasks.Input;
 
 public class DexOptionsImpl implements DexOptions {
+
+    @Input
+    private boolean coreLibraryFlag;
+
+    public void setCoreLibrary(boolean coreLibrary) {
+        coreLibraryFlag = coreLibrary
+    }
+
+    @Override
+    boolean isCoreLibrary() {
+        return coreLibraryFlag
+    }
 }
