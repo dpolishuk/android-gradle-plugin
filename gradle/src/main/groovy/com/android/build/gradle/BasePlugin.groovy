@@ -24,6 +24,7 @@ import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidBuilder
 import com.android.builder.AndroidDependency
+import com.android.builder.BuilderConstants
 import com.android.builder.DefaultSdkParser
 import com.android.builder.JarDependency
 import com.android.builder.ProductFlavor
@@ -708,7 +709,7 @@ abstract class BasePlugin {
 
             def moduleArtifacts = artifacts[id]
             moduleArtifacts?.each { artifact ->
-                if (artifact.type == 'alb') {
+                if (artifact.type == BuilderConstants.EXT_LIB_ARCHIVE) {
                     def explodedDir = project.file(
                             "$project.buildDir/exploded-bundles/$artifact.file.name")
                     AndroidDependencyImpl adep = new AndroidDependencyImpl(

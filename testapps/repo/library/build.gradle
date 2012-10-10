@@ -10,7 +10,7 @@ apply plugin: 'android-library'
 apply plugin: 'maven'
 
 repositories {
-    mavenLocal()
+    maven { url '../testrepo' }
     mavenCentral()
 }
 
@@ -29,7 +29,7 @@ version = '1.0'
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: uri("../repo"))
+            repository(url: uri("../testrepo"))
         }
     }
 }

@@ -22,6 +22,7 @@ import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
+import com.android.builder.BuilderConstants
 import com.android.builder.BundleDependency
 import com.android.builder.JarDependency
 import com.android.builder.VariantConfiguration
@@ -186,7 +187,7 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         bundle.dependsOn jar, packageRes, packageAidl, packageSymbol
         bundle.setDescription("Assembles a bundle containing the library in ${variant.name}.");
         bundle.destinationDir = project.file("$project.buildDir/libs")
-        bundle.extension = "alb"
+        bundle.extension = BuilderConstants.EXT_LIB_ARCHIVE
         if (variant.baseName != BuildType.RELEASE) {
             bundle.classifier = variant.baseName
         }
