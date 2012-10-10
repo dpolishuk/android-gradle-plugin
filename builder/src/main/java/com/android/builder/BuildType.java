@@ -20,11 +20,7 @@ import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 import com.google.common.base.Objects;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-public class BuildType implements Serializable {
+public class BuildType extends BuildConfig {
     private static final long serialVersionUID = 1L;
 
     public final static String DEBUG = "debug";
@@ -36,7 +32,6 @@ public class BuildType implements Serializable {
     private boolean mDebugSigned;
     private String mPackageNameSuffix = null;
     private boolean mRunProguard = false;
-    private final List<String> mBuildConfigLines = new ArrayList<String>();
 
     private boolean mZipAlign = true;
 
@@ -114,22 +109,11 @@ public class BuildType implements Serializable {
         return mZipAlign;
     }
 
-    protected void addBuildConfigLines(List<String> lines) {
-        mBuildConfigLines.addAll(lines);
-    }
-
-    protected void clearBuildConfigLines() {
-        mBuildConfigLines.clear();
-    }
-
-    public List<String> getBuildConfigLines() {
-        return mBuildConfigLines;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
         BuildType buildType = (BuildType) o;
 
@@ -139,10 +123,6 @@ public class BuildType implements Serializable {
         if (mDebuggable != buildType.mDebuggable) return false;
         if (mRunProguard != buildType.mRunProguard) return false;
         if (mZipAlign != buildType.mZipAlign) return false;
-        if (mBuildConfigLines != null ?
-                !mBuildConfigLines.equals(buildType.mBuildConfigLines) :
-                buildType.mBuildConfigLines != null)
-            return false;
         if (mPackageNameSuffix != null ?
                 !mPackageNameSuffix.equals(buildType.mPackageNameSuffix) :
                 buildType.mPackageNameSuffix != null)
@@ -153,13 +133,13 @@ public class BuildType implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = mName != null ? mName.hashCode() : 0;
+        int result = super.hashCode();
+        result = 31 * result + (mName != null ? mName.hashCode() : 0);
         result = 31 * result + (mDebuggable ? 1 : 0);
         result = 31 * result + (mDebugJniBuild ? 1 : 0);
         result = 31 * result + (mDebugSigned ? 1 : 0);
         result = 31 * result + (mPackageNameSuffix != null ? mPackageNameSuffix.hashCode() : 0);
         result = 31 * result + (mRunProguard ? 1 : 0);
-        result = 31 * result + (mBuildConfigLines != null ? mBuildConfigLines.hashCode() : 0);
         result = 31 * result + (mZipAlign ? 1 : 0);
         return result;
     }

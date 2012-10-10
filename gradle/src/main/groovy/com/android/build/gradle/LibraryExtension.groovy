@@ -15,25 +15,29 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.BuildTypeDsl
+import com.android.build.gradle.internal.BuildTypeFactory.BuildTypeDsl
 import com.android.builder.BuildType
 import org.gradle.api.Action
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.internal.reflect.Instantiator
 
 class LibraryExtension extends BaseExtension {
 
-    final BuildTypeDsl debug = new BuildTypeDsl(BuildType.DEBUG)
-    final BuildTypeDsl release = new BuildTypeDsl(BuildType.RELEASE)
+    final BuildType debug
+    final BuildType release
 
-    LibraryExtension(ProjectInternal project) {
-        super(project)
+    LibraryExtension(ProjectInternal project, Instantiator instantiator) {
+        super(project, instantiator)
+
+        debug = instantiator.newInstance(BuildTypeDsl.class, BuildType.DEBUG)
+        release = instantiator.newInstance(BuildTypeDsl.class, BuildType.RELEASE)
     }
 
-    void debug(Action<BuildTypeDsl> action) {
+    void debug(Action<BuildType> action) {
         action.execute(debug);
     }
 
-    void release(Action<BuildTypeDsl> action) {
+    void release(Action<BuildType> action) {
         action.execute(release);
     }
 }

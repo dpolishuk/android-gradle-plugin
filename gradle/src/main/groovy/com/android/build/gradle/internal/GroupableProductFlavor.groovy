@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package com.android.build.gradle
+package com.android.build.gradle.internal
 
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import com.android.builder.ProductFlavor
 
 /**
+ * A version of ProductFlavor that can receive a group name
  */
-class CompileAidlTask extends BaseTask {
+public class GroupableProductFlavor extends ProductFlavor {
+    private static final long serialVersionUID = 1L
 
-    @InputFiles
-    List<File> sourceDirs
+    private String flavorGroup
 
-    @InputFiles
-    List<File> importDirs
+    public GroupableProductFlavor(String name) {
+        super(name)
+    }
 
-    @OutputDirectory
-    File sourceOutputDir
+    public void setFlavorGroup(String flavorGroup) {
+        this.flavorGroup = flavorGroup
+    }
 
-    @TaskAction
-    void generate() {
-        getBuilder().compileAidl(getSourceDirs(), getSourceOutputDir(), getImportDirs())
+    public String getFlavorGroup() {
+        return flavorGroup
     }
 }

@@ -221,6 +221,7 @@ public class VariantConfiguration {
     /**
      * Returns the direct library dependencies
      */
+    @NonNull
     public List<AndroidDependency> getDirectLibraries() {
         return mDirectLibraries;
     }
@@ -228,6 +229,7 @@ public class VariantConfiguration {
     /**
      * Returns all the library dependencies, direct and transitive.
      */
+    @NonNull
     public List<AndroidDependency> getAllLibraries() {
         return mFlatLibraries;
     }
@@ -256,7 +258,7 @@ public class VariantConfiguration {
         return mType;
     }
 
-    VariantConfiguration getTestedConfig() {
+    public VariantConfiguration getTestedConfig() {
         return mTestedConfig;
     }
 
@@ -289,6 +291,20 @@ public class VariantConfiguration {
                 outFlatDependencies.add(0, library);
             }
         }
+    }
+
+    /**
+     * Returns the original package name before any overrides from flavors.
+     * If the variant is a test variant, then the package name is the one coming from the
+     * configuration of the tested variant, and this call is similar to #getPackageName()
+     * @return the package name
+     */
+    public String getOriginalPackageName() {
+        if (mType == VariantConfiguration.Type.TEST) {
+            return getPackageName();
+        }
+
+        return getPackageFromManifest();
     }
 
     /**
@@ -334,7 +350,6 @@ public class VariantConfiguration {
      * @return the package override or null
      */
     public String getPackageOverride() {
-
         String packageName = mMergedFlavor.getPackageName();
         String packageSuffix = mBuildType.getPackageNameSuffix();
 
@@ -355,8 +370,17 @@ public class VariantConfiguration {
 
     private final static String DEFAULT_TEST_RUNNER = "android.test.InstrumentationTestRunner";
 
+    /**
+     * Returns the instrumentionRunner to use to test this variant, or if the
+     * variant is a test, the one to use to test the tested variant.
+     * @return the instrumentation test runner name
+     */
     public String getInstrumentationRunner() {
-        String runner = mMergedFlavor.getTestInstrumentationRunner();
+        VariantConfiguration config = this;
+        if (mType == Type.TEST) {
+            config = getTestedConfig();
+        }
+        String runner = config.mMergedFlavor.getTestInstrumentationRunner();
         return runner != null ? runner : DEFAULT_TEST_RUNNER;
     }
 
@@ -368,7 +392,17 @@ public class VariantConfiguration {
         return sManifestParser.getPackage(manifestLocation);
     }
 
+    /**
+     * Return the minSdkVersion for this variant.
+     *
+     * This uses both the value from the manifest (if present), and the override coming
+     * from the flavor(s) (if present).
+     * @return the minSdkVersion
+     */
     public int getMinSdkVersion() {
+        if (mTestedConfig != null) {
+            return mTestedConfig.getMinSdkVersion();
+        }
         int minSdkVersion = mMergedFlavor.getMinSdkVersion();
         if (minSdkVersion == -1) {
             // read it from the main manifest
@@ -379,29 +413,19 @@ public class VariantConfiguration {
         return minSdkVersion;
     }
 
-    /**
-     * Returns a list of object that represents the configuration. This can be used to compare
-     * 2 different list of config objects to know whether the build is up to date or not.
-     */
-    public Iterable<Object> getConfigObjects() {
-        List<Object> list = Lists.newArrayListWithExpectedSize(mFlavorConfigs.size() + 2);
-        list.add(mDefaultConfig);
-        list.add(mBuildType);
-        list.addAll(mFlavorConfigs);
-        // TODO: figure out the deps in here.
-//        list.addAll(mFlatLibraries);
-
-        return list;
-    }
-
-    public List<File> getManifestInputs() {
-        List<File> inputs = Lists.newArrayList();
-
+    public File getMainManifest() {
         File defaultManifest = mDefaultSourceProvider.getManifestFile();
+
         // this could not exist in a test project.
         if (defaultManifest != null && defaultManifest.isFile()) {
-            inputs.add(defaultManifest);
+            return defaultManifest;
         }
+
+        return null;
+    }
+
+    public List<File> getManifestOverlays() {
+        List<File> inputs = Lists.newArrayList();
 
         if (mBuildTypeSourceProvider != null) {
             File typeLocation = mBuildTypeSourceProvider.getManifestFile();
@@ -414,14 +438,6 @@ public class VariantConfiguration {
             File f = sourceProvider.getManifestFile();
             if (f != null && f.isFile()) {
                 inputs.add(f);
-            }
-        }
-
-        List<AndroidDependency> libs = mDirectLibraries;
-        for (AndroidDependency lib : libs) {
-            File manifest = lib.getManifest();
-            if (manifest != null && manifest.isFile()) {
-                inputs.add(manifest);
             }
         }
 
@@ -465,6 +481,22 @@ public class VariantConfiguration {
         return inputs;
     }
 
+    public List<File> getAidlSourceList() {
+        List<File> sourceList = Lists.newArrayList();
+        sourceList.add(mDefaultSourceProvider.getAidlDir());
+        if (mType != Type.TEST) {
+            sourceList.add(mBuildTypeSourceProvider.getAidlDir());
+        }
+
+        if (hasFlavors()) {
+            for (SourceProvider flavorSourceSet : mFlavorSourceProviders) {
+                sourceList.add(flavorSourceSet.getAidlDir());
+            }
+        }
+
+        return sourceList;
+    }
+
     /**
      * Returns all the aidl import folder that are outside of the current project.
      */
@@ -502,20 +534,20 @@ public class VariantConfiguration {
     public List<String> getBuildConfigLines() {
         List<String> fullList = Lists.newArrayList();
 
-        List<String> list = mDefaultConfig.getBuildConfigLines();
+        List<String> list = mDefaultConfig.getBuildConfig();
         if (!list.isEmpty()) {
             fullList.add("// lines from default config.");
             fullList.addAll(list);
         }
 
-        list = mBuildType.getBuildConfigLines();
+        list = mBuildType.getBuildConfig();
         if (!list.isEmpty()) {
             fullList.add("// lines from build type: " + mBuildType.getName());
             fullList.addAll(list);
         }
 
         for (ProductFlavor flavor : mFlavorConfigs) {
-            list = flavor.getBuildConfigLines();
+            list = flavor.getBuildConfig();
             if (!list.isEmpty()) {
                 fullList.add("// lines from product flavor: " + flavor.getName());
                 fullList.addAll(list);

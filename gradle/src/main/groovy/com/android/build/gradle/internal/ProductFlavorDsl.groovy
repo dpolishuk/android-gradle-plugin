@@ -19,22 +19,23 @@ package com.android.build.gradle.internal
 import com.android.builder.ProductFlavor
 
 /**
- * Dsl overlay for ProductFlavor.
+ * DSL overlay to make methods that accept String... work.
  */
-public class ProductFlavorDsl extends ProductFlavor {
+class ProductFlavorDsl extends ProductFlavor {
     private static final long serialVersionUID = 1L
 
-    String flavorGroup
-
-    public ProductFlavorDsl(String name) {
+    ProductFlavorDsl(String name) {
         super(name)
     }
 
+    // -- DSL Methods. TODO remove once the instantiator does what I expect it to do.
+
     public void buildConfig(String... lines) {
-        addBuildConfigLines(Arrays.asList(lines))
+        setBuildConfig(lines)
     }
 
-    public void flavorGroup(String flavorGroup) {
-        this.flavorGroup = flavorGroup
+    public void buildConfig(String line) {
+        setBuildConfig(line)
     }
+
 }

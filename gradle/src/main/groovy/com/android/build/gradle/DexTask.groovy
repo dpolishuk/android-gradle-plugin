@@ -36,20 +36,10 @@ class DexTask extends BaseTask {
 
     @TaskAction
     void generate() {
-        List<String> files = new ArrayList<String>();
-        for (File f : getSourceFiles()) {
-            if (f != null && f.exists()) {
-                files.add(f.absolutePath)
-            }
-        }
-
-        List<String> libs = new ArrayList<String>();
-        for (File f : getLibraries()) {
-            if (f != null && f.exists()) {
-                libs.add(f.absolutePath)
-            }
-        }
-
-        getBuilder().convertBytecode(files, libs, getOutputFile().absolutePath, getDexOptions())
+        getBuilder().convertByteCode(
+                getSourceFiles(),
+                getLibraries(),
+                getOutputFile().absolutePath,
+                getDexOptions())
     }
 }

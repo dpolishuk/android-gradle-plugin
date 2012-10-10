@@ -28,12 +28,8 @@ public class AaptOptionsImpl implements AaptOptions {
     @Input
     private List<String> noCompressList
 
-    public void ignoreAssetsPattern(String ignoreAssetsPattern) {
+    public void setIgnoreAssetsPattern(String ignoreAssetsPattern) {
         ignoreAssetsPattern = ignoreAssetsPattern
-    }
-
-    public void noCompress(String... noCompress) {
-        noCompressList = Arrays.asList(noCompress)
     }
 
     @Override
@@ -41,8 +37,26 @@ public class AaptOptionsImpl implements AaptOptions {
         return ignoreAssetsPattern
     }
 
+    public void setNoCompress(String noCompress) {
+        noCompressList = Collections.singletonList(noCompress)
+    }
+
+    public void setNoCompress(String... noCompress) {
+        noCompressList = Arrays.asList(noCompress)
+    }
+
     @Override
     List<String> getNoCompress() {
         return noCompressList
+    }
+
+    // -- DSL Methods. TODO remove once the instantiator does what I expect it to do.
+
+    public void noCompress(String noCompress) {
+        noCompressList = Collections.singletonList(noCompress)
+    }
+
+    public void noCompress(String... noCompress) {
+        noCompressList = Arrays.asList(noCompress)
     }
 }

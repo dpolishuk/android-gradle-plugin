@@ -19,25 +19,48 @@ import com.android.builder.packaging.DuplicateFileException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 class PackageApplicationTask extends BaseTask {
-    @OutputFile
-    File outputFile
-
     @InputFile
     File resourceFile
 
     @InputFile
     File dexFile
 
-    @Input
+    @InputFiles
+    List<File> packagedJars
+
+    @InputDirectory @Optional
     File javaResourceDir
 
     @InputDirectory @Optional
     File jniDir
+
+    @Input
+    boolean debugSigned
+
+    @Input
+    boolean debugJni
+
+    @Input @Optional
+    String signingStoreLocation
+
+    @Input @Optional
+    String signingStorePassword
+
+    @Input @Optional
+    String signingKeyAlias
+
+    @Input @Optional
+    String signingKeyPassword
+
+    @OutputFile
+    File outputFile
+
 
     @TaskAction
     void generate() {
@@ -46,8 +69,15 @@ class PackageApplicationTask extends BaseTask {
             getBuilder().packageApk(
                     getResourceFile().absolutePath,
                     getDexFile().absolutePath,
+                    getPackagedJars(),
                     getJavaResourceDir()?.absolutePath,
                     getJniDir()?.absolutePath,
+                    getDebugSigned(),
+                    getDebugJni(),
+                    getSigningStoreLocation(),
+                    getSigningStorePassword(),
+                    getSigningKeyAlias(),
+                    getSigningKeyPassword(),
                     getOutputFile().absolutePath)
         } catch (DuplicateFileException e) {
             def logger = getLogger()

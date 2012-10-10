@@ -6,25 +6,25 @@ buildscript {
         maven { url '../../repo' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.2-SNAPSHOT'
+        classpath 'com.android.tools.build:gradle:0.3-SNAPSHOT'
     }
 }
 apply plugin: 'android'
 
 android {
-    target = "android-15"
-    testBuildType = "debug"
+    target "android-15"
+    testBuildType "debug"
 
     defaultConfig {
-        versionCode = 12
-        versionName = "2.0"
-        minSdkVersion = 16
-        targetSdkVersion = 16
+        versionCode 12
+        versionName "2.0"
+        minSdkVersion 16
+        targetSdkVersion 16
 
-        signingStoreLocation = "debug.keystore"
-        signingStorePassword = "android"
-        signingKeyAlias = "androiddebugkey"
-        signingKeyPassword = "android"
+        signingStoreLocation "debug.keystore"
+        signingStorePassword "android"
+        signingKeyAlias "androiddebugkey"
+        signingKeyPassword "android"
  
         buildConfig "private final static boolean DEFAULT = true;", \
                     "private final static String FOO = \"foo\";"
@@ -32,13 +32,13 @@ android {
 
     buildTypes {
         debug {
-            packageNameSuffix = ".debug"
+            packageNameSuffix ".debug"
 
             buildConfig "private final static boolean DEBUG2 = false;"
         }
     }
 
     aaptOptions {
-        noCompress "txt"
+        noCompress 'txt'
     }
 }

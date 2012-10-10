@@ -16,6 +16,9 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.AaptOptionsImpl
+import com.android.builder.TextSymbolProvider
+import com.android.builder.VariantConfiguration
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
@@ -31,10 +34,19 @@ class ProcessResourcesTask extends BaseTask {
     File manifestFile
 
     @InputDirectory @Optional
-    File crunchDir
+    File preprocessResDir
 
     @InputFiles
     Iterable<File> resDirectories
+
+    @InputDirectory @Optional
+    File assetsDir
+
+    @Nested
+    List<TextSymbolProvider> libraries
+
+    @Input @Optional
+    String packageOverride
 
     @OutputDirectory @Optional
     File sourceOutputDir
@@ -48,6 +60,12 @@ class ProcessResourcesTask extends BaseTask {
     @OutputFile @Optional
     File proguardFile
 
+    // this doesn't change from one build to another, so no need to annotate
+    VariantConfiguration.Type type
+
+    @Input
+    boolean debuggable
+
     @Nested
     AaptOptionsImpl aaptOptions
 
@@ -55,13 +73,18 @@ class ProcessResourcesTask extends BaseTask {
     void generate() {
 
         getBuilder().processResources(
-                getManifestFile().absolutePath,
-                getCrunchDir()?.absolutePath,
+                getManifestFile(),
+                getPreprocessResDir(),
                 getResDirectories(),
+                getAssetsDir(),
+                getLibraries(),
+                getPackageOverride(),
                 getSourceOutputDir()?.absolutePath,
                 getTextSymbolDir()?.absolutePath,
                 getPackageFile()?.absolutePath,
                 getProguardFile()?.absolutePath,
+                getType(),
+                getDebuggable(),
                 getAaptOptions())
     }
 }

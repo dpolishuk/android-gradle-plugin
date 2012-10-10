@@ -17,18 +17,22 @@
 package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidSourceSet
+import com.android.builder.ProductFlavor
 import org.gradle.api.Project
 import org.gradle.api.Task
 
-class ProductFlavorData extends ConfigurationDependencies {
+/**
+ * Class containing a ProductFlavor and associated data (sourcesets)
+ */
+class ProductFlavorData<T extends ProductFlavor> extends ConfigurationDependencies {
 
-    final ProductFlavorDsl productFlavor
+    final T productFlavor
 
     final AndroidSourceSet testSourceSet
 
     Task assembleTask
 
-    ProductFlavorData(ProductFlavorDsl productFlavor,
+    ProductFlavorData(T productFlavor,
                       AndroidSourceSet sourceSet, AndroidSourceSet testSourceSet,
                       Project project, ConfigType type) {
         super(project, sourceSet, type)
@@ -40,7 +44,7 @@ class ProductFlavorData extends ConfigurationDependencies {
                 new ConfigurationDependencies(project, testSourceSet, type))
     }
 
-    ProductFlavorData(ProductFlavorDsl productFlavor,
+    ProductFlavorData(T productFlavor,
                       AndroidSourceSet sourceSet, AndroidSourceSet testSourceSet,
                       Project project) {
         this(productFlavor, sourceSet, testSourceSet, project, ConfigType.FLAVOR)

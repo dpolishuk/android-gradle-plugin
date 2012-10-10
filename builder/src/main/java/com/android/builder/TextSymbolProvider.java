@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package com.android.build.gradle.internal
+package com.android.builder;
 
-import com.android.builder.BuildType
+import java.io.File;
 
 /**
- * Dsl overlay for BuildType.
+ * Provides a path to the Text Symbol file and to the Android Manifest
  */
-public class BuildTypeDsl extends BuildType {
-    private static final long serialVersionUID = 1L
+public interface TextSymbolProvider extends ManifestProvider {
 
-    public BuildTypeDsl(String name) {
-        super(name)
-    }
-
-    public void buildConfig(String... lines) {
-        addBuildConfigLines(Arrays.asList(lines))
-    }
+    /**
+     * Returns the location of the text symbol file
+     */
+    File getTextSymbol();
 }

@@ -88,7 +88,6 @@ class ProductionAppVariant extends ApplicationVariant {
                 androidBasePlugin.verbose)
 
         androidBuilder.setTarget(androidBasePlugin.target)
-        androidBuilder.setVariantConfig(config)
 
         return androidBuilder
     }

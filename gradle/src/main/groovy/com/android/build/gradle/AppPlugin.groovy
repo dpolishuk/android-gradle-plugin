@@ -16,10 +16,11 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.BuildTypeData
-import com.android.build.gradle.internal.BuildTypeDsl
+import com.android.build.gradle.internal.BuildTypeFactory
 import com.android.build.gradle.internal.ConfigurationDependencies
+import com.android.build.gradle.internal.GroupableProductFlavor
+import com.android.build.gradle.internal.GroupableProductFlavorFactory
 import com.android.build.gradle.internal.ProductFlavorData
-import com.android.build.gradle.internal.ProductFlavorDsl
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
 import com.android.builder.AndroidDependency
@@ -32,22 +33,31 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.internal.reflect.Instantiator
+
+import javax.inject.Inject
 
 class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
     private final Map<String, BuildTypeData> buildTypes = [:]
-    private final Map<String, ProductFlavorData> productFlavors = [:]
+    private final Map<String, ProductFlavorData<GroupableProductFlavor>> productFlavors = [:]
 
-    private AppExtension extension
+    AppExtension extension
+
+    @Inject
+    public AppPlugin(Instantiator instantiator) {
+        super(instantiator)
+    }
 
     @Override
     void apply(Project project) {
         super.apply(project)
 
-        def buildTypeContainer = project.container(BuildTypeDsl)
-        def productFlavorContainer = project.container(ProductFlavorDsl)
+        def buildTypeContainer = project.container(BuildType, new BuildTypeFactory(instantiator))
+        def productFlavorContainer = project.container(GroupableProductFlavor,
+                new GroupableProductFlavorFactory(instantiator))
 
         extension = project.extensions.create('android', AppExtension,
-                (ProjectInternal) project, buildTypeContainer, productFlavorContainer)
+                (ProjectInternal) project, instantiator, buildTypeContainer, productFlavorContainer)
         setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         buildTypeContainer.whenObjectAdded { BuildType buildType ->
@@ -60,7 +70,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         buildTypeContainer.create(BuildType.DEBUG)
         buildTypeContainer.create(BuildType.RELEASE)
 
-        productFlavorContainer.whenObjectAdded { ProductFlavorDsl productFlavor ->
+        productFlavorContainer.whenObjectAdded { GroupableProductFlavor productFlavor ->
             addProductFlavor(productFlavor)
         }
 
@@ -90,7 +100,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         buildTypes[buildType.name] = buildTypeData
     }
 
-    private void addProductFlavor(ProductFlavorDsl productFlavor) {
+    private void addProductFlavor(GroupableProductFlavor productFlavor) {
         if (productFlavor.name.startsWith("test")) {
             throw new RuntimeException("ProductFlavor names cannot start with 'test'")
         }
@@ -102,8 +112,9 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         String testName = "test${productFlavor.name.capitalize()}"
         def testSourceSet = extension.sourceSetsContainer.create(testName)
 
-        ProductFlavorData productFlavorData = new ProductFlavorData(
-                productFlavor, mainSourceSet, testSourceSet, project)
+        ProductFlavorData<GroupableProductFlavor> productFlavorData =
+                new ProductFlavorData<GroupableProductFlavor>(
+                        productFlavor, mainSourceSet, testSourceSet, project)
 
         productFlavors[productFlavor.name] = productFlavorData
     }
@@ -132,8 +143,8 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
             } else {
                 // need to group the flavor per group.
                 // First a map of group -> list(ProductFlavor)
-                ArrayListMultimap<String, ProductFlavorData> map = ArrayListMultimap.create();
-                productFlavors.values().each { ProductFlavorData productFlavorData ->
+                ArrayListMultimap<String, ProductFlavorData<GroupableProductFlavor>> map = ArrayListMultimap.create();
+                productFlavors.values().each { ProductFlavorData<GroupableProductFlavor> productFlavorData ->
                     def flavor = productFlavorData.productFlavor
                     if (flavor.flavorGroup == null) {
                         throw new RuntimeException(
@@ -167,7 +178,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         def group = extension.flavorGroupList.get(i)
         def flavorList = map.get(group)
         for (ProductFlavorData flavor : flavorList) {
-           datas[i] = flavor
+            datas[i] = flavor
             createTasksForMultiFlavoredBuilds(datas, i+1, map)
         }
     }
