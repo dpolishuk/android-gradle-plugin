@@ -20,6 +20,7 @@ import com.android.build.gradle.AndroidSourceSet
 import com.android.builder.JarDependency
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import com.android.build.gradle.DependencyChecker
 
 /**
  * Object that represents the dependencies of a configuration, and optionally contains the
@@ -27,13 +28,19 @@ import org.gradle.api.artifacts.Configuration
  */
 class ConfigurationDependencies {
 
+    protected static enum ConfigType { DEFAULT, FLAVOR, BUILDTYPE }
+
     final Project project
     final AndroidSourceSet sourceSet
+    final ConfigType type
     ConfigurationDependencies testConfigDependencies;
 
-    ConfigurationDependencies(Project project, AndroidSourceSet sourceSet) {
+    DependencyChecker checker
+
+    ConfigurationDependencies(Project project, AndroidSourceSet sourceSet, ConfigType type) {
         this.project = project
         this.sourceSet = sourceSet
+        this.type = type
     }
 
     List<AndroidDependencyImpl> libraries

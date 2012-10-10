@@ -15,6 +15,7 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.utils.ILogger
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 
@@ -23,20 +24,22 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier
  */
 class DependencyChecker {
 
+    final ConfigurationDependencies configurationDependencies
     final logger
-    final List<Integer> mFoundAndroidApis = []
-    final List<String> mFoundBouncyCastle = []
+    final List<Integer> foundAndroidApis = []
+    final List<String> foundBouncyCastle = []
 
-    DependencyChecker(ILogger logger) {
+    DependencyChecker(ConfigurationDependencies configurationDependencies, ILogger logger) {
+        this.configurationDependencies = configurationDependencies
         this.logger = logger;
     }
 
     boolean excluded(ModuleVersionIdentifier id) {
         if (id.group == 'com.google.android' && id.name == 'android') {
             int moduleLevel = getApiLevelFromMavenArtifact(id.version)
-            mFoundAndroidApis.add(moduleLevel)
+            foundAndroidApis.add(moduleLevel)
 
-            logger.info("Ignoring Android API artifact: " + id)
+            logger.info("Ignoring Android API artifact %s for %s", id, getConfigName())
             return true
         }
 
@@ -46,35 +49,49 @@ class DependencyChecker {
                 (id.group == 'xerces' && id.name == 'xmlParserAPIs')) {
 
             logger.warning(
-                    "WARNING: Dependency %s is ignored as it may be conflicting with the internal version provided by Android.\n" +
+                    "WARNING: Dependency %s is ignored for %s as it may be conflicting with the internal version provided by Android.\n" +
                     "         In case of problem, please repackage with jarjar to change the class packages",
-                    id)
+                    id, getConfigName())
             return true;
         }
 
         if (id.group == 'org.json' && id.name == 'json') {
             logger.warning(
-                    "WARNING: Dependency %s is ignored as it may be conflicting with the internal version provided by Android.\n" +
+                    "WARNING: Dependency %s is ignored for %s as it may be conflicting with the internal version provided by Android.\n" +
                             "         In case of problem, please repackage with jarjar to change the class packages",
-                    id)
+                    id, getConfigName())
             return true
         }
 
         if (id.group == 'org.khronos' && id.name == 'opengl-api') {
             logger.warning(
-                    "WARNING: Dependency %s is ignored as it may be conflicting with the internal version provided by Android.\n" +
+                    "WARNING: Dependency %s is ignored for %s as it may be conflicting with the internal version provided by Android.\n" +
                             "         In case of problem, please repackage with jarjar to change the class packages",
-                    id)
+                    id, getConfigName())
             return true
         }
 
         if (id.group == 'org.bouncycastle' && id.name.startsWith("bcprov")) {
-            mFoundBouncyCastle.add(id.version)
+            foundBouncyCastle.add(id.version)
         }
 
         return false
     }
 
+    public String getConfigName() {
+        switch (configurationDependencies.type) {
+            case ConfigurationDependencies.ConfigType.DEFAULT:
+                if (configurationDependencies.sourceSet.name.equals("test")) {
+                    return "the default test configuration"
+                }
+
+                return "the default configuration"
+            case ConfigurationDependencies.ConfigType.FLAVOR:
+                return "Flavor ${configurationDependencies.sourceSet.name.capitalize()}"
+            case ConfigurationDependencies.ConfigType.BUILDTYPE:
+                return "Build Type ${configurationDependencies.sourceSet.name.capitalize()}"
+        }
+    }
 
     private int getApiLevelFromMavenArtifact(String version) {
         switch (version) {

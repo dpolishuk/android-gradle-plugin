@@ -27,7 +27,7 @@ class BuildTypeData extends ConfigurationDependencies {
     final Task assembleTask
 
     BuildTypeData(BuildType buildType, AndroidSourceSet sourceSet, Project project) {
-        super(project, sourceSet)
+        super(project, sourceSet, ConfigType.BUILDTYPE)
 
         this.buildType = buildType
 

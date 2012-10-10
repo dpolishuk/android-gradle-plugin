@@ -30,13 +30,20 @@ class ProductFlavorData extends ConfigurationDependencies {
 
     ProductFlavorData(ProductFlavorDsl productFlavor,
                       AndroidSourceSet sourceSet, AndroidSourceSet testSourceSet,
-                      Project project) {
-        super(project, sourceSet)
+                      Project project, ConfigType type) {
+        super(project, sourceSet, type)
 
         this.productFlavor = productFlavor
         this.testSourceSet = testSourceSet
 
-        setTestConfigDependencies(new ConfigurationDependencies(project, testSourceSet))
+        setTestConfigDependencies(
+                new ConfigurationDependencies(project, testSourceSet, type))
+    }
+
+    ProductFlavorData(ProductFlavorDsl productFlavor,
+                      AndroidSourceSet sourceSet, AndroidSourceSet testSourceSet,
+                      Project project) {
+        this(productFlavor, sourceSet, testSourceSet, project, ConfigType.FLAVOR)
     }
 
 
