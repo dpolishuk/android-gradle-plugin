@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal
+
+package com.android.builder;
+
+import java.io.File;
 
 /**
- * Represents something that contains source and javaResources.
+ * Provides a path to the Android Manifest
  */
-public interface SourceVariant {
-    String getName()
+public interface ManifestProvider {
 
-    String getDirName()
+    /**
+     * Returns the location of the manifest.
+     */
+    File getManifest();
 }

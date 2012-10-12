@@ -13,28 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.build.gradle
 
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.OutputFile
 
 /**
  */
-class CompileAidlTask extends BaseTask {
+class BaseManifestTask extends BaseTask {
 
-    @InputFiles
-    List<File> sourceDirs
-
-    @InputFiles
-    List<File> importDirs
-
-    @OutputDirectory
-    File sourceOutputDir
-
-    @TaskAction
-    void generate() {
-        getBuilder().compileAidl(getSourceDirs(), getSourceOutputDir(), getImportDirs())
-    }
+    @OutputFile
+    File outManifest
 }

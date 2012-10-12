@@ -20,6 +20,9 @@ import com.android.builder.BuildType
 import org.gradle.api.Project
 import org.gradle.api.Task
 
+/**
+ * Class containing a BuildType and associated data (Sourceset for instance).
+ */
 class BuildTypeData extends ConfigurationDependencies {
 
     final BuildType buildType

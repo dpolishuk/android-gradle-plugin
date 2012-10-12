@@ -18,16 +18,11 @@ package com.android.build.gradle
 import com.android.build.gradle.internal.ApplicationVariant
 import com.android.builder.AndroidBuilder
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 
 abstract class BaseTask extends DefaultTask {
 
     BasePlugin plugin
     ApplicationVariant variant
-
-    @Input @Optional
-    Iterable<Object> configObjects
 
     protected AndroidBuilder getBuilder() {
         return plugin.getAndroidBuilder(variant);

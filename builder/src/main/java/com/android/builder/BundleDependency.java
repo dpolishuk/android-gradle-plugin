@@ -55,6 +55,16 @@ public abstract class BundleDependency implements AndroidDependency {
     }
 
     @Override
+    public File getManifest() {
+        return new File(mBundleFolder, SdkConstants.FN_ANDROID_MANIFEST_XML);
+    }
+
+    @Override
+    public File getTextSymbol() {
+        return new File(mBundleFolder, "R.txt");
+    }
+
+    @Override
     public File getFolder() {
         return mBundleFolder;
     }
@@ -62,11 +72,6 @@ public abstract class BundleDependency implements AndroidDependency {
     @Override
     public File getJarFile() {
         return new File(mBundleFolder, SdkConstants.FN_CLASSES_JAR);
-    }
-
-    @Override
-    public File getManifest() {
-        return new File(mBundleFolder, SdkConstants.FN_ANDROID_MANIFEST_XML);
     }
 
     @Override

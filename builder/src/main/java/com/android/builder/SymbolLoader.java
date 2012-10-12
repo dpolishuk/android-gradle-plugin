@@ -16,6 +16,7 @@
 
 package com.android.builder;
 
+import com.android.utils.ILogger;
 import com.google.common.base.Charsets;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -31,6 +32,7 @@ class SymbolLoader {
 
     private final File mSymbolFile;
     private Table<String, String, SymbolEntry> mSymbols;
+    private final ILogger mLogger;
 
     public static class SymbolEntry {
         private final String mName;
@@ -56,8 +58,9 @@ class SymbolLoader {
         }
     }
 
-    SymbolLoader(File symbolFile) {
+    SymbolLoader(File symbolFile, ILogger logger) {
         mSymbolFile = symbolFile;
+        mLogger = logger;
     }
 
     void load() throws IOException {
@@ -65,8 +68,13 @@ class SymbolLoader {
 
         mSymbols = HashBasedTable.create();
 
+        int lineIndex = 1;
+        String line = null;
         try {
-            for (String line : lines) {
+            final int count = lines.size();
+            for (; lineIndex <= count ; lineIndex++) {
+                line = lines.get(lineIndex-1);
+
                 // format is "<type> <class> <name> <value>"
                 // don't want to split on space as value could contain spaces.
                 int pos = line.indexOf(' ');
@@ -79,8 +87,11 @@ class SymbolLoader {
 
                 mSymbols.put(className, name, new SymbolEntry(name, type, value));
             }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new IOException("File format error reading " + mSymbolFile.getAbsolutePath());
+        } catch (IndexOutOfBoundsException e) {
+            String s = String.format("File format error reading %s\tline %d: '%s'",
+                    mSymbolFile.getAbsolutePath(), lineIndex, line);
+            mLogger.error(null, s);
+            throw new IOException(s, e);
         }
     }
 

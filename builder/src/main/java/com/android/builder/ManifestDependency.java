@@ -14,27 +14,17 @@
  * limitations under the License.
  */
 
-package com.android.build.gradle
+package com.android.builder;
 
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import java.util.List;
 
 /**
+ * Represents the manifest of a dependency as well as the dependencies
  */
-class CompileAidlTask extends BaseTask {
+public interface ManifestDependency extends ManifestProvider {
 
-    @InputFiles
-    List<File> sourceDirs
-
-    @InputFiles
-    List<File> importDirs
-
-    @OutputDirectory
-    File sourceOutputDir
-
-    @TaskAction
-    void generate() {
-        getBuilder().compileAidl(getSourceDirs(), getSourceOutputDir(), getImportDirs())
-    }
+    /**
+     * Returns the direct dependency of this dependency.
+     */
+    List<ManifestDependency> getManifestDependencies();
 }

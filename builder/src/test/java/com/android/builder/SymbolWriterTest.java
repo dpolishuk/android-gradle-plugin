@@ -15,6 +15,7 @@
  */
 package com.android.builder;
 
+import com.android.utils.NullLogger;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Table;
 import com.google.common.io.Files;
@@ -29,7 +30,7 @@ public class SymbolWriterTest extends TestCase {
         File file = File.createTempFile(getClass().getSimpleName(), "txt");
         file.deleteOnExit();
         Files.write(rText, file, Charsets.UTF_8);
-        SymbolLoader loader = new SymbolLoader(file);
+        SymbolLoader loader = new SymbolLoader(file, NullLogger.getLogger());
         loader.load();
         Table<String, String, SymbolLoader.SymbolEntry> symbols = loader.getSymbols();
         assertNotNull(symbols);

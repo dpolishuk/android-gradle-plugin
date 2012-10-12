@@ -33,6 +33,9 @@ import org.gradle.api.plugins.MavenPlugin
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
+import org.gradle.internal.reflect.Instantiator
+
+import javax.inject.Inject
 
 class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
@@ -42,12 +45,17 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
     BuildTypeData debugBuildTypeData
     BuildTypeData releaseBuildTypeData
 
+    @Inject
+    public LibraryPlugin(Instantiator instantiator) {
+        super(instantiator)
+    }
+
     @Override
     void apply(Project project) {
         super.apply(project)
 
         extension = project.extensions.create('android', LibraryExtension,
-                (ProjectInternal) project)
+                (ProjectInternal) project, instantiator)
         setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         // create the source sets for the build type.

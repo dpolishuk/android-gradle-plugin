@@ -30,7 +30,6 @@ import org.gradle.api.tasks.compile.JavaCompile
 public abstract class ApplicationVariant {
 
     final VariantConfiguration config
-    Iterable<Object> configObjects
 
     FileCollection resourcePackage
     JavaCompile compileTask
@@ -42,18 +41,6 @@ public abstract class ApplicationVariant {
 
     ApplicationVariant(VariantConfiguration config) {
         this.config = config
-    }
-
-    Iterable<Object> getConfigObjects() {
-        if (configObjects == null) {
-            configObjects = config.configObjects
-        }
-
-        return configObjects
-    }
-
-    List<String> getBuildConfigLines() {
-        return config.buildConfigLines
     }
 
     public VariantConfiguration getVariantConfiguration() {

@@ -15,33 +15,34 @@
  */
 package com.android.build.gradle
 
-import com.android.build.gradle.internal.BuildTypeDsl
-import com.android.build.gradle.internal.ProductFlavorDsl
+import com.android.builder.BuildType
+import com.android.builder.ProductFlavor
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.internal.reflect.Instantiator
 
 class AppExtension extends BaseExtension {
-    final NamedDomainObjectContainer<ProductFlavorDsl> productFlavors
-    final NamedDomainObjectContainer<BuildTypeDsl> buildTypes
+    final NamedDomainObjectContainer<ProductFlavor> productFlavors
+    final NamedDomainObjectContainer<BuildType> buildTypes
 
     List<String> flavorGroupList
 
     String testBuildType = "debug"
 
-    AppExtension(ProjectInternal project,
-                 NamedDomainObjectContainer<BuildTypeDsl> buildTypes,
-                 NamedDomainObjectContainer<ProductFlavorDsl> productFlavors) {
-        super(project)
+    AppExtension(ProjectInternal project, Instantiator instantiator,
+                 NamedDomainObjectContainer<BuildType> buildTypes,
+                 NamedDomainObjectContainer<ProductFlavor> productFlavors) {
+        super(project, instantiator)
         this.buildTypes = buildTypes
         this.productFlavors = productFlavors
     }
 
-    void buildTypes(Action<? super NamedDomainObjectContainer<BuildTypeDsl>> action) {
+    void buildTypes(Action<? super NamedDomainObjectContainer<BuildType>> action) {
         action.execute(buildTypes)
     }
 
-    void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavorDsl>> action) {
+    void productFlavors(Action<? super NamedDomainObjectContainer<ProductFlavor>> action) {
         action.execute(productFlavors)
     }
 

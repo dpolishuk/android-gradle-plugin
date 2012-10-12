@@ -16,21 +16,29 @@
 package com.android.build.gradle
 
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
 class GenerateBuildConfigTask extends BaseTask {
 
+    @Input
+    String packageName
+
+    @Input
+    boolean debuggable
+
+    @Input
+    List<String> javaLines;
+
     @OutputDirectory
     File sourceOutputDir
 
-    @Input @Optional
-    List<String> optionalJavaLines;
-
     @TaskAction
     void generate() {
-        getBuilder().generateBuildConfig(getSourceOutputDir().absolutePath,
-                getOptionalJavaLines());
+        getBuilder().generateBuildConfig(
+                getPackageName(),
+                isDebuggable(),
+                getJavaLines(),
+                getSourceOutputDir().absolutePath);
     }
 }

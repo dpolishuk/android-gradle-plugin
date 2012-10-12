@@ -18,12 +18,15 @@ package com.android.build.gradle
 import com.android.build.gradle.internal.AaptOptionsImpl
 import com.android.build.gradle.internal.AndroidSourceSetFactory
 import com.android.build.gradle.internal.DexOptionsImpl
+import com.android.build.gradle.internal.GroupableProductFlavor
 import com.android.build.gradle.internal.ProductFlavorDsl
+import com.android.builder.ProductFlavor
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.internal.reflect.Instantiator
 
 /**
  * Base android extension for all android plugins.
@@ -31,19 +34,24 @@ import org.gradle.api.internal.project.ProjectInternal
 class BaseExtension {
 
     String target
-    final ProductFlavorDsl defaultConfig = new ProductFlavorDsl("main")
 
-    final AaptOptionsImpl aaptOptions = new AaptOptionsImpl()
-    final DexOptionsImpl dexOptions = new DexOptionsImpl()
+    final ProductFlavor defaultConfig
+    final AaptOptionsImpl aaptOptions
+    final DexOptionsImpl dexOptions
 
     /**
      * The source sets container.
      */
     final NamedDomainObjectContainer<AndroidSourceSet> sourceSetsContainer
 
-    BaseExtension(ProjectInternal project) {
+    BaseExtension(ProjectInternal project, Instantiator instantiator) {
+        defaultConfig = instantiator.newInstance(ProductFlavorDsl.class, "main")
+
+        aaptOptions = instantiator.newInstance(AaptOptionsImpl.class)
+        dexOptions = instantiator.newInstance(DexOptionsImpl.class)
+
         sourceSetsContainer = project.container(AndroidSourceSet,
-                new AndroidSourceSetFactory(project.fileResolver))
+                new AndroidSourceSetFactory(instantiator, project.fileResolver))
 
         sourceSetsContainer.whenObjectAdded { AndroidSourceSet sourceSet ->
             ConfigurationContainer configurations = project.getConfigurations()
@@ -85,7 +93,7 @@ class BaseExtension {
         action.execute(sourceSetsContainer)
     }
 
-    void defaultConfig(Action<ProductFlavorDsl> action) {
+    void defaultConfig(Action<GroupableProductFlavor> action) {
         action.execute(defaultConfig)
     }
 

@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Represents a dependency on a Library Project.
  */
-public interface AndroidDependency {
+public interface AndroidDependency extends ManifestProvider, TextSymbolProvider {
 
     /**
      * Returns the location of the unarchived bundle.
@@ -39,11 +39,6 @@ public interface AndroidDependency {
      * Cannot be null.
      */
     File getJarFile();
-
-    /**
-     * Returns the location of the manifest.
-     */
-    File getManifest();
 
     /**
      * Returns the location of the res folder.

@@ -19,19 +19,22 @@ package com.android.build.gradle.internal
 import com.android.build.gradle.AndroidSourceSet
 import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.internal.reflect.Instantiator
 
 /**
  */
 public class AndroidSourceSetFactory implements NamedDomainObjectFactory<AndroidSourceSet> {
 
+    final Instantiator instantiator
     final FileResolver fileResolver
 
-    public AndroidSourceSetFactory(FileResolver fileResolver) {
+    public AndroidSourceSetFactory(Instantiator instantiator, FileResolver fileResolver) {
+        this.instantiator = instantiator
         this.fileResolver = fileResolver
     }
 
     @Override
     AndroidSourceSet create(String name) {
-        return new DefaultAndroidSourceSet(name, fileResolver)
+        return instantiator.newInstance(DefaultAndroidSourceSet.class, name, fileResolver)
     }
 }

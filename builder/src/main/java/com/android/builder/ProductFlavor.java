@@ -18,12 +18,8 @@ package com.android.builder;
 
 import com.android.annotations.NonNull;
 import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 
-import java.io.Serializable;
-import java.util.List;
-
-public class ProductFlavor implements Serializable {
+public class ProductFlavor extends BuildConfig {
     private static final long serialVersionUID = 1L;
 
     private final String mName;
@@ -39,8 +35,6 @@ public class ProductFlavor implements Serializable {
     private String mSigningStorePassword = null;
     private String mSigningKeyAlias = null;
     private String mSigningKeyPassword = null;
-
-    private final List<String> mBuildConfigLines = Lists.newArrayList();
 
     public ProductFlavor(String name) {
         mName = name;
@@ -145,18 +139,6 @@ public class ProductFlavor implements Serializable {
                 mSigningKeyPassword != null;
     }
 
-    protected void addBuildConfigLines(List<String> lines) {
-        mBuildConfigLines.addAll(lines);
-    }
-
-    protected void clearBuildConfigLines() {
-        mBuildConfigLines.clear();
-    }
-
-    public List<String> getBuildConfigLines() {
-        return mBuildConfigLines;
-    }
-
     /**
      * Merges the flavor on top of a base platform and returns a new object with the result.
      * @param base the flavor to merge on top of
@@ -199,6 +181,7 @@ public class ProductFlavor implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
 
         ProductFlavor that = (ProductFlavor) o;
 
@@ -206,10 +189,6 @@ public class ProductFlavor implements Serializable {
         if (mMinSdkVersion != that.mMinSdkVersion) return false;
         if (mTargetSdkVersion != that.mTargetSdkVersion) return false;
         if (mVersionCode != that.mVersionCode) return false;
-        if (mBuildConfigLines != null ?
-                !mBuildConfigLines.equals(that.mBuildConfigLines) :
-                that.mBuildConfigLines != null)
-            return false;
         if (mPackageName != null ?
                 !mPackageName.equals(that.mPackageName) :
                 that.mPackageName != null)
@@ -246,7 +225,8 @@ public class ProductFlavor implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = mName != null ? mName.hashCode() : 0;
+        int result = super.hashCode();
+        result = 31 * result + (mName != null ? mName.hashCode() : 0);
         result = 31 * result + mMinSdkVersion;
         result = 31 * result + mTargetSdkVersion;
         result = 31 * result + mVersionCode;
@@ -261,7 +241,6 @@ public class ProductFlavor implements Serializable {
                 mSigningStorePassword.hashCode() : 0);
         result = 31 * result + (mSigningKeyAlias != null ? mSigningKeyAlias.hashCode() : 0);
         result = 31 * result + (mSigningKeyPassword != null ? mSigningKeyPassword.hashCode() : 0);
-        result = 31 * result + (mBuildConfigLines != null ? mBuildConfigLines.hashCode() : 0);
         return result;
     }
 

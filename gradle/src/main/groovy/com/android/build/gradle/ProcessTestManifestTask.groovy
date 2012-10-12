@@ -17,47 +17,36 @@ package com.android.build.gradle
 
 import com.android.builder.ManifestDependency
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 /**
  */
-class ProcessManifestTask extends BaseManifestTask {
-
-    @InputFile
-    File mainManifest
-
-    @InputFiles
-    List<File> manifestOverlays
-
-    @Nested
-    List<ManifestDependency> libraries
+class ProcessTestManifestTask extends BaseManifestTask {
 
     @Input
-    int versionCode
-
-    @Input @Optional
-    String versionName
+    String testPackageName
 
     @Input
     int minSdkVersion
 
     @Input
-    int targetSdkVersion
+    String testedPackageName
+
+    @Input
+    String instrumentationRunner
+
+    @Nested
+    List<ManifestDependency> libraries
 
     @TaskAction
     void generate() {
-        getBuilder().processManifest(
-                getMainManifest(),
-                getManifestOverlays(),
-                getLibraries(),
-                getVersionCode(),
-                getVersionName(),
+        getBuilder().processTestManifest(
+                getTestPackageName(),
                 getMinSdkVersion(),
-                getTargetSdkVersion(),
+                getTestedPackageName(),
+                getInstrumentationRunner(),
+                getLibraries(),
                 getOutManifest().absolutePath)
     }
 }
