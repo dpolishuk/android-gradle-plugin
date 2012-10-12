@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.builder.signing;
+package com.android.builder.internal.signing;
 
 import com.android.annotations.NonNull;
 import com.android.prefs.AndroidLocation;

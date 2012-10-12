@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.builder.packaging;
+package com.android.builder.internal.packaging;
 
+
+import com.android.builder.packaging.DuplicateFileException;
+import com.android.builder.packaging.PackagerException;
+import com.android.builder.packaging.SealedPackageException;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,9 +34,9 @@ public class JavaResourceProcessor {
          * Adds a file to the archive at a given path
          * @param file the file to add
          * @param archivePath the path of the file inside the APK archive.
-         * @throws PackagerException if an error occurred
-         * @throws SealedPackageException if the archive is already sealed.
-         * @throws DuplicateFileException if a file conflicts with another already added to the APK
+         * @throws com.android.builder.packaging.PackagerException if an error occurred
+         * @throws com.android.builder.packaging.SealedPackageException if the archive is already sealed.
+         * @throws com.android.builder.packaging.DuplicateFileException if a file conflicts with another already added to the APK
          *                                   at the same location inside the APK archive.
          */
         void addFile(File file, String archivePath) throws PackagerException,

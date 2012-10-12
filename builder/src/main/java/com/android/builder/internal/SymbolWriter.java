@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.builder;
+package com.android.builder.internal;
 
 import com.android.SdkConstants;
-import com.android.builder.SymbolLoader.SymbolEntry;
+import com.android.builder.internal.SymbolLoader.SymbolEntry;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Table;
@@ -38,14 +38,14 @@ public class SymbolWriter {
     private final SymbolLoader mSymbols;
     private final SymbolLoader mValues;
 
-    SymbolWriter(String outFolder, String packageName, SymbolLoader symbols, SymbolLoader values) {
+    public SymbolWriter(String outFolder, String packageName, SymbolLoader symbols, SymbolLoader values) {
         mOutFolder = outFolder;
         mPackageName = packageName;
         mSymbols = symbols;
         mValues = values;
     }
 
-    void write() throws IOException {
+    public void write() throws IOException {
         Splitter splitter = Splitter.on('.');
         Iterable<String> folders = splitter.split(mPackageName);
         File file = new File(mOutFolder);

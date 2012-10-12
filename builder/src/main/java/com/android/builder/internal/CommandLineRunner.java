@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.builder;
+package com.android.builder.internal;
 
 import com.android.annotations.Nullable;
 import com.android.sdklib.util.GrabProcessOutput;

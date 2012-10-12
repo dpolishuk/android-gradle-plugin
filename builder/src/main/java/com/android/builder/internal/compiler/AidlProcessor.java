@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.builder.compiler;
+package com.android.builder.internal.compiler;
 
 import com.android.annotations.NonNull;
-import com.android.builder.CommandLineRunner;
-import com.android.builder.compiler.SourceGenerator.DisplayType;
+import com.android.builder.internal.CommandLineRunner;
+import com.android.builder.internal.compiler.SourceGenerator.DisplayType;
 import com.android.utils.ILogger;
 import com.google.common.collect.Lists;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.builder.compiler;
+package com.android.builder.internal.compiler;
 
 import java.io.File;
 import java.util.Set;
