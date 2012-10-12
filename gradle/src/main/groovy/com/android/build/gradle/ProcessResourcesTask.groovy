@@ -16,7 +16,7 @@
 package com.android.build.gradle
 
 import com.android.build.gradle.internal.AaptOptionsImpl
-import com.android.builder.TextSymbolProvider
+import com.android.builder.SymbolFileProvider
 import com.android.builder.VariantConfiguration
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
@@ -43,7 +43,7 @@ class ProcessResourcesTask extends BaseTask {
     File assetsDir
 
     @Nested
-    List<TextSymbolProvider> libraries
+    List<SymbolFileProvider> libraries
 
     @Input @Optional
     String packageOverride

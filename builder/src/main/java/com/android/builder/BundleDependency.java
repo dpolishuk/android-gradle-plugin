@@ -60,7 +60,7 @@ public abstract class BundleDependency implements AndroidDependency {
     }
 
     @Override
-    public File getTextSymbol() {
+    public File getSymbolFile() {
         return new File(mBundleFolder, "R.txt");
     }
 

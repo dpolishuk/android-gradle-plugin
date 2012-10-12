@@ -26,15 +26,15 @@ import com.android.builder.internal.SymbolWriter;
 import com.android.builder.internal.TestManifestGenerator;
 import com.android.builder.internal.compiler.AidlProcessor;
 import com.android.builder.internal.compiler.SourceGenerator;
-import com.android.builder.packaging.DuplicateFileException;
 import com.android.builder.internal.packaging.JavaResourceProcessor;
 import com.android.builder.internal.packaging.Packager;
-import com.android.builder.packaging.PackagerException;
-import com.android.builder.packaging.SealedPackageException;
 import com.android.builder.internal.signing.DebugKeyHelper;
 import com.android.builder.internal.signing.KeystoreHelper;
 import com.android.builder.internal.signing.KeytoolException;
 import com.android.builder.internal.signing.SigningInfo;
+import com.android.builder.packaging.DuplicateFileException;
+import com.android.builder.packaging.PackagerException;
+import com.android.builder.packaging.SealedPackageException;
 import com.android.manifmerger.ManifestMerger;
 import com.android.manifmerger.MergerLog;
 import com.android.prefs.AndroidLocation.AndroidLocationException;
@@ -517,7 +517,7 @@ public class AndroidBuilder {
             @Nullable File preprocessResDir,
             @NonNull  Iterable<File> resInputs,
             @Nullable File assetsDir,
-            @NonNull  List<TextSymbolProvider> libraries,
+            @NonNull  List<SymbolFileProvider> libraries,
             @Nullable String packageOverride,
             @Nullable String sourceOutputDir,
             @Nullable String symbolOutputDir,
@@ -657,8 +657,8 @@ public class AndroidBuilder {
         if (type != VariantConfiguration.Type.LIBRARY && !libraries.isEmpty()) {
             SymbolLoader symbolValues = null;
 
-            for (TextSymbolProvider lib : libraries) {
-                File rFile = lib.getTextSymbol();
+            for (SymbolFileProvider lib : libraries) {
+                File rFile = lib.getSymbolFile();
                 // if the library has no resource, this file won't exist.
                 if (rFile.isFile()) {
                     // load the values if that's not already been done.

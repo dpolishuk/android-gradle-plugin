@@ -22,8 +22,8 @@ import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.build.gradle.internal.ManifestDependencyImpl
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
+import com.android.build.gradle.internal.SymbolFileProviderImpl
 import com.android.build.gradle.internal.TestAppVariant
-import com.android.build.gradle.internal.TextSymbolProviderImpl
 import com.android.builder.AndroidBuilder
 import com.android.builder.AndroidDependency
 import com.android.builder.BuilderConstants
@@ -33,7 +33,7 @@ import com.android.builder.ManifestDependency
 import com.android.builder.ProductFlavor
 import com.android.builder.SdkParser
 import com.android.builder.SourceProvider
-import com.android.builder.TextSymbolProvider
+import com.android.builder.SymbolFileProvider
 import com.android.builder.VariantConfiguration
 import com.android.utils.ILogger
 import com.google.common.collect.ArrayListMultimap
@@ -891,12 +891,12 @@ abstract class BasePlugin {
         return list
     }
 
-    protected List<TextSymbolProvider> getTextSymbolDependencies(
+    protected List<SymbolFileProvider> getTextSymbolDependencies(
             List<AndroidDependency> libraries) {
-        List<TextSymbolProvider> list = Lists.newArrayListWithCapacity(libraries.size())
+        List<SymbolFileProvider> list = Lists.newArrayListWithCapacity(libraries.size())
 
         for (AndroidDependency lib : libraries) {
-            list.add(new TextSymbolProviderImpl(lib.manifest, lib.textSymbol))
+            list.add(new SymbolFileProviderImpl(lib.manifest, lib.symbolFile))
         }
 
         return list

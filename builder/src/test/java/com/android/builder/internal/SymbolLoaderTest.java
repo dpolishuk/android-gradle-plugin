@@ -15,7 +15,6 @@
  */
 package com.android.builder.internal;
 
-import com.android.builder.internal.SymbolLoader;
 import com.android.utils.NullLogger;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Table;

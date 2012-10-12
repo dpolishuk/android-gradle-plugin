@@ -21,10 +21,10 @@ import java.io.File;
 /**
  * Provides a path to the Text Symbol file and to the Android Manifest
  */
-public interface TextSymbolProvider extends ManifestProvider {
+public interface SymbolFileProvider extends ManifestProvider {
 
     /**
      * Returns the location of the text symbol file
      */
-    File getTextSymbol();
+    File getSymbolFile();
 }

@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Represents a dependency on a Library Project.
  */
-public interface AndroidDependency extends ManifestProvider, TextSymbolProvider {
+public interface AndroidDependency extends ManifestDependency, SymbolFileProvider {
 
     /**
      * Returns the location of the unarchived bundle.
