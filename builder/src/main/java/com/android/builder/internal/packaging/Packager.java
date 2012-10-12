@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package com.android.builder.packaging;
+package com.android.builder.internal.packaging;
 
 import com.android.SdkConstants;
 import com.android.annotations.NonNull;
-import com.android.builder.packaging.JavaResourceProcessor.IArchiveBuilder;
-import com.android.builder.signing.SignedJarBuilder;
-import com.android.builder.signing.SignedJarBuilder.IZipEntryFilter;
-import com.android.builder.signing.SigningInfo;
+import com.android.builder.internal.packaging.JavaResourceProcessor.IArchiveBuilder;
+import com.android.builder.internal.signing.SignedJarBuilder;
+import com.android.builder.internal.signing.SignedJarBuilder.IZipEntryFilter;
+import com.android.builder.internal.signing.SigningInfo;
+import com.android.builder.packaging.DuplicateFileException;
+import com.android.builder.packaging.PackagerException;
+import com.android.builder.packaging.SealedPackageException;
 import com.android.sdklib.internal.build.DebugKeyProvider;
 import com.android.utils.ILogger;
 
@@ -218,7 +221,7 @@ public final class Packager implements IArchiveBuilder {
      * @param dexLocation the file representing the dex file. This can be null for apk with no code.
      * @param signingInfo the signing information used to sign the package. Optional the OS path to the debug keystore, if needed or null.
      * @param logger the logger.
-     * @throws PackagerException
+     * @throws com.android.builder.packaging.PackagerException
      */
     public Packager(
             @NonNull String apkLocation,
@@ -292,7 +295,7 @@ public final class Packager implements IArchiveBuilder {
      * @param file the file to add
      * @param archivePath the path of the file inside the APK archive.
      * @throws PackagerException if an error occurred
-     * @throws SealedPackageException if the APK is already sealed.
+     * @throws com.android.builder.packaging.SealedPackageException if the APK is already sealed.
      * @throws DuplicateFileException if a file conflicts with another already added to the APK
      *                                   at the same location inside the APK archive.
      */

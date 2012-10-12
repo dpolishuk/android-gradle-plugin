@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.builder;
+package com.android.builder.internal;
 
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Class able to generate a BuildConfig class in Android project.
  * The BuildConfig class contains constants related to the build target.
  */
-class BuildConfigGenerator {
+public class BuildConfigGenerator {
 
     private final static String TEMPLATE = "BuildConfig.template";
     private final static String PH_PACKAGE = "#PACKAGE#";

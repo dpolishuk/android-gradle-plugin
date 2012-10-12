@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.builder;
+package com.android.builder.internal;
 
 import com.android.utils.ILogger;
 import com.google.common.base.Charsets;
@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  */
-class SymbolLoader {
+public class SymbolLoader {
 
     private final File mSymbolFile;
     private Table<String, String, SymbolEntry> mSymbols;
@@ -58,12 +58,12 @@ class SymbolLoader {
         }
     }
 
-    SymbolLoader(File symbolFile, ILogger logger) {
+    public SymbolLoader(File symbolFile, ILogger logger) {
         mSymbolFile = symbolFile;
         mLogger = logger;
     }
 
-    void load() throws IOException {
+    public void load() throws IOException {
         List<String> lines = Files.readLines(mSymbolFile, Charsets.UTF_8);
 
         mSymbols = HashBasedTable.create();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.builder.compiler;
+package com.android.builder.internal.compiler;
 
 import com.android.utils.ILogger;
 import com.google.common.collect.Lists;

@@ -17,7 +17,7 @@
 package com.android.builder.packaging;
 
 import com.android.annotations.NonNull;
-import com.android.builder.signing.SignedJarBuilder.IZipEntryFilter.ZipAbortException;
+import com.android.builder.internal.signing.SignedJarBuilder.IZipEntryFilter.ZipAbortException;
 
 import java.io.File;
 

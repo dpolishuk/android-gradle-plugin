@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.builder.signing;
+package com.android.builder.internal.signing;
 
-import com.android.builder.signing.SignedJarBuilder.IZipEntryFilter.ZipAbortException;
+import com.android.builder.internal.signing.SignedJarBuilder.IZipEntryFilter.ZipAbortException;
 
 import sun.misc.BASE64Encoder;
 import sun.security.pkcs.ContentInfo;

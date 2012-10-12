@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.builder;
+package com.android.builder.internal;
 
+import com.android.builder.internal.SymbolLoader;
 import com.android.utils.NullLogger;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Table;
