@@ -16,25 +16,25 @@
 
 package com.android.build.gradle.internal;
 
-import com.android.builder.TextSymbolProvider;
+import com.android.builder.SymbolFileProvider;
 import org.gradle.api.tasks.InputFile;
 
 import java.io.File;
 
 /**
- * Implementation of TextSymbolProvider that can be used as a Task input.
+ * Implementation of SymbolFileProvider that can be used as a Task input.
  */
-public class TextSymbolProviderImpl implements TextSymbolProvider {
+public class SymbolFileProviderImpl implements SymbolFileProvider {
 
     @InputFile
     private File manifest;
 
     @InputFile
-    private File textSymbol;
+    private File symbolFile;
 
-    TextSymbolProviderImpl(File manifest, File textSymbol) {
+    SymbolFileProviderImpl(File manifest, File symbolFile) {
         this.manifest = manifest;
-        this.textSymbol = textSymbol;
+        this.symbolFile = symbolFile;
     }
 
     @Override
@@ -43,7 +43,7 @@ public class TextSymbolProviderImpl implements TextSymbolProvider {
     }
 
     @Override
-    public File getTextSymbol() {
-        return textSymbol;
+    public File getSymbolFile() {
+        return symbolFile;
     }
 }

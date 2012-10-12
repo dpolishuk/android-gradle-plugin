@@ -17,6 +17,7 @@ package com.android.build.gradle.internal
 
 import com.android.builder.AndroidDependency
 import com.android.builder.BundleDependency
+import com.android.builder.ManifestDependency
 
 class AndroidDependencyImpl extends BundleDependency {
     final List<AndroidDependency> dependencies;
@@ -27,5 +28,10 @@ class AndroidDependencyImpl extends BundleDependency {
         super(explodedBundle, name)
         this.dependencies = dependencies
         this.bundle = bundle
+    }
+
+    @Override
+    List<ManifestDependency> getManifestDependencies() {
+        return dependencies
     }
 }

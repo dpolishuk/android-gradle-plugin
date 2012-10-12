@@ -17,7 +17,6 @@
 package com.android.builder.internal.signing;
 
 import com.android.builder.internal.signing.SignedJarBuilder.IZipEntryFilter.ZipAbortException;
-
 import sun.misc.BASE64Encoder;
 import sun.security.pkcs.ContentInfo;
 import sun.security.pkcs.PKCS7;
