@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
+import com.android.build.gradle.internal.tasks.BaseTask
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class UninstallTask extends BaseTask {
+public class GenerateBuildConfigTask extends BaseTask {
+
     @Input
-    File sdkDir
+    String packageName
+
+    @Input
+    boolean debuggable
+
+    @Input
+    List<String> javaLines;
+
+    @OutputDirectory
+    File sourceOutputDir
 
     @TaskAction
     void generate() {
-        String packageName = variant.package
-        logger.info("Uninstalling app: " + packageName)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args "uninstall"
-            args packageName
-        }
+        getBuilder().generateBuildConfig(
+                getPackageName(),
+                isDebuggable(),
+                getJavaLines(),
+                getSourceOutputDir().absolutePath);
     }
 }

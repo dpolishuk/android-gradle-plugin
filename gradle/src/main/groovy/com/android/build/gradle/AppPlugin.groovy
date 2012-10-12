@@ -37,6 +37,9 @@ import org.gradle.internal.reflect.Instantiator
 
 import javax.inject.Inject
 
+/**
+ * Gradle plugin class for 'application' projects.
+ */
 class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
     private final Map<String, BuildTypeData> buildTypes = [:]
     private final Map<String, ProductFlavorData<GroupableProductFlavor>> productFlavors = [:]

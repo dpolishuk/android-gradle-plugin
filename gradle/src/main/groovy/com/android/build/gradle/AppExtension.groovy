@@ -22,7 +22,10 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.internal.reflect.Instantiator
 
-class AppExtension extends BaseExtension {
+/**
+ * Extension for 'application' project.
+ */
+public class AppExtension extends BaseExtension {
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
     final NamedDomainObjectContainer<BuildType> buildTypes
 

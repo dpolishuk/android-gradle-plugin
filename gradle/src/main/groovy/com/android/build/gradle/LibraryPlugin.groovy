@@ -20,6 +20,7 @@ import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
+import com.android.build.gradle.tasks.ProcessManifestTask
 import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
 import com.android.builder.BuilderConstants
@@ -38,7 +39,10 @@ import org.gradle.internal.reflect.Instantiator
 
 import javax.inject.Inject
 
-class LibraryPlugin extends BasePlugin implements Plugin<Project> {
+/**
+ * Gradle plugin class for 'library' projects.
+ */
+public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
     private final static String DIR_BUNDLES = "bundles";
 

@@ -13,18 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
-import com.android.build.gradle.internal.ApplicationVariant
-import com.android.builder.AndroidBuilder
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.TaskAction
 
-abstract class BaseTask extends DefaultTask {
+public class ZipAlignTask extends DefaultTask {
+    @OutputFile
+    File outputFile
 
-    BasePlugin plugin
-    ApplicationVariant variant
+    @Input
+    File sdkDir
 
-    protected AndroidBuilder getBuilder() {
-        return plugin.getAndroidBuilder(variant);
+    @InputFile
+    File inputFile
+
+    @TaskAction
+    void generate() {
+        project.exec {
+            executable = new File(getSdkDir(), "tools${File.separator}zipalign")
+            args '-f', '4'
+            args getInputFile()
+            args getOutputFile()
+        }
     }
 }

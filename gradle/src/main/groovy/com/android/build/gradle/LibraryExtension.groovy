@@ -21,7 +21,10 @@ import org.gradle.api.Action
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.internal.reflect.Instantiator
 
-class LibraryExtension extends BaseExtension {
+/**
+ * Extension for 'library' project.
+ */
+public class LibraryExtension extends BaseExtension {
 
     final BuildType debug
     final BuildType release

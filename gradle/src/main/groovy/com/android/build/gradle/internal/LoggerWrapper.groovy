@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.internal
 
 import com.android.utils.ILogger
 import org.gradle.api.logging.LogLevel

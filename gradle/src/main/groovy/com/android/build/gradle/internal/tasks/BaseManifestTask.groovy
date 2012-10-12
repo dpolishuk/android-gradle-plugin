@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.internal.tasks
 
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.OutputFile
 
 /**
- * Run tests for a given variant
  */
-class RunTestsTask extends BaseTask {
+public abstract class BaseManifestTask extends BaseTask {
 
-    @Input
-    File sdkDir
-
-    @TaskAction
-    void generate() {
-        List<String> command = variant.runCommand
-
-        logger.info("Running tests with command: " + command)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args command
-        }
-    }
+    @OutputFile
+    File outManifest
 }

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
 import com.android.build.gradle.internal.AaptOptionsImpl
+import com.android.build.gradle.internal.tasks.BaseTask
 import com.android.builder.SymbolFileProvider
 import com.android.builder.VariantConfiguration
 import org.gradle.api.tasks.Input
@@ -28,7 +29,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class ProcessResourcesTask extends BaseTask {
+public class ProcessResourcesTask extends BaseTask {
 
     @InputFile
     File manifestFile

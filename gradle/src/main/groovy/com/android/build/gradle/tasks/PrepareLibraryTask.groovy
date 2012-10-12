@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
-import com.android.builder.DexOptions
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.OutputFile
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class DexTask extends BaseTask {
-    @OutputFile
-    File outputFile
+public class PrepareLibraryTask extends DefaultTask {
+    @InputFile
+    File bundle
 
-    @InputFiles
-    Iterable<File> sourceFiles
-
-    @InputFiles
-    Iterable<File> libraries
-
-    @Nested
-    DexOptions dexOptions
+    @OutputDirectory
+    File explodedDir
 
     @TaskAction
-    void generate() {
-        getBuilder().convertByteCode(
-                getSourceFiles(),
-                getLibraries(),
-                getOutputFile().absolutePath,
-                getDexOptions())
+    def prepare() {
+        project.copy {
+            from project.zipTree(bundle)
+            into explodedDir
+        }
     }
 }

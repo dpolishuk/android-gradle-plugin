@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
+import com.android.build.gradle.internal.tasks.BaseTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
-class CrunchResourcesTask extends BaseTask {
-    @OutputDirectory
-    File outputDir
+/**
+ * Run tests for a given variant
+ */
+public class RunTestsTask extends BaseTask {
 
-    @InputFiles
-    Iterable<File> resDirectories
+    @Input
+    File sdkDir
 
     @TaskAction
     void generate() {
-        getBuilder().preprocessResources(getOutputDir().absolutePath, getResDirectories())
+        List<String> command = variant.runCommand
+
+        logger.info("Running tests with command: " + command)
+        project.exec {
+            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
+            args command
+        }
     }
 }

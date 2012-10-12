@@ -13,31 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
+import com.android.build.gradle.internal.tasks.BaseTask
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class ZipAlignTask extends DefaultTask {
-    @OutputFile
-    File outputFile
+class CrunchResourcesTask extends BaseTask {
+    @OutputDirectory
+    File outputDir
 
-    @Input
-    File sdkDir
-
-    @InputFile
-    File inputFile
+    @InputFiles
+    Iterable<File> resDirectories
 
     @TaskAction
     void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "tools${File.separator}zipalign")
-            args '-f', '4'
-            args getInputFile()
-            args getOutputFile()
-        }
+        getBuilder().preprocessResources(getOutputDir().absolutePath, getResDirectories())
     }
 }

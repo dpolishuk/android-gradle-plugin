@@ -17,7 +17,6 @@
 package com.android.build.gradle.internal
 
 import com.android.build.gradle.AndroidSourceSet
-import com.android.build.gradle.DependencyChecker
 import com.android.builder.JarDependency
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration

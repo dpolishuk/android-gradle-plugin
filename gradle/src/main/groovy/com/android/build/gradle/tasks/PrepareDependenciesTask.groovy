@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
+import com.android.build.gradle.internal.DependencyChecker
+import com.android.build.gradle.internal.tasks.BaseTask
 import com.android.utils.Pair
 import org.gradle.api.tasks.TaskAction
 
-class PrepareDependenciesTask extends BaseTask {
+public class PrepareDependenciesTask extends BaseTask {
     final List<DependencyChecker> checkers = []
     final Set<Pair<Integer, String>> androidDependencies = []
 
