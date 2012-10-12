@@ -25,6 +25,7 @@ import com.android.builder.BuildType
 import com.android.builder.BuilderConstants
 import com.android.builder.BundleDependency
 import com.android.builder.JarDependency
+import com.android.builder.ManifestDependency
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -213,6 +214,11 @@ class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
             @Override
             List<AndroidDependency> getDependencies() {
+                return variantConfig.directLibraries
+            }
+
+            @Override
+            List<ManifestDependency> getManifestDependencies() {
                 return variantConfig.directLibraries
             }
         };
