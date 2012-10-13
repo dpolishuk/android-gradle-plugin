@@ -19,6 +19,8 @@ package com.android.build.gradle
 import org.gradle.api.file.SourceDirectorySet
 
 /**
+ * A {@code AndroidSourceSet} represents a logical group of Java, aidl, renderscript source
+ * as well as Android and non-Android resources.
  */
 public interface AndroidSourceSet {
 

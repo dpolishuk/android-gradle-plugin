@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
+package com.android.build.gradle.tasks
+
+import com.android.build.gradle.internal.tasks.BaseTask
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
 /**
- * Task installing an app.
  */
-class InstallTask extends DefaultTask {
-    @Input
-    File sdkDir
+public class CompileAidlTask extends BaseTask {
 
-    @InputFile
-    File packageFile
+    @InputFiles
+    List<File> sourceDirs
+
+    @InputFiles
+    List<File> importDirs
+
+    @OutputDirectory
+    File sourceOutputDir
 
     @TaskAction
     void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args 'install'
-            args '-r'
-            args getPackageFile()
-        }
+        getBuilder().compileAidl(getSourceDirs(), getSourceOutputDir(), getImportDirs())
     }
 }

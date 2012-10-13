@@ -13,51 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
-import com.android.builder.ManifestDependency
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
+import com.android.build.gradle.internal.tasks.BaseTask
+import com.android.builder.DexOptions
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Nested
-import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-/**
- */
-class ProcessManifestTask extends BaseManifestTask {
-
-    @InputFile
-    File mainManifest
+public class DexTask extends BaseTask {
+    @OutputFile
+    File outputFile
 
     @InputFiles
-    List<File> manifestOverlays
+    Iterable<File> sourceFiles
+
+    @InputFiles
+    Iterable<File> libraries
 
     @Nested
-    List<ManifestDependency> libraries
-
-    @Input
-    int versionCode
-
-    @Input @Optional
-    String versionName
-
-    @Input
-    int minSdkVersion
-
-    @Input
-    int targetSdkVersion
+    DexOptions dexOptions
 
     @TaskAction
     void generate() {
-        getBuilder().processManifest(
-                getMainManifest(),
-                getManifestOverlays(),
+        getBuilder().convertByteCode(
+                getSourceFiles(),
                 getLibraries(),
-                getVersionCode(),
-                getVersionName(),
-                getMinSdkVersion(),
-                getTargetSdkVersion(),
-                getOutManifest().absolutePath)
+                getOutputFile().absolutePath,
+                getDexOptions())
     }
 }

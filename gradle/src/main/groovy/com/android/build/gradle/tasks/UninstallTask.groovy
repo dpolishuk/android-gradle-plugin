@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputDirectory
+import com.android.build.gradle.internal.tasks.BaseTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
-class PrepareLibraryTask extends DefaultTask {
-    @InputFile
-    File bundle
-
-    @OutputDirectory
-    File explodedDir
+public class UninstallTask extends BaseTask {
+    @Input
+    File sdkDir
 
     @TaskAction
-    def prepare() {
-        project.copy {
-            from project.zipTree(bundle)
-            into explodedDir
+    void generate() {
+        String packageName = variant.package
+        logger.info("Uninstalling app: " + packageName)
+        project.exec {
+            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
+            args "uninstall"
+            args packageName
         }
     }
 }

@@ -19,6 +19,7 @@ package com.android.build.gradle;
 import java.io.File;
 
 /**
+ * An AndroidSourceFile represents a single file input for an Android project.
  */
 public interface AndroidSourceFile {
 
@@ -27,7 +28,16 @@ public interface AndroidSourceFile {
      */
     String getName();
 
+    /**
+     * Returns the file.
+     * @return the file input.
+     */
     File getFile();
 
+    /**
+     * Sets the location of the file
+     * @param o
+     * @return the AndroidSourceFile object
+     */
     AndroidSourceFile srcFile(java.lang.Object o);
 }

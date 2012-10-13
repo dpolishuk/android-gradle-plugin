@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
 import com.android.build.gradle.internal.AndroidAsciiReportRenderer
 import com.android.build.gradle.internal.ApplicationVariant
@@ -25,7 +25,7 @@ import org.gradle.logging.StyledTextOutputFactory
 
 /**
  */
-class AndroidDependencyTask extends DefaultTask {
+public class AndroidDependencyTask extends DefaultTask {
 
     private AndroidAsciiReportRenderer renderer = new AndroidAsciiReportRenderer();
 

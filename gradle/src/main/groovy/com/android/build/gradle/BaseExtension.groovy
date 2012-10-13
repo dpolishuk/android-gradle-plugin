@@ -31,7 +31,7 @@ import org.gradle.internal.reflect.Instantiator
 /**
  * Base android extension for all android plugins.
  */
-class BaseExtension {
+public abstract class BaseExtension {
 
     String target
 

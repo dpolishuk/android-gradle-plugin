@@ -13,32 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
+import com.android.build.gradle.internal.tasks.BaseManifestTask
+import com.android.builder.ManifestDependency
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
-class GenerateBuildConfigTask extends BaseTask {
+/**
+ */
+class ProcessTestManifestTask extends BaseManifestTask {
 
     @Input
-    String packageName
+    String testPackageName
 
     @Input
-    boolean debuggable
+    int minSdkVersion
 
     @Input
-    List<String> javaLines;
+    String testedPackageName
 
-    @OutputDirectory
-    File sourceOutputDir
+    @Input
+    String instrumentationRunner
+
+    @Nested
+    List<ManifestDependency> libraries
 
     @TaskAction
     void generate() {
-        getBuilder().generateBuildConfig(
-                getPackageName(),
-                isDebuggable(),
-                getJavaLines(),
-                getSourceOutputDir().absolutePath);
+        getBuilder().processTestManifest(
+                getTestPackageName(),
+                getMinSdkVersion(),
+                getTestedPackageName(),
+                getInstrumentationRunner(),
+                getLibraries(),
+                getOutManifest().absolutePath)
     }
 }

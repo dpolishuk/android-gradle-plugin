@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.internal.tasks
 
-import org.gradle.api.tasks.OutputFile
+import com.android.build.gradle.BasePlugin
+import com.android.build.gradle.internal.ApplicationVariant
+import com.android.builder.AndroidBuilder
+import org.gradle.api.DefaultTask
 
-/**
- */
-class BaseManifestTask extends BaseTask {
+public abstract class BaseTask extends DefaultTask {
 
-    @OutputFile
-    File outManifest
+    BasePlugin plugin
+    ApplicationVariant variant
+
+    protected AndroidBuilder getBuilder() {
+        return plugin.getAndroidBuilder(variant);
+    }
 }

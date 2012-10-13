@@ -19,6 +19,7 @@ package com.android.build.gradle;
 import org.gradle.tooling.model.SourceDirectory;
 
 /**
+ * An AndroidSourceDirectory represents a single directory input for an Android project.
  */
 public interface AndroidSourceDirectory extends SourceDirectory {
 
@@ -27,5 +28,10 @@ public interface AndroidSourceDirectory extends SourceDirectory {
      */
     String getName();
 
+    /**
+     * Sets the location of the directory
+     * @param o
+     * @return the AndroidSourceDirectory object
+     */
     AndroidSourceDirectory srcDir(java.lang.Object o);
 }

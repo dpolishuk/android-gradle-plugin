@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle
+package com.android.build.gradle.tasks
 
+import com.android.build.gradle.internal.tasks.BaseTask
 import com.android.builder.packaging.DuplicateFileException
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
@@ -24,7 +25,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-class PackageApplicationTask extends BaseTask {
+public class PackageApplicationTask extends BaseTask {
     @InputFile
     File resourceFile
 
