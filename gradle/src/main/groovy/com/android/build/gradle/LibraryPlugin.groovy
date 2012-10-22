@@ -20,7 +20,6 @@ import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
-import com.android.build.gradle.tasks.ProcessManifestTask
 import com.android.builder.AndroidDependency
 import com.android.builder.BuildType
 import com.android.builder.BuilderConstants
@@ -138,30 +137,24 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         ProductionAppVariant variant = new ProductionAppVariant(variantConfig)
         variants.add(variant)
 
-        def prepareDependenciesTask = createPrepareDependenciesTask(variant, configDependencies)
+        createPrepareDependenciesTask(variant, configDependencies)
 
         // Add a task to process the manifest(s)
-        ProcessManifestTask processManifestTask = createProcessManifestTask(variant, DIR_BUNDLES)
-        // TODO - move this
-        processManifestTask.dependsOn prepareDependenciesTask
+        createProcessManifestTask(variant, DIR_BUNDLES)
 
         // Add a task to create the BuildConfig class
-        def generateBuildConfigTask = createBuildConfigTask(variant, null)
+        createBuildConfigTask(variant)
 
         // Add a task to generate resource source files
-        def processResources = createProcessResTask(variant, processManifestTask,
-                null /*crunchTask*/)
+        createProcessResTask(variant)
 
         // process java resources
         createProcessJavaResTask(variant)
 
-        def compileAidl = createAidlTask(variant)
-        // TODO - move this
-        compileAidl.dependsOn prepareDependenciesTask
+        createAidlTask(variant)
 
         // Add a compile task
-        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
-                compileAidl)
+        createCompileTask(variant, null/*testedVariant*/)
 
         // jar the classes.
         Jar jar = project.tasks.add("package${buildTypeData.buildType.name.capitalize()}Jar", Jar);
@@ -190,10 +183,10 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
                 buildTypeData.sourceSet.aidl.directory)
         packageAidl.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}/aidl"))
 
-        // package the R symbol test file into the bundle folder
+        // package the R symbol text file into the bundle folder
         Copy packageSymbol = project.tasks.add("package${variant.name}Symbols", Copy)
-        packageSymbol.dependsOn processResources
-        packageSymbol.from(processResources.textSymbolDir)
+        packageSymbol.dependsOn variant.processResourcesTask
+        packageSymbol.from(variant.processResourcesTask.textSymbolDir)
         packageSymbol.into(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
 
         Zip bundle = project.tasks.add("bundle${variant.name}", Zip)

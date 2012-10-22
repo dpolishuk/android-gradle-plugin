@@ -61,12 +61,6 @@ class ProductionAppVariant extends ApplicationVariant {
     }
 
     @Override
-    boolean isSigned() {
-        return config.buildType.debugSigned ||
-                config.mergedFlavor.isSigningReady()
-    }
-
-    @Override
     boolean getRunProguard() {
         return config.buildType.runProguard
     }

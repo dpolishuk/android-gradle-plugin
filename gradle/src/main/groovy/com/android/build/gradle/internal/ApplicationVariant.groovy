@@ -16,11 +16,19 @@
 package com.android.build.gradle.internal
 
 import com.android.build.gradle.BasePlugin
+import com.android.build.gradle.internal.tasks.BaseManifestTask
+import com.android.build.gradle.tasks.CompileAidlTask
+import com.android.build.gradle.tasks.CrunchResourcesTask
+import com.android.build.gradle.tasks.DexTask
+import com.android.build.gradle.tasks.GenerateBuildConfigTask
+import com.android.build.gradle.tasks.PackageApplicationTask
+import com.android.build.gradle.tasks.PrepareDependenciesTask
+import com.android.build.gradle.tasks.ProcessResourcesTask
+import com.android.build.gradle.tasks.RunTestsTask
 import com.android.builder.AndroidBuilder
 import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Task
-import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.compile.JavaCompile
 
@@ -31,13 +39,26 @@ public abstract class ApplicationVariant {
 
     final VariantConfiguration config
 
-    FileCollection resourcePackage
+    PrepareDependenciesTask prepareDependenciesTask
+
+    BaseManifestTask processManifestTask
+    CompileAidlTask compileAidlTask
+    CrunchResourcesTask crunchResourcesTask
+    ProcessResourcesTask processResourcesTask
+    GenerateBuildConfigTask generateBuildConfigTask
+
     JavaCompile compileTask
     Copy processJavaResources
 
+    DexTask dexTask
+    PackageApplicationTask packageApplicationTask
+
     Task assembleTask
+
     Task installTask
     Task uninstallTask
+
+    RunTestsTask runTestsTask
 
     ApplicationVariant(VariantConfiguration config) {
         this.config = config
@@ -55,10 +76,12 @@ public abstract class ApplicationVariant {
 
     abstract String getBaseName()
 
-
     abstract boolean getZipAlign()
 
-    abstract boolean isSigned()
+    boolean isSigned() {
+        return config.buildType.debugSigned ||
+                config.mergedFlavor.isSigningReady()
+    }
 
     abstract boolean getRunProguard()
 

@@ -62,11 +62,6 @@ class TestAppVariant extends ApplicationVariant {
     }
 
     @Override
-    boolean isSigned() {
-        return true;
-    }
-
-    @Override
     boolean getRunProguard() {
         return false
     }

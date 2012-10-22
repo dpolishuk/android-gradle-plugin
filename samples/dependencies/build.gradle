@@ -22,18 +22,19 @@ dependencies {
 }
 
 android {
-    target = "android-15"
+    target "android-15"
+    testBuildType "blah"
 
 	defaultConfig {
-		signingStoreLocation = "debug.keystore"
-		signingStorePassword = "android"
-		signingKeyAlias = "androiddebugkey"
-		signingKeyPassword = "android"
+		signingStoreLocation "debug.keystore"
+		signingStorePassword "android"
+		signingKeyAlias "androiddebugkey"
+		signingKeyPassword "android"
 	}
 
 	buildTypes {
 		blah {
-			packageNameSuffix = ".blah"
+			packageNameSuffix ".blah"
 		}
 	}
 }

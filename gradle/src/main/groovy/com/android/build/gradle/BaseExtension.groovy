@@ -76,16 +76,15 @@ public abstract class BaseExtension {
                     String.format("Classpath packaged with the compiled %s classes.",
                             sourceSet.getName()));
 
-            sourceSet.getJava().srcDir(String.format("src/%s/java", sourceSet.getName()))
-            sourceSet.getResources().srcDir(
-                    String.format("src/%s/resources", sourceSet.getName()))
-            sourceSet.getRes().srcDir(String.format("src/%s/res", sourceSet.getName()))
-            sourceSet.getAssets().srcDir(String.format("src/%s/assets", sourceSet.getName()))
-            sourceSet.getManifest().srcFile(
+            sourceSet.java.srcDir(String.format("src/%s/java", sourceSet.getName()))
+            sourceSet.resources.srcDir(String.format("src/%s/resources", sourceSet.getName()))
+            sourceSet.res.srcDir(String.format("src/%s/res", sourceSet.getName()))
+            sourceSet.assets.srcDir(String.format("src/%s/assets", sourceSet.getName()))
+            sourceSet.manifest.srcFile(
                     String.format("src/%s/AndroidManifest.xml", sourceSet.getName()))
-            sourceSet.getAidl().srcDir(String.format("src/%s/aidl", sourceSet.getName()))
-            sourceSet.getRenderscript().srcDir(String.format("src/%s/rs", sourceSet.getName()))
-            sourceSet.getJni().srcDir(String.format("src/%s/jni", sourceSet.getName()))
+            sourceSet.aidl.srcDir(String.format("src/%s/aidl", sourceSet.getName()))
+            sourceSet.renderscript.srcDir(String.format("src/%s/rs", sourceSet.getName()))
+            sourceSet.jni.srcDir(String.format("src/%s/jni", sourceSet.getName()))
         }
     }
 
@@ -104,6 +103,4 @@ public abstract class BaseExtension {
     void dexOptions(Action<DexOptionsImpl> action) {
         action.execute(dexOptions)
     }
-
-
 }

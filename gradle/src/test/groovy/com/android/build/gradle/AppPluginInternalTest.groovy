@@ -15,15 +15,17 @@
  */
 package com.android.build.gradle
 
+import com.android.build.gradle.internal.ApplicationVariant
+import com.android.build.gradle.internal.BaseTest
 import com.android.build.gradle.internal.PluginHolder
 import com.android.builder.BuildType
-import junit.framework.TestCase
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 
-import java.security.CodeSource
-
-public class BasicConfigTest extends TestCase {
+/**
+ * Tests for the internal workings of the app plugin ("android")
+ */
+public class AppPluginInternalTest extends BaseTest {
 
     @Override
     protected void setUp() throws Exception {
@@ -48,7 +50,19 @@ public class BasicConfigTest extends TestCase {
         assertNotNull(plugin.buildTypes.get(BuildType.DEBUG))
         assertNotNull(plugin.buildTypes.get(BuildType.RELEASE))
         assertEquals(0, plugin.productFlavors.size())
-        assertEquals(3, plugin.variants.size()) // includes the test variant(s)
+
+
+        List<ApplicationVariant> variants = plugin.variants
+        assertEquals(3, variants.size()) // includes the test variant(s)
+
+        ApplicationVariant debugVariant = findVariant(variants, "Debug")
+        assertNotNull(debugVariant)
+
+        ApplicationVariant release = findVariant(variants, "Release")
+        assertNotNull(release)
+
+        ApplicationVariant test = findVariant(variants, "Test")
+        assertNotNull(test)
     }
 
     public void testDefaultConfig() {
@@ -95,10 +109,11 @@ public class BasicConfigTest extends TestCase {
 
         project.android {
             target "android-15"
+            testBuildType "staging"
 
             buildTypes {
                 staging {
-
+                    debugSigned true
                 }
             }
         }
@@ -107,7 +122,22 @@ public class BasicConfigTest extends TestCase {
         plugin.createAndroidTasks()
 
         assertEquals(3, plugin.buildTypes.size())
-        assertEquals(4, plugin.variants.size())  // includes the test variant(s)
+
+        List<ApplicationVariant> variants = plugin.variants
+        assertEquals(4, variants.size()) // includes the test variant(s)
+
+        ApplicationVariant debugVariant = findVariant(variants, "Debug")
+        assertNotNull(debugVariant)
+
+        ApplicationVariant releaseVariant = findVariant(variants, "Release")
+        assertNotNull(releaseVariant)
+
+        ApplicationVariant stagingVariant = findVariant(variants, "Staging")
+        assertNotNull(stagingVariant)
+
+        ApplicationVariant testVariant = findVariant(variants, "Test")
+        assertNotNull(testVariant)
+        assertEquals("staging", testVariant.config.buildType.name)
     }
 
     public void testFlavors() {
@@ -133,7 +163,16 @@ public class BasicConfigTest extends TestCase {
         plugin.createAndroidTasks()
 
         assertEquals(2, plugin.productFlavors.size())
-        assertEquals(6, plugin.variants.size()) // includes the test variant(s)
+
+        List<ApplicationVariant> variants = plugin.variants
+        assertEquals(6, variants.size()) // includes the test variant(s)
+
+        assertNotNull(findVariant(variants, "Flavor1Debug"))
+        assertNotNull(findVariant(variants, "Flavor1Release"))
+        assertNotNull(findVariant(variants, "Flavor1Test"))
+        assertNotNull(findVariant(variants, "Flavor2Debug"))
+        assertNotNull(findVariant(variants, "Flavor2Release"))
+        assertNotNull(findVariant(variants, "Flavor2Test"))
     }
 
     public void testMultiFlavors() {
@@ -171,31 +210,37 @@ public class BasicConfigTest extends TestCase {
         plugin.createAndroidTasks()
 
         assertEquals(5, plugin.productFlavors.size())
-        assertEquals(18, plugin.variants.size()) // includes the test variant(s)
+
+        List<ApplicationVariant> variants = plugin.variants
+        assertEquals(18, variants.size())   // includes the test variant(s)
+
+        assertNotNull(findVariant(variants, "F1FaDebug"))
+        assertNotNull(findVariant(variants, "F1FbDebug"))
+        assertNotNull(findVariant(variants, "F1FcDebug"))
+        assertNotNull(findVariant(variants, "F2FaDebug"))
+        assertNotNull(findVariant(variants, "F2FbDebug"))
+        assertNotNull(findVariant(variants, "F2FcDebug"))
+        assertNotNull(findVariant(variants, "F1FaRelease"))
+        assertNotNull(findVariant(variants, "F1FbRelease"))
+        assertNotNull(findVariant(variants, "F1FcRelease"))
+        assertNotNull(findVariant(variants, "F2FaRelease"))
+        assertNotNull(findVariant(variants, "F2FbRelease"))
+        assertNotNull(findVariant(variants, "F2FcRelease"))
+        assertNotNull(findVariant(variants, "F1FaTest"))
+        assertNotNull(findVariant(variants, "F1FbTest"))
+        assertNotNull(findVariant(variants, "F1FcTest"))
+        assertNotNull(findVariant(variants, "F2FaTest"))
+        assertNotNull(findVariant(variants, "F2FbTest"))
+        assertNotNull(findVariant(variants, "F2FcTest"))
     }
 
-
-    /**
-     * Returns the Android source tree root dir.
-     * @return the root dir or null if it couldn't be computed.
-     */
-    private File getTestDir() {
-        CodeSource source = getClass().getProtectionDomain().getCodeSource()
-        if (source != null) {
-            URL location = source.getLocation();
-            try {
-                File dir = new File(location.toURI())
-                assertTrue(dir.getPath(), dir.exists())
-                System.out.println(dir.absolutePath)
-
-                File rootDir = dir.getParentFile().getParentFile().getParentFile().getParentFile()
-
-                return new File(rootDir, "tests")
-            } catch (URISyntaxException e) {
-                fail(e.getLocalizedMessage())
+    private ApplicationVariant findVariant(Collection<ApplicationVariant> variants, String name) {
+        for (ApplicationVariant variant : variants) {
+            if (name.equals(variant.name)) {
+                return variant
             }
         }
 
-        fail("Fail to get tests folder")
+        return null
     }
 }
