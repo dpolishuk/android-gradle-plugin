@@ -20,6 +20,7 @@ import com.android.build.gradle.internal.BuildTypeFactory
 import com.android.build.gradle.internal.ConfigurationDependencies
 import com.android.build.gradle.internal.GroupableProductFlavor
 import com.android.build.gradle.internal.GroupableProductFlavorFactory
+import com.android.build.gradle.internal.PluginHolder
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
@@ -41,8 +42,9 @@ import javax.inject.Inject
  * Gradle plugin class for 'application' projects.
  */
 class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
-    private final Map<String, BuildTypeData> buildTypes = [:]
-    private final Map<String, ProductFlavorData<GroupableProductFlavor>> productFlavors = [:]
+    static PluginHolder pluginHolder;
+    final Map<String, BuildTypeData> buildTypes = [:]
+    final Map<String, ProductFlavorData<GroupableProductFlavor>> productFlavors = [:]
 
     AppExtension extension
 
@@ -54,6 +56,11 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
     @Override
     void apply(Project project) {
         super.apply(project)
+
+        // This is for testing.
+        if (pluginHolder != null) {
+            pluginHolder.plugin = this;
+        }
 
         def buildTypeContainer = project.container(BuildType, new BuildTypeFactory(instantiator))
         def productFlavorContainer = project.container(GroupableProductFlavor,
@@ -122,7 +129,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         productFlavors[productFlavor.name] = productFlavorData
     }
 
-    private void createAndroidTasks() {
+    protected void createAndroidTasks() {
         // resolve dependencies for all config
         List<ConfigurationDependencies> dependencies = []
         dependencies.addAll(buildTypes.values())
