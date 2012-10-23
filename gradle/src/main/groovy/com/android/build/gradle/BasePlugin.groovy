@@ -84,6 +84,7 @@ import org.gradle.util.GUtil
 public abstract class BasePlugin {
 
     public final static String INSTALL_GROUP = "Install"
+    protected static File TEST_SDK_DIR;
 
     protected Instantiator instantiator
 
@@ -171,6 +172,12 @@ public abstract class BasePlugin {
     }
 
     private void findSdk(Project project) {
+        // if already set through tests.
+        if (TEST_SDK_DIR != null) {
+            sdkDir = TEST_SDK_DIR
+            return
+        }
+
         def rootDir = project.rootDir
         def localProperties = new File(rootDir, SdkConstants.FN_LOCAL_PROPERTIES)
         if (localProperties.exists()) {
