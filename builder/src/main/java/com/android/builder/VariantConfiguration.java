@@ -206,7 +206,7 @@ public class VariantConfiguration {
         return !mFlavorConfigs.isEmpty();
     }
 
-    public Iterable<ProductFlavor> getFlavorConfigs() {
+    public List<ProductFlavor> getFlavorConfigs() {
         return mFlavorConfigs;
     }
 

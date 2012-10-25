@@ -26,7 +26,6 @@ import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.SymbolFileProviderImpl
 import com.android.build.gradle.internal.TestAppVariant
-import com.android.build.gradle.internal.tasks.BaseManifestTask
 import com.android.build.gradle.tasks.AndroidDependencyTask
 import com.android.build.gradle.tasks.CompileAidlTask
 import com.android.build.gradle.tasks.CrunchResourcesTask
@@ -214,10 +213,13 @@ public abstract class BasePlugin {
         return androidBuilder.runtimeClasspath.join(File.pathSeparator)
     }
 
-    protected ProcessManifestTask createProcessManifestTask(ApplicationVariant variant,
-                                                        String manifestOurDir) {
+    protected void createProcessManifestTask(ApplicationVariant variant,
+                                                            String manifestOurDir) {
         def processManifestTask = project.tasks.add("process${variant.name}Manifest",
                 ProcessManifestTask)
+        variant.processManifestTask = processManifestTask
+        processManifestTask.dependsOn variant.prepareDependenciesTask
+
         processManifestTask.plugin = this
         processManifestTask.variant = variant
 
@@ -249,14 +251,15 @@ public abstract class BasePlugin {
             project.file(
                     "$project.buildDir/${manifestOurDir}/$variant.dirName/AndroidManifest.xml")
         }
-
-        return processManifestTask
     }
 
-    protected ProcessTestManifestTask createProcessTestManifestTask(ApplicationVariant variant,
+    protected void createProcessTestManifestTask(ApplicationVariant variant,
                                                                     String manifestOurDir) {
         def processTestManifestTask = project.tasks.add("process${variant.name}TestManifest",
                 ProcessTestManifestTask)
+        variant.processManifestTask = processTestManifestTask
+        processTestManifestTask.dependsOn variant.prepareDependenciesTask
+
         processTestManifestTask.plugin = this
         processTestManifestTask.variant = variant
 
@@ -281,30 +284,31 @@ public abstract class BasePlugin {
             project.file(
                     "$project.buildDir/${manifestOurDir}/$variant.dirName/AndroidManifest.xml")
         }
-
-        return processTestManifestTask
     }
 
-    protected CrunchResourcesTask createCrunchResTask(ApplicationVariant variant) {
+    protected void createCrunchResTask(ApplicationVariant variant) {
         def crunchTask = project.tasks.add("crunch${variant.name}Res", CrunchResourcesTask)
+        variant.crunchResourcesTask = crunchTask
+
         crunchTask.plugin = this
         crunchTask.variant = variant
+
         crunchTask.conventionMapping.resDirectories = { variant.config.resourceInputs }
         crunchTask.conventionMapping.outputDir = {
             project.file("$project.buildDir/res/$variant.dirName")
         }
-
-        return crunchTask
     }
 
-    protected GenerateBuildConfigTask createBuildConfigTask(ApplicationVariant variant,
-                                                            BaseManifestTask processManifestTask) {
+    protected void createBuildConfigTask(ApplicationVariant variant) {
         def generateBuildConfigTask = project.tasks.add(
                 "generate${variant.name}BuildConfig", GenerateBuildConfigTask)
-        if (processManifestTask != null) {
-            // This is in case the manifest is generated
-            generateBuildConfigTask.dependsOn processManifestTask
+        variant.generateBuildConfigTask = generateBuildConfigTask
+        if (variant.config.type == VariantConfiguration.Type.TEST) {
+            // in case of a test project, the manifest is generated so we need to depend
+            // on its creation.
+            generateBuildConfigTask.dependsOn variant.processManifestTask
         }
+
         generateBuildConfigTask.plugin = this
         generateBuildConfigTask.variant = variant
 
@@ -323,26 +327,31 @@ public abstract class BasePlugin {
         generateBuildConfigTask.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/${variant.dirName}")
         }
-
-        return generateBuildConfigTask
     }
 
-    protected ProcessResourcesTask createProcessResTask(ApplicationVariant variant,
-                                                        BaseManifestTask processManifestTask,
-                                                        CrunchResourcesTask crunchTask) {
+    protected void createProcessResTask(ApplicationVariant variant) {
         def processResources = project.tasks.add("process${variant.name}Res", ProcessResourcesTask)
-        processResources.dependsOn processManifestTask
+        variant.processResourcesTask = processResources
+        processResources.dependsOn variant.processManifestTask
+
         processResources.plugin = this
         processResources.variant = variant
 
         VariantConfiguration config = variant.config
 
-        processResources.conventionMapping.manifestFile = { processManifestTask.outManifest }
+        processResources.conventionMapping.manifestFile = {
+            variant.processManifestTask.outManifest
+        }
 
-        if (crunchTask != null) {
-            processResources.dependsOn crunchTask
-            processResources.conventionMapping.preprocessResDir = { crunchTask.outputDir }
-            processResources.conventionMapping.resDirectories = { crunchTask.resDirectories }
+        if (variant.crunchResourcesTask != null) {
+            processResources.dependsOn variant.crunchResourcesTask
+
+            processResources.conventionMapping.preprocessResDir = {
+                variant.crunchResourcesTask.outputDir
+            }
+            processResources.conventionMapping.resDirectories = {
+                variant.crunchResourcesTask.resDirectories
+            }
         } else {
             processResources.conventionMapping.resDirectories = { config.resourceInputs }
         }
@@ -381,8 +390,6 @@ public abstract class BasePlugin {
         processResources.conventionMapping.type = { config.type }
         processResources.conventionMapping.debuggable = { config.buildType.debuggable }
         processResources.conventionMapping.aaptOptions = { extension.aaptOptions }
-
-        return processResources
     }
 
     protected void createProcessJavaResTask(ApplicationVariant variant) {
@@ -390,6 +397,7 @@ public abstract class BasePlugin {
 
         Copy processResources = project.getTasks().add("process${variant.name}JavaRes",
                 ProcessResources.class);
+        variant.processJavaResources = processResources
 
         // set the input
         processResources.from(((AndroidSourceSet) config.defaultSourceSet).resources)
@@ -406,41 +414,37 @@ public abstract class BasePlugin {
         processResources.conventionMapping.destinationDir = {
             project.file("$project.buildDir/javaResources/$variant.dirName")
         }
-
-        variant.processJavaResources = processResources
     }
 
-    protected CompileAidlTask createAidlTask(ApplicationVariant variant) {
-
+    protected void createAidlTask(ApplicationVariant variant) {
         VariantConfiguration config = variant.config
 
         def compileTask = project.tasks.add("compile${variant.name}Aidl", CompileAidlTask)
+        variant.compileAidlTask = compileTask
+        variant.compileAidlTask.dependsOn variant.prepareDependenciesTask
+
         compileTask.plugin = this
         compileTask.variant = variant
 
-        compileTask.conventionMapping.sourceDirs = { variant.config.aidlSourceList }
-        compileTask.conventionMapping.importDirs = { variant.config.aidlImports }
+        compileTask.conventionMapping.sourceDirs = { config.aidlSourceList }
+        compileTask.conventionMapping.importDirs = { config.aidlImports }
 
         compileTask.conventionMapping.sourceOutputDir = {
             project.file("$project.buildDir/source/$variant.dirName")
         }
-
-        return compileTask
     }
 
     protected void createCompileTask(ApplicationVariant variant,
-                                     ApplicationVariant testedVariant,
-                                     ProcessResourcesTask processResources,
-                                     GenerateBuildConfigTask generateBuildConfigTask,
-                                     CompileAidlTask aidlTask) {
+                                     ApplicationVariant testedVariant) {
         def compileTask = project.tasks.add("compile${variant.name}", JavaCompile)
-        compileTask.dependsOn processResources, generateBuildConfigTask, aidlTask
+        variant.compileTask = compileTask
+        compileTask.dependsOn variant.processResourcesTask, variant.generateBuildConfigTask, variant.compileAidlTask
 
         VariantConfiguration config = variant.config
 
         List<Object> sourceList = new ArrayList<Object>();
         sourceList.add(((AndroidSourceSet) config.defaultSourceSet).java)
-        sourceList.add({ processResources.sourceOutputDir })
+        sourceList.add({ variant.processResourcesTask.sourceOutputDir })
         if (config.getType() != VariantConfiguration.Type.TEST) {
             sourceList.add(((AndroidSourceSet) config.buildTypeSourceSet).java)
         }
@@ -484,51 +488,45 @@ public abstract class BasePlugin {
         compileTask.doFirst {
             compileTask.options.bootClasspath = getRuntimeJars(variant)
         }
-
-        // Wire up the outputs
-        variant.resourcePackage = project.files({processResources.packageFile}) {
-            builtBy processResources
-        }
-        variant.compileTask = compileTask
     }
 
     protected void createTestTasks(TestAppVariant variant, ProductionAppVariant testedVariant,
                                    List<ConfigurationDependencies> configDependencies) {
+        // The test app is signed with the same info as the tested app so there's no need
+        // to test both.
+        if (!testedVariant.isSigned()) {
+            throw new GradleException("Tested Variant '${testedVariant.name}' is not configured to create a signed APK.")
+        }
 
-        def prepareDependenciesTask = createPrepareDependenciesTask(variant, configDependencies)
+        createPrepareDependenciesTask(variant, configDependencies)
 
         // Add a task to process the manifest
-        def processManifestTask = createProcessTestManifestTask(variant, "manifests")
-        // TODO - move this
-        processManifestTask.dependsOn prepareDependenciesTask
+        createProcessTestManifestTask(variant, "manifests")
 
         // Add a task to crunch resource files
-        def crunchTask = createCrunchResTask(variant)
+        createCrunchResTask(variant)
 
         if (testedVariant.config.type == VariantConfiguration.Type.LIBRARY) {
             // in this case the tested library must be fully built before test can be built!
             if (testedVariant.assembleTask != null) {
-                processManifestTask.dependsOn testedVariant.assembleTask
-                crunchTask.dependsOn testedVariant.assembleTask
+                variant.processManifestTask.dependsOn testedVariant.assembleTask
+                variant.crunchResourcesTask.dependsOn testedVariant.assembleTask
             }
         }
 
         // Add a task to create the BuildConfig class
-        def generateBuildConfigTask = createBuildConfigTask(variant, processManifestTask)
+        createBuildConfigTask(variant)
 
         // Add a task to generate resource source files
-        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+        createProcessResTask(variant)
 
         // process java resources
         createProcessJavaResTask(variant)
 
-        def compileAidl = createAidlTask(variant)
-        // TODO - move this
-        compileAidl.dependsOn prepareDependenciesTask
+        createAidlTask(variant)
 
         // Add a task to compile the test application
-        createCompileTask(variant, testedVariant, processResources, generateBuildConfigTask,
-                compileAidl)
+        createCompileTask(variant, testedVariant)
 
         addPackageTasks(variant, null)
 
@@ -546,6 +544,7 @@ public abstract class BasePlugin {
 
         // now run the test.
         def runTestsTask = project.tasks.add("run${testedVariant.name}Tests", RunTestsTask)
+        variant.runTestsTask = runTestsTask
         runTestsTask.description = "Runs the checks for Build ${testedVariant.name}. Must be installed on device."
         runTestsTask.group = JavaBasePlugin.VERIFICATION_GROUP
         runTestsTask.sdkDir = sdkDir
@@ -570,11 +569,14 @@ public abstract class BasePlugin {
         // Add a dex task
         def dexTaskName = "dex${variant.name}"
         def dexTask = project.tasks.add(dexTaskName, DexTask)
+        variant.dexTask = dexTask
         dexTask.dependsOn variant.compileTask
+
         dexTask.plugin = this
         dexTask.variant = variant
+
         dexTask.conventionMapping.libraries = { project.files({ variant.config.packagedJars }) }
-        dexTask.conventionMapping.sourceFiles = { variant.compileTask.outputs.files }
+        dexTask.conventionMapping.sourceFiles = { variant.compileTask.outputs.files } // this creates a dependency
         dexTask.conventionMapping.outputFile = {
             project.file(
                     "${project.buildDir}/libs/${project.archivesBaseName}-${variant.baseName}.dex")
@@ -583,13 +585,15 @@ public abstract class BasePlugin {
 
         // Add a task to generate application package
         def packageApp = project.tasks.add("package${variant.name}", PackageApplicationTask)
-        packageApp.dependsOn variant.resourcePackage, dexTask, variant.processJavaResources
+        variant.packageApplicationTask = packageApp
+        packageApp.dependsOn variant.processResourcesTask, dexTask, variant.processJavaResources
+
         packageApp.plugin = this
         packageApp.variant = variant
 
         VariantConfiguration config = variant.config
 
-        packageApp.conventionMapping.resourceFile = { variant.resourcePackage.singleFile }
+        packageApp.conventionMapping.resourceFile = { variant.processResourcesTask.packageFile }
         packageApp.conventionMapping.dexFile = { dexTask.outputFile }
 
         packageApp.conventionMapping.packagedJars = { config.packagedJars }
@@ -673,10 +677,12 @@ public abstract class BasePlugin {
         androidDependencyTask.setGroup("Help")
     }
 
-    PrepareDependenciesTask createPrepareDependenciesTask(ApplicationVariant variant,
+    protected void createPrepareDependenciesTask(ApplicationVariant variant,
             List<ConfigurationDependencies> configDependenciesList) {
         def prepareDependenciesTask = project.tasks.add("prepare${variant.name}Dependencies",
                 PrepareDependenciesTask)
+        variant.prepareDependenciesTask = prepareDependenciesTask
+
         prepareDependenciesTask.plugin = this
         prepareDependenciesTask.variant = variant
 
@@ -689,8 +695,6 @@ public abstract class BasePlugin {
                 addDependencyToPrepareTask(prepareDependenciesTask, lib)
             }
         }
-
-        return prepareDependenciesTask
     }
 
     def addDependencyToPrepareTask(PrepareDependenciesTask prepareDependenciesTask,

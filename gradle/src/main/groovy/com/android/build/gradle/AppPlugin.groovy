@@ -18,6 +18,7 @@ package com.android.build.gradle
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.BuildTypeFactory
 import com.android.build.gradle.internal.ConfigurationDependencies
+import com.android.build.gradle.internal.DefaultBuildVariant
 import com.android.build.gradle.internal.GroupableProductFlavor
 import com.android.build.gradle.internal.GroupableProductFlavorFactory
 import com.android.build.gradle.internal.PluginHolder
@@ -43,6 +44,9 @@ import javax.inject.Inject
  */
 class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
     static PluginHolder pluginHolder;
+
+    private boolean hasCreatedTasks = false
+
     final Map<String, BuildTypeData> buildTypes = [:]
     final Map<String, ProductFlavorData<GroupableProductFlavor>> productFlavors = [:]
 
@@ -67,7 +71,8 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
                 new GroupableProductFlavorFactory(instantiator))
 
         extension = project.extensions.create('android', AppExtension,
-                (ProjectInternal) project, instantiator, buildTypeContainer, productFlavorContainer)
+                this, (ProjectInternal) project, instantiator,
+                buildTypeContainer, productFlavorContainer)
         setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         buildTypeContainer.whenObjectAdded { BuildType buildType ->
@@ -130,6 +135,11 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
     }
 
     protected void createAndroidTasks() {
+        if (hasCreatedTasks) {
+            return
+        }
+        hasCreatedTasks = true
+
         // resolve dependencies for all config
         List<ConfigurationDependencies> dependencies = []
         dependencies.addAll(buildTypes.values())
@@ -239,6 +249,11 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
 
             if (buildTypeData == testData) {
                 testedVariant = productionAppVariant
+            } else {
+                // add this non-tested variant to the list
+                DefaultBuildVariant buildVariant = instantiator.newInstance(
+                        DefaultBuildVariant.class, productionAppVariant)
+                extension.buildVariants.add(buildVariant)
             }
         }
 
@@ -264,6 +279,14 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         def testVariant = new TestAppVariant(testVariantConfig)
         variants.add(testVariant)
         createTestTasks(testVariant, testedVariant, testConfigDependencies)
+
+        // add the test and tested variants to the list
+        DefaultBuildVariant testedBuildVariant = instantiator.newInstance(
+                DefaultBuildVariant.class, testVariant)
+        extension.testBuildVariants.add(testedBuildVariant)
+        DefaultBuildVariant buildVariant = instantiator.newInstance(
+                DefaultBuildVariant.class, testedVariant, testedBuildVariant)
+        extension.buildVariants.add(buildVariant)
     }
 
     /**
@@ -330,6 +353,11 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
 
             if (buildTypeData == testData) {
                 testedVariant = productionAppVariant
+            } else {
+                // add this non-tested variant to the list
+                DefaultBuildVariant buildVariant = instantiator.newInstance(
+                        DefaultBuildVariant.class, productionAppVariant)
+                extension.buildVariants.add(buildVariant)
             }
         }
 
@@ -366,6 +394,15 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         def testVariant = new TestAppVariant(testVariantConfig)
         variants.add(testVariant)
         createTestTasks(testVariant, testedVariant, testConfigDependencies)
+
+        // add the test and tested variants to the list
+        DefaultBuildVariant testedBuildVariant = instantiator.newInstance(
+                DefaultBuildVariant.class, testVariant)
+        extension.testBuildVariants.add(testedBuildVariant)
+        DefaultBuildVariant buildVariant = instantiator.newInstance(
+                DefaultBuildVariant.class, testedVariant, testedBuildVariant)
+        extension.buildVariants.add(buildVariant)
+
     }
 
     private Task createAssembleTask(ProductFlavorData[] flavorDataList) {
@@ -389,32 +426,27 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
 
         def variant = new ProductionAppVariant(variantConfig)
 
-        def prepareDependenciesTask = createPrepareDependenciesTask(variant, configDependencies)
+        createPrepareDependenciesTask(variant, configDependencies)
 
         // Add a task to process the manifest(s)
-        def processManifestTask = createProcessManifestTask(variant, "manifests")
-        // TODO - move this
-        processManifestTask.dependsOn prepareDependenciesTask
+        createProcessManifestTask(variant, "manifests")
 
         // Add a task to crunch resource files
-        def crunchTask = createCrunchResTask(variant)
+        createCrunchResTask(variant)
 
         // Add a task to create the BuildConfig class
-        def generateBuildConfigTask = createBuildConfigTask(variant, null)
+        createBuildConfigTask(variant)
 
         // Add a task to generate resource source files
-        def processResources = createProcessResTask(variant, processManifestTask, crunchTask)
+        createProcessResTask(variant)
 
         // Add a task to process the java resources
         createProcessJavaResTask(variant)
 
-        def compileAidl = createAidlTask(variant)
-        // TODO - move this
-        compileAidl.dependsOn prepareDependenciesTask
+        createAidlTask(variant)
 
         // Add a compile task
-        createCompileTask(variant, null/*testedVariant*/, processResources, generateBuildConfigTask,
-                compileAidl)
+        createCompileTask(variant, null/*testedVariant*/)
 
         addPackageTasks(variant, assembleTask)
 
