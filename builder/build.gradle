@@ -94,20 +94,27 @@ uploadArchives {
 
 // custom tasks for creating source/javadoc jars
 task sourcesJar(type: Jar, dependsOn:classes) {
-     classifier = 'sources'
-     from sourceSets.main.allSource
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
- 
+
+javadoc {
+    exclude               "**/internal/**"
+    options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
+
+    title                 "Android Builder"
+}
+
 task javadocJar(type: Jar, dependsOn:javadoc) {
-     classifier = 'javadoc'
-     from javadoc.destinationDir
+    classifier         'javadoc'
+    from               javadoc.destinationDir
 }
  
 // add javadoc/source jar tasks as artifacts
 artifacts {
-     archives jar
-     archives sourcesJar
-     archives javadocJar
+    archives jar
+    archives sourcesJar
+    archives javadocJar
 }
 
 signing {

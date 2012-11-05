@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
-import com.android.build.gradle.internal.tasks.BaseTask
+import com.android.build.gradle.tasks.ProcessImages
 import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-class CrunchResourcesTask extends BaseTask {
-    @OutputDirectory
-    File outputDir
+class ProcessImagesTask extends ProcessImages {
 
     @InputFiles
     Iterable<File> resDirectories
 
     @TaskAction
     void generate() {
-        getBuilder().preprocessResources(getOutputDir().absolutePath, getResDirectories())
+        getBuilder().processImages(getOutputDir().absolutePath, getResDirectories())
     }
 }

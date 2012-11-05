@@ -192,8 +192,8 @@ public class AndroidBuilder {
     }
 
     /**
-     * Pre-process resources. This crunches images and process 9-patches before they can
-     * be packaged.
+     * Process the images. This optimize the bitmaps and pre-processes the 9-patch files before
+     * they can be packaged.
      * This is incremental.
      *
      * @param resOutputDir where the processed resources are stored.
@@ -201,7 +201,7 @@ public class AndroidBuilder {
      * @throws IOException
      * @throws InterruptedException
      */
-    public void preprocessResources(@NonNull String resOutputDir, List<File> inputs)
+    public void processImages(@NonNull String resOutputDir, List<File> inputs)
             throws IOException, InterruptedException {
         checkState(mTarget != null, "Target not set.");
         checkNotNull(resOutputDir, "resOutputDir cannot be null.");
@@ -239,7 +239,7 @@ public class AndroidBuilder {
         command.add("-C");
         command.add(resOutputDir);
 
-        mLogger.info("crunch command: %s", command.toString());
+        mLogger.info("processImages command: %s", command.toString());
 
         mCmdLineRunner.runCmdLine(command);
     }

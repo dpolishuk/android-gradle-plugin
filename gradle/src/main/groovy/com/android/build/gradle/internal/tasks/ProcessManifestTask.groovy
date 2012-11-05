@@ -13,41 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
-import com.android.build.gradle.internal.tasks.BaseManifestTask
+import com.android.build.gradle.tasks.ProcessManifest
 import com.android.builder.ManifestDependency
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 /**
  */
-class ProcessTestManifestTask extends BaseManifestTask {
+public class ProcessManifestTask extends ProcessManifest {
+
+    @InputFile
+    File mainManifest
+
+    @InputFiles
+    List<File> manifestOverlays
+
+    @Nested
+    List<ManifestDependency> libraries
 
     @Input
-    String testPackageName
+    int versionCode
+
+    @Input @Optional
+    String versionName
 
     @Input
     int minSdkVersion
 
     @Input
-    String testedPackageName
-
-    @Input
-    String instrumentationRunner
-
-    @Nested
-    List<ManifestDependency> libraries
+    int targetSdkVersion
 
     @TaskAction
     void generate() {
-        getBuilder().processTestManifest(
-                getTestPackageName(),
-                getMinSdkVersion(),
-                getTestedPackageName(),
-                getInstrumentationRunner(),
+        getBuilder().processManifest(
+                getMainManifest(),
+                getManifestOverlays(),
                 getLibraries(),
+                getVersionCode(),
+                getVersionName(),
+                getMinSdkVersion(),
+                getTargetSdkVersion(),
                 getOutManifest().absolutePath)
     }
 }

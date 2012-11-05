@@ -13,24 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
-import com.android.build.gradle.internal.tasks.BaseTask
+import com.android.build.gradle.tasks.ProcessManifest
+import com.android.builder.ManifestDependency
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.TaskAction
 
-public class UninstallTask extends BaseTask {
+/**
+ */
+class ProcessTestManifestTask extends ProcessManifest {
+
     @Input
-    File sdkDir
+    String testPackageName
+
+    @Input
+    int minSdkVersion
+
+    @Input
+    String testedPackageName
+
+    @Input
+    String instrumentationRunner
+
+    @Nested
+    List<ManifestDependency> libraries
 
     @TaskAction
     void generate() {
-        String packageName = variant.package
-        logger.info("Uninstalling app: " + packageName)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args "uninstall"
-            args packageName
-        }
+        getBuilder().processTestManifest(
+                getTestPackageName(),
+                getMinSdkVersion(),
+                getTestedPackageName(),
+                getInstrumentationRunner(),
+                getLibraries(),
+                getOutManifest().absolutePath)
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
 import com.android.build.gradle.internal.AndroidAsciiReportRenderer
 import com.android.build.gradle.internal.ApplicationVariant

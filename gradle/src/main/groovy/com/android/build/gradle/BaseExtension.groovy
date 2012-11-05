@@ -25,6 +25,7 @@ import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
+import org.gradle.api.internal.DefaultDomainObjectSet
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.internal.reflect.Instantiator
 
@@ -39,13 +40,21 @@ public abstract class BaseExtension {
     final AaptOptionsImpl aaptOptions
     final DexOptionsImpl dexOptions
 
+    private final BasePlugin plugin
+    private final DefaultDomainObjectSet<BuildVariant> buildVariants =
+        new DefaultDomainObjectSet<BuildVariant>(BuildVariant.class)
+    private final DefaultDomainObjectSet<BuildVariant> testBuildVariants =
+        new DefaultDomainObjectSet<BuildVariant>(BuildVariant.class)
+
     /**
      * The source sets container.
      */
     final NamedDomainObjectContainer<AndroidSourceSet> sourceSetsContainer
 
-    BaseExtension(ProjectInternal project, Instantiator instantiator) {
-        defaultConfig = instantiator.newInstance(ProductFlavorDsl.class, "main")
+    BaseExtension(BasePlugin plugin, ProjectInternal project, Instantiator instantiator) {
+        this.plugin = plugin
+
+        defaultConfig = instantiator.newInstance(ProductFlavorDsl.class, ProductFlavor.MAIN)
 
         aaptOptions = instantiator.newInstance(AaptOptionsImpl.class)
         dexOptions = instantiator.newInstance(DexOptionsImpl.class)
@@ -102,5 +111,15 @@ public abstract class BaseExtension {
 
     void dexOptions(Action<DexOptionsImpl> action) {
         action.execute(dexOptions)
+    }
+
+    public DefaultDomainObjectSet<BuildVariant> getBuildVariants() {
+        plugin.createAndroidTasks()
+        return buildVariants
+    }
+
+    public DefaultDomainObjectSet<BuildVariant> getTestBuildVariants() {
+        plugin.createAndroidTasks()
+        return testBuildVariants
     }
 }

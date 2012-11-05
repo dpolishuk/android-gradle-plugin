@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
 import com.android.build.gradle.internal.DependencyChecker
-import com.android.build.gradle.internal.tasks.BaseTask
 import com.android.utils.Pair
 import org.gradle.api.tasks.TaskAction
 

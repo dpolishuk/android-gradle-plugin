@@ -26,21 +26,21 @@ import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.SymbolFileProviderImpl
 import com.android.build.gradle.internal.TestAppVariant
-import com.android.build.gradle.tasks.AndroidDependencyTask
-import com.android.build.gradle.tasks.CompileAidlTask
-import com.android.build.gradle.tasks.CrunchResourcesTask
-import com.android.build.gradle.tasks.DexTask
-import com.android.build.gradle.tasks.GenerateBuildConfigTask
-import com.android.build.gradle.tasks.InstallTask
-import com.android.build.gradle.tasks.PackageApplicationTask
-import com.android.build.gradle.tasks.PrepareDependenciesTask
-import com.android.build.gradle.tasks.PrepareLibraryTask
-import com.android.build.gradle.tasks.ProcessManifestTask
-import com.android.build.gradle.tasks.ProcessResourcesTask
-import com.android.build.gradle.tasks.ProcessTestManifestTask
-import com.android.build.gradle.tasks.RunTestsTask
-import com.android.build.gradle.tasks.UninstallTask
-import com.android.build.gradle.tasks.ZipAlignTask
+import com.android.build.gradle.internal.tasks.AidlCompileTask
+import com.android.build.gradle.internal.tasks.AndroidDependencyTask
+import com.android.build.gradle.internal.tasks.DexTask
+import com.android.build.gradle.internal.tasks.GenerateBuildConfigTask
+import com.android.build.gradle.internal.tasks.InstallTask
+import com.android.build.gradle.internal.tasks.PackageApplicationTask
+import com.android.build.gradle.internal.tasks.PrepareDependenciesTask
+import com.android.build.gradle.internal.tasks.PrepareLibraryTask
+import com.android.build.gradle.internal.tasks.ProcessImagesTask
+import com.android.build.gradle.internal.tasks.ProcessManifestTask
+import com.android.build.gradle.internal.tasks.ProcessResourcesTask
+import com.android.build.gradle.internal.tasks.ProcessTestManifestTask
+import com.android.build.gradle.internal.tasks.RunTestsTask
+import com.android.build.gradle.internal.tasks.UninstallTask
+import com.android.build.gradle.internal.tasks.ZipAlignTask
 import com.android.builder.AndroidBuilder
 import com.android.builder.AndroidDependency
 import com.android.builder.BuilderConstants
@@ -97,6 +97,8 @@ public abstract class BasePlugin {
     private DefaultSdkParser androidSdkParser
     private LoggerWrapper loggerWrapper
 
+    private boolean hasCreatedTasks = false
+
     private ProductFlavorData<ProductFlavor> defaultConfigData
     protected AndroidSourceSet mainSourceSet
     protected AndroidSourceSet testSourceSet
@@ -104,13 +106,14 @@ public abstract class BasePlugin {
     protected Task uninstallAll
     protected Task assembleTest
 
-    abstract String getTarget()
+    protected abstract String getTarget()
 
     protected BasePlugin(Instantiator instantiator) {
         this.instantiator = instantiator
     }
 
-    protected abstract BaseExtension getExtension();
+    protected abstract BaseExtension getExtension()
+    protected abstract void doCreateAndroidTasks()
 
     protected void apply(Project project) {
         this.project = project
@@ -124,11 +127,25 @@ public abstract class BasePlugin {
         uninstallAll = project.tasks.add("uninstallAll")
         uninstallAll.description = "Uninstall all applications."
         uninstallAll.group = INSTALL_GROUP
+
+        project.afterEvaluate {
+            createAndroidTasks()
+        }
+    }
+
+    final void createAndroidTasks() {
+        if (hasCreatedTasks) {
+            return
+        }
+        hasCreatedTasks = true
+
+        doCreateAndroidTasks()
+        createDependencyReportTask()
     }
 
     protected setDefaultConfig(ProductFlavor defaultConfig,
                                NamedDomainObjectContainer<AndroidSourceSet> sourceSets) {
-        mainSourceSet = sourceSets.create("main")
+        mainSourceSet = sourceSets.create(defaultConfig.name)
         testSourceSet = sourceSets.create("test")
 
         defaultConfigData = new ProductFlavorData<ProductFlavor>(defaultConfig, mainSourceSet,
@@ -286,15 +303,15 @@ public abstract class BasePlugin {
         }
     }
 
-    protected void createCrunchResTask(ApplicationVariant variant) {
-        def crunchTask = project.tasks.add("crunch${variant.name}Res", CrunchResourcesTask)
-        variant.crunchResourcesTask = crunchTask
+    protected void createProcessImagesTask(ApplicationVariant variant) {
+        def processImagesTask = project.tasks.add("process${variant.name}Images", ProcessImagesTask)
+        variant.processImagesTask = processImagesTask
 
-        crunchTask.plugin = this
-        crunchTask.variant = variant
+        processImagesTask.plugin = this
+        processImagesTask.variant = variant
 
-        crunchTask.conventionMapping.resDirectories = { variant.config.resourceInputs }
-        crunchTask.conventionMapping.outputDir = {
+        processImagesTask.conventionMapping.resDirectories = { variant.config.resourceInputs }
+        processImagesTask.conventionMapping.outputDir = {
             project.file("$project.buildDir/res/$variant.dirName")
         }
     }
@@ -343,14 +360,14 @@ public abstract class BasePlugin {
             variant.processManifestTask.outManifest
         }
 
-        if (variant.crunchResourcesTask != null) {
-            processResources.dependsOn variant.crunchResourcesTask
+        if (variant.processImagesTask != null) {
+            processResources.dependsOn variant.processImagesTask
 
             processResources.conventionMapping.preprocessResDir = {
-                variant.crunchResourcesTask.outputDir
+                variant.processImagesTask.outputDir
             }
             processResources.conventionMapping.resDirectories = {
-                variant.crunchResourcesTask.resDirectories
+                variant.processImagesTask.resDirectories
             }
         } else {
             processResources.conventionMapping.resDirectories = { config.resourceInputs }
@@ -419,9 +436,9 @@ public abstract class BasePlugin {
     protected void createAidlTask(ApplicationVariant variant) {
         VariantConfiguration config = variant.config
 
-        def compileTask = project.tasks.add("compile${variant.name}Aidl", CompileAidlTask)
-        variant.compileAidlTask = compileTask
-        variant.compileAidlTask.dependsOn variant.prepareDependenciesTask
+        def compileTask = project.tasks.add("compile${variant.name}Aidl", AidlCompileTask)
+        variant.aidlCompileTask = compileTask
+        variant.aidlCompileTask.dependsOn variant.prepareDependenciesTask
 
         compileTask.plugin = this
         compileTask.variant = variant
@@ -437,8 +454,8 @@ public abstract class BasePlugin {
     protected void createCompileTask(ApplicationVariant variant,
                                      ApplicationVariant testedVariant) {
         def compileTask = project.tasks.add("compile${variant.name}", JavaCompile)
-        variant.compileTask = compileTask
-        compileTask.dependsOn variant.processResourcesTask, variant.generateBuildConfigTask, variant.compileAidlTask
+        variant.javaCompileTask = compileTask
+        compileTask.dependsOn variant.processResourcesTask, variant.generateBuildConfigTask, variant.aidlCompileTask
 
         VariantConfiguration config = variant.config
 
@@ -456,7 +473,7 @@ public abstract class BasePlugin {
         compileTask.source = sourceList.toArray()
 
         if (testedVariant != null) {
-            compileTask.classpath = project.files({config.compileClasspath}) + testedVariant.compileTask.classpath + testedVariant.compileTask.outputs.files
+            compileTask.classpath = project.files({config.compileClasspath}) + testedVariant.javaCompileTask.classpath + testedVariant.javaCompileTask.outputs.files
         } else {
             compileTask.classpath = project.files({config.compileClasspath})
         }
@@ -504,13 +521,13 @@ public abstract class BasePlugin {
         createProcessTestManifestTask(variant, "manifests")
 
         // Add a task to crunch resource files
-        createCrunchResTask(variant)
+        createProcessImagesTask(variant)
 
         if (testedVariant.config.type == VariantConfiguration.Type.LIBRARY) {
             // in this case the tested library must be fully built before test can be built!
             if (testedVariant.assembleTask != null) {
                 variant.processManifestTask.dependsOn testedVariant.assembleTask
-                variant.crunchResourcesTask.dependsOn testedVariant.assembleTask
+                variant.processImagesTask.dependsOn testedVariant.assembleTask
             }
         }
 
@@ -570,13 +587,13 @@ public abstract class BasePlugin {
         def dexTaskName = "dex${variant.name}"
         def dexTask = project.tasks.add(dexTaskName, DexTask)
         variant.dexTask = dexTask
-        dexTask.dependsOn variant.compileTask
+        dexTask.dependsOn variant.javaCompileTask
 
         dexTask.plugin = this
         dexTask.variant = variant
 
         dexTask.conventionMapping.libraries = { project.files({ variant.config.packagedJars }) }
-        dexTask.conventionMapping.sourceFiles = { variant.compileTask.outputs.files } // this creates a dependency
+        dexTask.conventionMapping.sourceFiles = { variant.javaCompileTask.outputs.files } // this creates a dependency
         dexTask.conventionMapping.outputFile = {
             project.file(
                     "${project.buildDir}/libs/${project.archivesBaseName}-${variant.baseName}.dex")
@@ -623,20 +640,25 @@ public abstract class BasePlugin {
         }
 
         def appTask = packageApp
+        variant.outputFile = project.file("$project.buildDir/apk/${apkName}")
 
         if (signedApk) {
             if (variant.zipAlign) {
                 // Add a task to zip align application package
-                def alignApp = project.tasks.add("zipalign${variant.name}", ZipAlignTask)
-                alignApp.dependsOn packageApp
-                alignApp.conventionMapping.inputFile = { packageApp.outputFile }
-                alignApp.conventionMapping.outputFile = {
+                def zipAlignTask = project.tasks.add("zipalign${variant.name}", ZipAlignTask)
+                variant.zipAlignTask = zipAlignTask
+
+                zipAlignTask.dependsOn packageApp
+                zipAlignTask.conventionMapping.inputFile = { packageApp.outputFile }
+                zipAlignTask.conventionMapping.outputFile = {
                     project.file(
                             "$project.buildDir/apk/${project.archivesBaseName}-${variant.baseName}.apk")
                 }
-                alignApp.sdkDir = sdkDir
+                zipAlignTask.sdkDir = sdkDir
 
-                appTask = alignApp
+                appTask = zipAlignTask
+                variant.outputFile = project.file(
+                        "$project.buildDir/apk/${project.archivesBaseName}-${variant.baseName}.apk")
             }
 
             // Add a task to install the application package
@@ -670,7 +692,7 @@ public abstract class BasePlugin {
         uninstallAll.dependsOn uninstallTask
     }
 
-    protected void createDependencyReportTask() {
+    private void createDependencyReportTask() {
         def androidDependencyTask = project.tasks.add("androidDependencies", AndroidDependencyTask)
         androidDependencyTask.setDescription("Displays the Android dependencies of the project")
         androidDependencyTask.setVariants(variants)

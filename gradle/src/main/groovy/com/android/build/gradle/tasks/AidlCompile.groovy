@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.internal.tasks
 
-import org.gradle.api.tasks.OutputFile
+package com.android.build.gradle.tasks
+
+import com.android.build.gradle.internal.tasks.BaseTask
+import org.gradle.api.tasks.OutputDirectory
 
 /**
  */
-public abstract class BaseManifestTask extends BaseTask {
+public class AidlCompile extends BaseTask {
 
-    @OutputFile
-    File outManifest
+    @OutputDirectory
+    File sourceOutputDir
 }

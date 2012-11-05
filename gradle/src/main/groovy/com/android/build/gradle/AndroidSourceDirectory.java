@@ -29,9 +29,11 @@ public interface AndroidSourceDirectory extends SourceDirectory {
     String getName();
 
     /**
-     * Sets the location of the directory
-     * @param o
+     * Sets the location of the directory.
+     *
+     * @param srcPath The source directory. This is evaluated as for
+     *                {@link org.gradle.api.Project#file(Object)}
      * @return the AndroidSourceDirectory object
      */
-    AndroidSourceDirectory srcDir(java.lang.Object o);
+    AndroidSourceDirectory srcDir(Object srcPath);
 }

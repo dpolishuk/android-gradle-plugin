@@ -184,28 +184,36 @@ public class AppPluginDslTest extends BaseTest {
     }
 
     private void checkTasks(BuildVariant variant, boolean testVariant) {
-        assertNotNull(variant.processManifestTask)
-        assertNotNull(variant.compileAidlTask)
-        assertNotNull(variant.crunchResourcesTask)
-        assertNotNull(variant.processResourcesTask)
-        assertNotNull(variant.generateBuildConfigTask)
-        assertNotNull(variant.compileTask)
+        assertNotNull(variant.processManifest)
+        assertNotNull(variant.aidlCompile)
+        assertNotNull(variant.processImages)
+        assertNotNull(variant.processResources)
+        assertNotNull(variant.generateBuildConfig)
+        assertNotNull(variant.javaCompile)
         assertNotNull(variant.processJavaResources)
-        assertNotNull(variant.dexTask)
-        assertNotNull(variant.packageApplicationTask)
-        assertNotNull(variant.assembleTask)
-        assertNotNull(variant.uninstallTask)
+        assertNotNull(variant.dex)
+        assertNotNull(variant.packageApplication)
+
+        assertNotNull(variant.assemble)
+        assertNotNull(variant.uninstall)
 
         if (variant.buildType.debugSigned || variant.mergedConfig.isSigningReady()) {
-            assertNotNull(variant.installTask)
+            assertNotNull(variant.install)
+
+            // tested variant are never zipAligned.
+            if (!testVariant && variant.buildType.zipAlign) {
+                assertNotNull(variant.zipAlign)
+            } else {
+                assertNull(variant.zipAlign)
+            }
         } else {
-            assertNull(variant.installTask)
+            assertNull(variant.install)
         }
 
         if (testVariant) {
-            assertNotNull(variant.runTestsTask)
+            assertNotNull(variant.runTests)
         } else {
-            assertNull(variant.runTestsTask)
+            assertNull(variant.runTests)
         }
     }
 

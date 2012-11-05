@@ -45,8 +45,6 @@ import javax.inject.Inject
 class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradle.api.Plugin<Project> {
     static PluginHolder pluginHolder;
 
-    private boolean hasCreatedTasks = false
-
     final Map<String, BuildTypeData> buildTypes = [:]
     final Map<String, ProductFlavorData<GroupableProductFlavor>> productFlavors = [:]
 
@@ -73,6 +71,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         extension = project.extensions.create('android', AppExtension,
                 this, (ProjectInternal) project, instantiator,
                 buildTypeContainer, productFlavorContainer)
+        extension.
         setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         buildTypeContainer.whenObjectAdded { BuildType buildType ->
@@ -92,10 +91,6 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         productFlavorContainer.whenObjectRemoved {
             throw new UnsupportedOperationException(
                     "Removing product flavors is not implemented yet.")
-        }
-
-        project.afterEvaluate {
-            createAndroidTasks()
         }
     }
 
@@ -134,12 +129,8 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         productFlavors[productFlavor.name] = productFlavorData
     }
 
-    protected void createAndroidTasks() {
-        if (hasCreatedTasks) {
-            return
-        }
-        hasCreatedTasks = true
-
+    @Override
+    protected void doCreateAndroidTasks() {
         // resolve dependencies for all config
         List<ConfigurationDependencies> dependencies = []
         dependencies.addAll(buildTypes.values())
@@ -183,8 +174,6 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
                 createTasksForMultiFlavoredBuilds(array, 0, map)
             }
         }
-
-        createDependencyReportTask()
     }
 
     private createTasksForMultiFlavoredBuilds(ProductFlavorData[] datas, int i,
@@ -432,7 +421,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         createProcessManifestTask(variant, "manifests")
 
         // Add a task to crunch resource files
-        createCrunchResTask(variant)
+        createProcessImagesTask(variant)
 
         // Add a task to create the BuildConfig class
         createBuildConfigTask(variant)
@@ -454,7 +443,7 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
     }
 
     @Override
-    String getTarget() {
+    protected String getTarget() {
         return extension.target;
     }
 }
