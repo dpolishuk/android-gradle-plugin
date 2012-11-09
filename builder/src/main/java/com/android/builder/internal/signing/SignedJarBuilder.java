@@ -259,11 +259,15 @@ public class SignedJarBuilder {
             Signature signature = Signature.getInstance("SHA1with" + mKey.getAlgorithm());
             signature.initSign(mKey);
             mOutputJar.putNextEntry(new JarEntry("META-INF/CERT.SF"));
-            writeSignatureFile(new SignatureOutputStream(mOutputJar, signature));
+            SignatureOutputStream out = new SignatureOutputStream(mOutputJar, signature);
+            writeSignatureFile(out);
 
             // CERT.*
             mOutputJar.putNextEntry(new JarEntry("META-INF/CERT." + mKey.getAlgorithm()));
             writeSignatureBlock(signature, mCertificate, mKey);
+
+            // close this last since it will also close mOutputJar
+            out.close();
         }
 
         mOutputJar.close();

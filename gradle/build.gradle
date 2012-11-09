@@ -83,20 +83,30 @@ uploadArchives {
 
 // custom tasks for creating source/javadoc jars
 task sourcesJar(type: Jar, dependsOn:classes) {
-     classifier = 'sources'
-     from sourceSets.main.allSource
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
- 
+
+groovydoc {
+    exclude     "**/internal/**"
+    includePrivate false
+
+    docTitle "Gradle Plugin for Android"
+    header ""
+    footer "Copyright (C) 2012 The Android Open Source Project"
+    overview ""
+}
+
 task javadocJar(type: Jar, dependsOn:groovydoc) {
-     classifier = 'javadoc'
-     from groovydoc.destinationDir
+    classifier  'javadoc'
+    from        groovydoc.destinationDir
 }
  
 // add javadoc/source jar tasks as artifacts
 artifacts {
-     archives jar
-     archives sourcesJar
-     archives javadocJar
+    archives jar
+    archives sourcesJar
+    archives javadocJar
 }
 
 signing {

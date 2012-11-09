@@ -13,33 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
-import com.android.build.gradle.internal.tasks.BaseTask
+import com.android.build.gradle.tasks.PackageApplication
 import com.android.builder.packaging.DuplicateFileException
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-public class PackageApplicationTask extends BaseTask {
-    @InputFile
-    File resourceFile
-
-    @InputFile
-    File dexFile
+public class PackageApplicationTask extends PackageApplication {
 
     @InputFiles
     List<File> packagedJars
-
-    @InputDirectory @Optional
-    File javaResourceDir
-
-    @InputDirectory @Optional
-    File jniDir
 
     @Input
     boolean debugSigned
@@ -58,10 +44,6 @@ public class PackageApplicationTask extends BaseTask {
 
     @Input @Optional
     String signingKeyPassword
-
-    @OutputFile
-    File outputFile
-
 
     @TaskAction
     void generate() {

@@ -13,31 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.build.gradle.tasks
+package com.android.build.gradle.internal.tasks
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-public class ZipAlignTask extends DefaultTask {
-    @OutputFile
-    File outputFile
-
-    @Input
-    File sdkDir
-
+public class PrepareLibraryTask extends DefaultTask {
     @InputFile
-    File inputFile
+    File bundle
+
+    @OutputDirectory
+    File explodedDir
 
     @TaskAction
-    void generate() {
-        project.exec {
-            executable = new File(getSdkDir(), "tools${File.separator}zipalign")
-            args '-f', '4'
-            args getInputFile()
-            args getOutputFile()
+    def prepare() {
+        project.copy {
+            from project.zipTree(bundle)
+            into explodedDir
         }
     }
 }

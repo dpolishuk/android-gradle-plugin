@@ -16,30 +16,24 @@
 package com.android.build.gradle.tasks
 
 import com.android.build.gradle.internal.tasks.BaseTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
 
-public class GenerateBuildConfigTask extends BaseTask {
+public class PackageApplication extends BaseTask {
+    @InputFile
+    File resourceFile
 
-    @Input
-    String packageName
+    @InputFile
+    File dexFile
 
-    @Input
-    boolean debuggable
+    @InputDirectory @Optional
+    File javaResourceDir
 
-    @Input
-    List<String> javaLines;
+    @InputDirectory @Optional
+    File jniDir
 
-    @OutputDirectory
-    File sourceOutputDir
-
-    @TaskAction
-    void generate() {
-        getBuilder().generateBuildConfig(
-                getPackageName(),
-                isDebuggable(),
-                getJavaLines(),
-                getSourceOutputDir().absolutePath);
-    }
+    @OutputFile
+    File outputFile
 }

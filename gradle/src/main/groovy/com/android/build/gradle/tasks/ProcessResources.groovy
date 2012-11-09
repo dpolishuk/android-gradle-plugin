@@ -16,31 +16,30 @@
 package com.android.build.gradle.tasks
 
 import com.android.build.gradle.internal.tasks.BaseTask
-import com.android.builder.DexOptions
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Nested
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
 
-public class DexTask extends BaseTask {
-    @OutputFile
-    File outputFile
+public class ProcessResources extends BaseTask {
 
-    @InputFiles
-    Iterable<File> sourceFiles
+    @InputFile
+    File manifestFile
 
-    @InputFiles
-    Iterable<File> libraries
+    @InputDirectory @Optional
+    File preprocessResDir
 
-    @Nested
-    DexOptions dexOptions
+    @OutputDirectory @Optional
+    File sourceOutputDir
 
-    @TaskAction
-    void generate() {
-        getBuilder().convertByteCode(
-                getSourceFiles(),
-                getLibraries(),
-                getOutputFile().absolutePath,
-                getDexOptions())
-    }
+    @OutputDirectory @Optional
+    File textSymbolDir
+
+    @OutputFile @Optional
+    File packageFile
+
+    @OutputFile @Optional
+    File proguardFile
+
 }

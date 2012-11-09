@@ -29,8 +29,8 @@ public class LibraryExtension extends BaseExtension {
     final BuildType debug
     final BuildType release
 
-    LibraryExtension(ProjectInternal project, Instantiator instantiator) {
-        super(project, instantiator)
+    LibraryExtension(BasePlugin plugin, ProjectInternal project, Instantiator instantiator) {
+        super(plugin, project, instantiator)
 
         debug = instantiator.newInstance(BuildTypeDsl.class, BuildType.DEBUG)
         release = instantiator.newInstance(BuildTypeDsl.class, BuildType.RELEASE)

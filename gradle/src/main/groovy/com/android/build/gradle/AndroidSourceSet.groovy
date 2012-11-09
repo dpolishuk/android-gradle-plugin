@@ -95,22 +95,111 @@ public interface AndroidSourceSet {
      */
     String getPackageConfigurationName();
 
+    /**
+     * The Android Manifest file for this source set.
+     *
+     * @return the manifest. Never returns null.
+     */
     AndroidSourceFile getManifest();
+
+    /**
+     * Configures the location of the Android Manifest for this set.
+     *
+     * <p>The given closure is used to configure the {@link AndroidSourceFile} which contains the
+     * manifest.
+     *
+     * @param configureClosure The closure to use to configure the Android Manifest.
+     * @return this
+     */
     AndroidSourceSet manifest(Closure configureClosure);
 
+    /**
+     * The Android Resources directory for this source set.
+     *
+     * @return the resources. Never returns null.
+     */
     AndroidSourceDirectory getRes();
+
+    /**
+     * Configures the location of the Android Resources for this set.
+     *
+     * <p>The given closure is used to configure the {@link AndroidSourceDirectory} which contains
+     * the resources.
+     *
+     * @param configureClosure The closure to use to configure the Resources.
+     * @return this
+     */
     AndroidSourceSet res(Closure configureClosure);
 
+    /**
+     * The Android Assets directory for this source set.
+     *
+     * @return the assets. Never returns null.
+     */
     AndroidSourceDirectory getAssets();
+
+    /**
+     * Configures the location of the Android Assets for this set.
+     *
+     * <p>The given closure is used to configure the {@link AndroidSourceDirectory} which contains
+     * the assets.
+     *
+     * @param configureClosure The closure to use to configure the Assets.
+     * @return this
+     */
     AndroidSourceSet assets(Closure configureClosure);
 
+    /**
+     * The Android AIDL source directory for this source set.
+     *
+     * @return the source. Never returns null.
+     */
     AndroidSourceDirectory getAidl();
+
+    /**
+     * Configures the location of the Android AIDL source for this set.
+     *
+     * <p>The given closure is used to configure the {@link AndroidSourceDirectory} which contains
+     * the AIDL source.
+     *
+     * @param configureClosure The closure to use to configure the AIDL source.
+     * @return this
+     */
     AndroidSourceSet aidl(Closure configureClosure);
 
+    /**
+     * The Android Renderscript source directory for this source set.
+     *
+     * @return the source. Never returns null.
+     */
     AndroidSourceDirectory getRenderscript();
+
+    /**
+     * Configures the location of the Android Renderscript source for this set.
+     *
+     * <p>The given closure is used to configure the {@link AndroidSourceDirectory} which contains
+     * the Renderscript source.
+     *
+     * @param configureClosure The closure to use to configure the Renderscript source.
+     * @return this
+     */
     AndroidSourceSet renderscript(Closure configureClosure);
 
+    /**
+     * The Android JNI source directory for this source set.
+     *
+     * @return the source. Never returns null.
+     */
     AndroidSourceDirectory getJni();
-    AndroidSourceSet jni(Closure configureClosure);
 
+    /**
+     * Configures the location of the Android JNI source for this set.
+     *
+     * <p>The given closure is used to configure the {@link AndroidSourceDirectory} which contains
+     * the JNI source.
+     *
+     * @param configureClosure The closure to use to configure the JNI source.
+     * @return this
+     */
+    AndroidSourceSet jni(Closure configureClosure);
 }

@@ -15,23 +15,12 @@
  */
 package com.android.build.gradle.tasks
 
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputFile
+import com.android.build.gradle.internal.tasks.BaseTask
 import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.TaskAction
 
-public class PrepareLibraryTask extends DefaultTask {
-    @InputFile
-    File bundle
+class ProcessImages extends BaseTask {
 
     @OutputDirectory
-    File explodedDir
+    File outputDir
 
-    @TaskAction
-    def prepare() {
-        project.copy {
-            from project.zipTree(bundle)
-            into explodedDir
-        }
-    }
 }

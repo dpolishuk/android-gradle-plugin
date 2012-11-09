@@ -16,15 +16,16 @@
 package com.android.build.gradle.internal
 
 import com.android.build.gradle.BasePlugin
-import com.android.build.gradle.internal.tasks.BaseManifestTask
-import com.android.build.gradle.tasks.CompileAidlTask
-import com.android.build.gradle.tasks.CrunchResourcesTask
-import com.android.build.gradle.tasks.DexTask
-import com.android.build.gradle.tasks.GenerateBuildConfigTask
-import com.android.build.gradle.tasks.PackageApplicationTask
-import com.android.build.gradle.tasks.PrepareDependenciesTask
-import com.android.build.gradle.tasks.ProcessResourcesTask
-import com.android.build.gradle.tasks.RunTestsTask
+import com.android.build.gradle.internal.tasks.AidlCompileTask
+import com.android.build.gradle.internal.tasks.DexTask
+import com.android.build.gradle.internal.tasks.GenerateBuildConfigTask
+import com.android.build.gradle.internal.tasks.PackageApplicationTask
+import com.android.build.gradle.internal.tasks.PrepareDependenciesTask
+import com.android.build.gradle.internal.tasks.ProcessImagesTask
+import com.android.build.gradle.internal.tasks.ProcessResourcesTask
+import com.android.build.gradle.internal.tasks.RunTestsTask
+import com.android.build.gradle.internal.tasks.ZipAlignTask
+import com.android.build.gradle.tasks.ProcessManifest
 import com.android.builder.AndroidBuilder
 import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
@@ -41,17 +42,20 @@ public abstract class ApplicationVariant {
 
     PrepareDependenciesTask prepareDependenciesTask
 
-    BaseManifestTask processManifestTask
-    CompileAidlTask compileAidlTask
-    CrunchResourcesTask crunchResourcesTask
+    ProcessManifest processManifestTask
+    AidlCompileTask aidlCompileTask
+    ProcessImagesTask processImagesTask
     ProcessResourcesTask processResourcesTask
     GenerateBuildConfigTask generateBuildConfigTask
 
-    JavaCompile compileTask
+    JavaCompile javaCompileTask
     Copy processJavaResources
 
     DexTask dexTask
     PackageApplicationTask packageApplicationTask
+    ZipAlignTask zipAlignTask
+
+    File outputFile
 
     Task assembleTask
 

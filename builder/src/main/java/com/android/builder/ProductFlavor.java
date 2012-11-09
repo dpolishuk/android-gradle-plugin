@@ -19,8 +19,19 @@ package com.android.builder;
 import com.android.annotations.NonNull;
 import com.google.common.base.Objects;
 
+/**
+ * The configuration of a product flavor.
+ *
+ * This is also used to describe the default configuration of all builds, even those that
+ * do not contain any flavors.
+ */
 public class ProductFlavor extends BuildConfig {
     private static final long serialVersionUID = 1L;
+
+    /**
+     * The name of the default config.
+     */
+    public static final String MAIN = "main";
 
     private final String mName;
     private int mMinSdkVersion = -1;
@@ -36,6 +47,14 @@ public class ProductFlavor extends BuildConfig {
     private String mSigningKeyAlias = null;
     private String mSigningKeyPassword = null;
 
+    /**
+     * Creates a ProductFlavor with a given name.
+     *
+     * Names can be important when dealing with flavor groups.
+     * @param name the name of the flavor.
+     *
+     * @see #MAIN
+     */
     public ProductFlavor(String name) {
         mName = name;
     }
@@ -44,56 +63,81 @@ public class ProductFlavor extends BuildConfig {
         return mName;
     }
 
-    public void setPackageName(String packageName) {
+    /**
+     * Sets the package name.
+     *
+     * @param packageName the package name
+     * @return the flavor object
+     */
+    public ProductFlavor setPackageName(String packageName) {
         mPackageName = packageName;
+        return this;
     }
 
     public String getPackageName() {
         return mPackageName;
     }
 
-    public void setVersionCode(int versionCode) {
+    /**
+     * Sets the version code. If the value is -1, it is considered not set.
+     *
+     * @param versionCode the version code
+     * @return the flavor object
+     */
+    public ProductFlavor setVersionCode(int versionCode) {
         mVersionCode = versionCode;
+        return this;
     }
 
     public int getVersionCode() {
         return mVersionCode;
     }
 
-    public void setVersionName(String versionName) {
+    /**
+     * Sets the version name.
+     *
+     * @param versionName the version name
+     * @return the flavor object
+     */
+    public ProductFlavor setVersionName(String versionName) {
         mVersionName = versionName;
+        return this;
     }
 
     public String getVersionName() {
         return mVersionName;
     }
 
-    public void setMinSdkVersion(int minSdkVersion) {
-        mMinSdkVersion  = minSdkVersion;
+    public ProductFlavor setMinSdkVersion(int minSdkVersion) {
+        mMinSdkVersion = minSdkVersion;
+        return this;
     }
 
     public int getMinSdkVersion() {
         return mMinSdkVersion;
     }
 
-    public void setTargetSdkVersion(int targetSdkVersion) {
-        mTargetSdkVersion  = targetSdkVersion;
+    public ProductFlavor setTargetSdkVersion(int targetSdkVersion) {
+        mTargetSdkVersion = targetSdkVersion;
+        return this;
     }
 
     public int getTargetSdkVersion() {
         return mTargetSdkVersion;
     }
 
-    public void setTestPackageName(String testPackageName) {
+    public ProductFlavor setTestPackageName(String testPackageName) {
         mTestPackageName = testPackageName;
+        return this;
     }
 
     public String getTestPackageName() {
         return mTestPackageName;
     }
 
-    public void setTestInstrumentationRunner(String testInstrumentationRunner) {
+    public ProductFlavor setTestInstrumentationRunner(String testInstrumentationRunner) {
         mTestInstrumentationRunner = testInstrumentationRunner;
+        return this;
     }
 
     public String getTestInstrumentationRunner() {
@@ -104,32 +148,36 @@ public class ProductFlavor extends BuildConfig {
         return mSigningStoreLocation;
     }
 
-    public void setSigningStoreLocation(String signingStoreLocation) {
+    public ProductFlavor setSigningStoreLocation(String signingStoreLocation) {
         mSigningStoreLocation = signingStoreLocation;
+        return this;
     }
 
     public String getSigningStorePassword() {
         return mSigningStorePassword;
     }
 
-    public void setSigningStorePassword(String signingStorePassword) {
+    public ProductFlavor setSigningStorePassword(String signingStorePassword) {
         mSigningStorePassword = signingStorePassword;
+        return this;
     }
 
     public String getSigningKeyAlias() {
         return mSigningKeyAlias;
     }
 
-    public void setSigningKeyAlias(String signingKeyAlias) {
+    public ProductFlavor setSigningKeyAlias(String signingKeyAlias) {
         mSigningKeyAlias = signingKeyAlias;
+        return this;
     }
 
     public String getSigningKeyPassword() {
         return mSigningKeyPassword;
     }
 
-    public void setSigningKeyPassword(String signingKeyPassword) {
+    public ProductFlavor setSigningKeyPassword(String signingKeyPassword) {
         mSigningKeyPassword = signingKeyPassword;
+        return this;
     }
 
     public boolean isSigningReady() {

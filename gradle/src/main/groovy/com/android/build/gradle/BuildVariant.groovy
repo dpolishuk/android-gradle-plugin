@@ -18,14 +18,14 @@ package com.android.build.gradle
 
 import com.android.annotations.NonNull
 import com.android.annotations.Nullable
-import com.android.build.gradle.internal.tasks.BaseManifestTask
-import com.android.build.gradle.tasks.CompileAidlTask
-import com.android.build.gradle.tasks.CrunchResourcesTask
-import com.android.build.gradle.tasks.DexTask
-import com.android.build.gradle.tasks.GenerateBuildConfigTask
-import com.android.build.gradle.tasks.PackageApplicationTask
-import com.android.build.gradle.tasks.ProcessResourcesTask
-import com.android.build.gradle.tasks.RunTestsTask
+import com.android.build.gradle.tasks.AidlCompile
+import com.android.build.gradle.tasks.Dex
+import com.android.build.gradle.tasks.GenerateBuildConfig
+import com.android.build.gradle.tasks.PackageApplication
+import com.android.build.gradle.tasks.ProcessImages
+import com.android.build.gradle.tasks.ProcessManifest
+import com.android.build.gradle.tasks.ProcessResources
+import com.android.build.gradle.tasks.ZipAlign
 import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Task
@@ -89,6 +89,15 @@ public interface BuildVariant {
     ProductFlavor getMergedConfig()
 
     /**
+     * Returns the output file for this build variants. Depending on the configuration, this could
+     * be an apk (regular and test project) or a bundled library (library project).
+     *
+     * If it's an apk, it could be signed, or not; zip-aligned, or not.
+     */
+    @NonNull
+    File getOutputFile()
+
+    /**
      * Returns the build variant that will test this build variant.
      *
      * Will return null if this build variant is a test build already.
@@ -100,37 +109,37 @@ public interface BuildVariant {
      * Returns the Manifest processing task.
      */
     @NonNull
-    BaseManifestTask getProcessManifestTask()
+    ProcessManifest getProcessManifest()
 
     /**
      * Returns the AIDL compilation task.
      */
     @NonNull
-    CompileAidlTask getCompileAidlTask()
+    AidlCompile getAidlCompile()
 
     /**
-     * Returns the Resource crunching task.
+     * Returns the image processing task.
      */
     @Nullable
-    CrunchResourcesTask getCrunchResourcesTask()
+    ProcessImages getProcessImages()
 
     /**
      * Returns the Android Resources processing task.
      */
     @NonNull
-    ProcessResourcesTask getProcessResourcesTask()
+    ProcessResources getProcessResources()
 
     /**
      * Returns the BuildConfig generation task.
      */
     @Nullable
-    GenerateBuildConfigTask getGenerateBuildConfigTask()
+    GenerateBuildConfig getGenerateBuildConfig()
 
     /**
      * Returns the Java Compilation task.
      */
     @NonNull
-    JavaCompile getCompileTask()
+    JavaCompile getJavaCompile()
 
     /**
      * Returns the Java resource processing task.
@@ -142,19 +151,25 @@ public interface BuildVariant {
      * Returns the Dex task.
      */
     @Nullable
-    DexTask getDexTask()
+    Dex getDex()
 
     /**
      * Returns the APK packaging task.
      */
     @Nullable
-    PackageApplicationTask getPackageApplicationTask()
+    PackageApplication getPackageApplication()
+
+    /**
+     * Retursn the Zip align task.
+     */
+    @Nullable
+    ZipAlign getZipAlign()
 
     /**
      * Returns the assemble task.
      */
     @Nullable
-    Task getAssembleTask()
+    Task getAssemble()
 
     /**
      * Returns the installation task.
@@ -162,7 +177,7 @@ public interface BuildVariant {
      * Even for variant for regular project, this can be null if the app cannot be signed.
      */
     @Nullable
-    Task getInstallTask()
+    Task getInstall()
 
     /**
      * Returns the uinstallation task.
@@ -171,12 +186,12 @@ public interface BuildVariant {
      * signing isn't setup.
      */
     @Nullable
-    Task getUninstallTask()
+    Task getUninstall()
 
     /**
      * Returns the task to run the tests.
      * Only valid for test project.
      */
     @Nullable
-    RunTestsTask getRunTestsTask()
+    Task getRunTests()
 }

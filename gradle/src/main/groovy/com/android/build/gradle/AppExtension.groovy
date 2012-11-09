@@ -19,7 +19,6 @@ import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
-import org.gradle.api.internal.DefaultDomainObjectSet
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.internal.reflect.Instantiator
 
@@ -27,23 +26,17 @@ import org.gradle.internal.reflect.Instantiator
  * Extension for 'application' project.
  */
 public class AppExtension extends BaseExtension {
-    private final AppPlugin appPlugin
 
     final NamedDomainObjectContainer<ProductFlavor> productFlavors
     final NamedDomainObjectContainer<BuildType> buildTypes
-    private final DefaultDomainObjectSet<BuildVariant> buildVariants =
-            new DefaultDomainObjectSet<BuildVariant>(BuildVariant.class)
-    private final DefaultDomainObjectSet<BuildVariant> testBuildVariants =
-        new DefaultDomainObjectSet<BuildVariant>(BuildVariant.class)
 
     List<String> flavorGroupList
     String testBuildType = "debug"
 
-    AppExtension(AppPlugin appPlugin, ProjectInternal project, Instantiator instantiator,
+    AppExtension(AppPlugin plugin, ProjectInternal project, Instantiator instantiator,
                  NamedDomainObjectContainer<BuildType> buildTypes,
                  NamedDomainObjectContainer<ProductFlavor> productFlavors) {
-        super(project, instantiator)
-        this.appPlugin = appPlugin
+        super(plugin, project, instantiator)
         this.buildTypes = buildTypes
         this.productFlavors = productFlavors
     }
@@ -58,15 +51,5 @@ public class AppExtension extends BaseExtension {
 
     public void flavorGroups(String... groups) {
         flavorGroupList = Arrays.asList(groups)
-    }
-
-    public DefaultDomainObjectSet<BuildVariant> getBuildVariants() {
-        appPlugin.createAndroidTasks()
-        return buildVariants
-    }
-
-    public DefaultDomainObjectSet<BuildVariant> getTestBuildVariants() {
-        appPlugin.createAndroidTasks()
-        return testBuildVariants
     }
 }

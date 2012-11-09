@@ -61,48 +61,54 @@ public class BuildType extends BuildConfig {
         return mName;
     }
 
-    public void setDebuggable(boolean debuggable) {
+    public BuildType setDebuggable(boolean debuggable) {
         mDebuggable = debuggable;
+        return this;
     }
 
     public boolean isDebuggable() {
         return mDebuggable;
     }
 
-    public void setDebugJniBuild(boolean debugJniBuild) {
+    public BuildType setDebugJniBuild(boolean debugJniBuild) {
         mDebugJniBuild = debugJniBuild;
+        return this;
     }
 
     public boolean isDebugJniBuild() {
         return mDebugJniBuild;
     }
 
-    public void setDebugSigned(boolean debugSigned) {
+    public BuildType setDebugSigned(boolean debugSigned) {
         mDebugSigned = debugSigned;
+        return this;
     }
 
     public boolean isDebugSigned() {
         return mDebugSigned;
     }
 
-    public void setPackageNameSuffix(@Nullable String packageNameSuffix) {
+    public BuildType setPackageNameSuffix(@Nullable String packageNameSuffix) {
         mPackageNameSuffix = packageNameSuffix;
+        return this;
     }
 
     @Nullable public String getPackageNameSuffix() {
         return mPackageNameSuffix;
     }
 
-    public void setRunProguard(boolean runProguard) {
+    public BuildType setRunProguard(boolean runProguard) {
         mRunProguard = runProguard;
+        return this;
     }
 
     public boolean isRunProguard() {
         return mRunProguard;
     }
 
-    public void setZipAlign(boolean zipAlign) {
+    public BuildType setZipAlign(boolean zipAlign) {
         mZipAlign = zipAlign;
+        return this;
     }
 
     public boolean isZipAlign() {

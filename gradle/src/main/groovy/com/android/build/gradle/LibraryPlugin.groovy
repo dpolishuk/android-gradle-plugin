@@ -17,6 +17,7 @@ package com.android.build.gradle
 
 import com.android.build.gradle.internal.BuildTypeData
 import com.android.build.gradle.internal.ConfigurationDependencies
+import com.android.build.gradle.internal.DefaultBuildVariant
 import com.android.build.gradle.internal.ProductFlavorData
 import com.android.build.gradle.internal.ProductionAppVariant
 import com.android.build.gradle.internal.TestAppVariant
@@ -59,7 +60,7 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         super.apply(project)
 
         extension = project.extensions.create('android', LibraryExtension,
-                (ProjectInternal) project, instantiator)
+                this, (ProjectInternal) project, instantiator)
         setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         // create the source sets for the build type.
@@ -73,10 +74,6 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         project.tasks.assemble.dependsOn releaseBuildTypeData.assembleTask
 
         createConfigurations()
-
-        project.afterEvaluate {
-            createAndroidTasks()
-        }
     }
 
     void createConfigurations() {
@@ -95,7 +92,8 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         }
     }
 
-    void createAndroidTasks() {
+    @Override
+    protected void doCreateAndroidTasks() {
         // resolve dependencies for all config
         List<ConfigurationDependencies> dependencies = []
         dependencies.add(debugBuildTypeData)
@@ -103,12 +101,25 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         resolveDependencies(dependencies)
 
         ProductionAppVariant testedVariant = createLibraryTasks(debugBuildTypeData)
-        createLibraryTasks(releaseBuildTypeData)
-        createTestTasks(testedVariant)
-        createDependencyReportTask()
+        ProductionAppVariant nonTestedVariant = createLibraryTasks(releaseBuildTypeData)
+        TestAppVariant testVariant = createTestTasks(testedVariant)
+
+        // add the not-tested build variant.
+        extension.buildVariants.add(
+                instantiator.newInstance(DefaultBuildVariant.class, nonTestedVariant))
+
+        // and add the test variant
+        DefaultBuildVariant testBuildVariant = instantiator.newInstance(
+                DefaultBuildVariant.class, testVariant)
+        extension.testBuildVariants.add(testBuildVariant)
+
+        // and finally the tested variant
+        extension.buildVariants.add(
+                instantiator.newInstance(DefaultBuildVariant.class,
+                        testedVariant, testBuildVariant))
     }
 
-    ProductionAppVariant createLibraryTasks(BuildTypeData buildTypeData) {
+    private ProductionAppVariant createLibraryTasks(BuildTypeData buildTypeData) {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         List<ConfigurationDependencies> configDependencies = []
@@ -158,8 +169,8 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
 
         // jar the classes.
         Jar jar = project.tasks.add("package${buildTypeData.buildType.name.capitalize()}Jar", Jar);
-        jar.dependsOn variant.compileTask, variant.processJavaResources
-        jar.from(variant.compileTask.outputs);
+        jar.dependsOn variant.javaCompileTask, variant.processJavaResources
+        jar.from(variant.javaCompileTask.outputs);
         jar.from(variant.processJavaResources.destinationDir)
 
         jar.destinationDir = project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}")
@@ -199,6 +210,8 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         }
         bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
 
+        variant.outputFile = bundle.archivePath
+
         project.artifacts.add(buildTypeData.buildType.name, bundle)
 
         buildTypeData.assembleTask.dependsOn bundle
@@ -223,7 +236,7 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         return variant
     }
 
-    void createTestTasks(ProductionAppVariant testedVariant) {
+    private TestAppVariant createTestTasks(ProductionAppVariant testedVariant) {
         ProductFlavorData defaultConfigData = getDefaultConfigData();
 
         List<ConfigurationDependencies> configDependencies = []
@@ -249,14 +262,12 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         def testVariant = new TestAppVariant(testVariantConfig,)
         variants.add(testVariant)
         createTestTasks(testVariant, testedVariant, configDependencies)
+
+        return testVariant
     }
 
     @Override
-    String getTarget() {
+    protected String getTarget() {
         return extension.target
-    }
-
-    protected String getManifestOutDir() {
-        return DIR_BUNDLES
     }
 }

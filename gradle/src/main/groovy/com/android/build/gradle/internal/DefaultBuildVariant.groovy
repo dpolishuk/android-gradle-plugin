@@ -16,14 +16,14 @@
 package com.android.build.gradle.internal
 
 import com.android.build.gradle.BuildVariant
-import com.android.build.gradle.internal.tasks.BaseManifestTask
-import com.android.build.gradle.tasks.CompileAidlTask
-import com.android.build.gradle.tasks.CrunchResourcesTask
-import com.android.build.gradle.tasks.DexTask
-import com.android.build.gradle.tasks.GenerateBuildConfigTask
-import com.android.build.gradle.tasks.PackageApplicationTask
-import com.android.build.gradle.tasks.ProcessResourcesTask
-import com.android.build.gradle.tasks.RunTestsTask
+import com.android.build.gradle.tasks.AidlCompile
+import com.android.build.gradle.tasks.Dex
+import com.android.build.gradle.tasks.GenerateBuildConfig
+import com.android.build.gradle.tasks.PackageApplication
+import com.android.build.gradle.tasks.ProcessImages
+import com.android.build.gradle.tasks.ProcessManifest
+import com.android.build.gradle.tasks.ProcessResources
+import com.android.build.gradle.tasks.ZipAlign
 import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Task
@@ -81,38 +81,43 @@ public class DefaultBuildVariant implements BuildVariant {
     }
 
     @Override
+    File getOutputFile() {
+        return variant.outputFile
+    }
+
+    @Override
     BuildVariant getTestVariant() {
         return testVariant
     }
 
     @Override
-    BaseManifestTask getProcessManifestTask() {
+    ProcessManifest getProcessManifest() {
         return variant.processManifestTask
     }
 
     @Override
-    CompileAidlTask getCompileAidlTask() {
-        return variant.compileAidlTask
+    AidlCompile getAidlCompile() {
+        return variant.aidlCompileTask
     }
 
     @Override
-    CrunchResourcesTask getCrunchResourcesTask() {
-        return variant.crunchResourcesTask
+    ProcessImages getProcessImages() {
+        return variant.processImagesTask
     }
 
     @Override
-    ProcessResourcesTask getProcessResourcesTask() {
+    ProcessResources getProcessResources() {
         return variant.processResourcesTask
     }
 
     @Override
-    GenerateBuildConfigTask getGenerateBuildConfigTask() {
+    GenerateBuildConfig getGenerateBuildConfig() {
         return variant.generateBuildConfigTask
     }
 
     @Override
-    JavaCompile getCompileTask() {
-        return variant.compileTask
+    JavaCompile getJavaCompile() {
+        return variant.javaCompileTask
     }
 
     @Override
@@ -121,32 +126,36 @@ public class DefaultBuildVariant implements BuildVariant {
     }
 
     @Override
-    DexTask getDexTask() {
+    Dex getDex() {
         return variant.dexTask
     }
 
     @Override
-    PackageApplicationTask getPackageApplicationTask() {
+    PackageApplication getPackageApplication() {
         return variant.packageApplicationTask
     }
 
+    ZipAlign getZipAlign() {
+        return variant.zipAlignTask
+    }
+
     @Override
-    Task getAssembleTask() {
+    Task getAssemble() {
         return variant.assembleTask
     }
 
     @Override
-    Task getInstallTask() {
+    Task getInstall() {
         return variant.installTask
     }
 
     @Override
-    Task getUninstallTask() {
+    Task getUninstall() {
         return variant.uninstallTask
     }
 
     @Override
-    RunTestsTask getRunTestsTask() {
+    Task getRunTests() {
         return variant.runTestsTask
     }
 }

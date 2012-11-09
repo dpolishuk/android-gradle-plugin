@@ -71,14 +71,14 @@ public class VariantConfiguration {
     }
 
     /**
-     * Creates the configuration with the base source set.
+     * Creates the configuration with the base source sets.
      *
      * This creates a config with a {@link Type#DEFAULT} type.
      *
-     * @param defaultConfig
-     * @param defaultSourceProvider
-     * @param buildType
-     * @param buildTypeSourceProvider
+     * @param defaultConfig the default configuration. Required.
+     * @param defaultSourceProvider the default source provider. Required
+     * @param buildType the build type for this variant. Required.
+     * @param buildTypeSourceProvider the source provider for the build type. Required.
      */
     public VariantConfiguration(
             @NonNull ProductFlavor defaultConfig, @NonNull SourceProvider defaultSourceProvider,
@@ -89,13 +89,13 @@ public class VariantConfiguration {
     }
 
     /**
-     * Creates the configuration with the base source set for a given {@link Type}.
+     * Creates the configuration with the base source sets for a given {@link Type}.
      *
-     * @param defaultConfig
-     * @param defaultSourceProvider
-     * @param buildType
-     * @param buildTypeSourceProvider
-     * @param type
+     * @param defaultConfig the default configuration. Required.
+     * @param defaultSourceProvider the default source provider. Required
+     * @param buildType the build type for this variant. Required.
+     * @param buildTypeSourceProvider the source provider for the build type. Required.
+     * @param type the type of the project.
      */
     public VariantConfiguration(
             @NonNull ProductFlavor defaultConfig, @NonNull SourceProvider defaultSourceProvider,
@@ -107,13 +107,14 @@ public class VariantConfiguration {
     }
 
     /**
-     * Creates the configuration with the base source set, and whether it is a library.
-     * @param defaultConfig
-     * @param defaultSourceProvider
-     * @param buildType
-     * @param buildTypeSourceProvider
-     * @param type
-     * @param testedConfig
+     * Creates the configuration with the base source sets, and an optional tested variant.
+     *
+     * @param defaultConfig the default configuration. Required.
+     * @param defaultSourceProvider the default source provider. Required
+     * @param buildType the build type for this variant. Required.
+     * @param buildTypeSourceProvider the source provider for the build type. Required.
+     * @param type the type of the project.
+     * @param testedConfig the reference to the tested project. Required if type is Type.TEST
      */
     public VariantConfiguration(
             @NonNull ProductFlavor defaultConfig, @NonNull SourceProvider defaultSourceProvider,
@@ -146,18 +147,33 @@ public class VariantConfiguration {
      * latter added ones).
      *
      * @param sourceProvider the configured product flavor
+     * @return the config object
      */
-    public void addProductFlavor(@NonNull ProductFlavor productFlavor,
+    public VariantConfiguration addProductFlavor(@NonNull ProductFlavor productFlavor,
                                  @NonNull SourceProvider sourceProvider) {
         mFlavorConfigs.add(productFlavor);
         mFlavorSourceProviders.add(sourceProvider);
         mMergedFlavor = productFlavor.mergeOver(mMergedFlavor);
+
+        return this;
     }
 
-    public void setJarDependencies(List<JarDependency> jars) {
+    /**
+     * Sets the library dependencies.
+     *
+     * @param jars list of jar dependency. This should include the jar dependencies of Android
+     *             projects.
+     * @return the config object
+     */
+    public VariantConfiguration setJarDependencies(List<JarDependency> jars) {
         mJars.addAll(jars);
+        return this;
     }
 
+    /**
+     * Returns the list of jar dependencies
+     * @return a non null collection of Jar dependencies.
+     */
     public Collection<JarDependency> getJars() {
         return mJars;
     }
@@ -165,18 +181,32 @@ public class VariantConfiguration {
     /**
      * Set the Library Project dependencies.
      * @param directLibraries list of direct dependencies. Each library object should contain
-     *            its own dependencies.
+     *            its own dependencies. This is actually a dependency graph.
+     * @return the config object
      */
-    public void setAndroidDependencies(@NonNull List<AndroidDependency> directLibraries) {
+    public VariantConfiguration setAndroidDependencies(
+            @NonNull List<AndroidDependency> directLibraries) {
         if (directLibraries != null) {
             mDirectLibraries.addAll(directLibraries);
         }
 
         resolveIndirectLibraryDependencies(mDirectLibraries, mFlatLibraries);
+
+        return this;
     }
 
-    public void setOutput(AndroidDependency output) {
+    /**
+     * Sets the output of this variant. This is required when the variant is a library so that
+     * the variant that tests this library can properly include the tested library in its own
+     * package.
+     *
+     * @param output the output of the library as an AndroidDependency that will provides the
+     *               location of all the created items.
+     * @return the config object
+     */
+    public VariantConfiguration setOutput(AndroidDependency output) {
         mOutput = output;
+        return this;
     }
 
     public ProductFlavor getDefaultConfig() {

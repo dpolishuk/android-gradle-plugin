@@ -16,25 +16,10 @@
 package com.android.build.gradle.tasks
 
 import com.android.build.gradle.internal.tasks.BaseTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.OutputDirectory
 
-/**
- * Run tests for a given variant
- */
-public class RunTestsTask extends BaseTask {
+public class GenerateBuildConfig extends BaseTask {
 
-    @Input
-    File sdkDir
-
-    @TaskAction
-    void generate() {
-        List<String> command = variant.runCommand
-
-        logger.info("Running tests with command: " + command)
-        project.exec {
-            executable = new File(getSdkDir(), "platform-tools${File.separator}adb")
-            args command
-        }
-    }
+    @OutputDirectory
+    File sourceOutputDir
 }
