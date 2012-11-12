@@ -71,7 +71,6 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
         extension = project.extensions.create('android', AppExtension,
                 this, (ProjectInternal) project, instantiator,
                 buildTypeContainer, productFlavorContainer)
-        extension.
         setDefaultConfig(extension.defaultConfig, extension.sourceSetsContainer)
 
         buildTypeContainer.whenObjectAdded { BuildType buildType ->
