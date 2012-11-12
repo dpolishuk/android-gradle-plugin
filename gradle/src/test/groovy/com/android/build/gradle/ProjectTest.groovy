@@ -109,7 +109,6 @@ class ProjectTest extends BaseTest {
         for (File project : projects) {
             String name = project.name
             if (!builtProjects.contains(name)) {
-                System.out.println(">>>> " + name)
                 buildProject(name)
             }
         }
@@ -118,7 +117,6 @@ class ProjectTest extends BaseTest {
     private void buildProject(String name) {
         File project = new File(testDir, name)
         builtProjects.add(name)
-        System.out.println("### " + name)
 
         buildProject(project, "clean", "assemble")
     }
@@ -134,7 +132,6 @@ class ProjectTest extends BaseTest {
                     .useGradleVersion("1.2")
                     .forProjectDirectory(project)
                     .connect()
-//                    .useInstallation(new File("/Users/xav/Desktop/gradle-1.2"))
 
             connection.newBuild().forTasks(tasks).run()
         } finally {

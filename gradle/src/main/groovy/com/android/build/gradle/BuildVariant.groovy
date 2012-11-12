@@ -30,6 +30,7 @@ import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.compile.JavaCompile
 
 /**
@@ -164,6 +165,12 @@ public interface BuildVariant {
      */
     @Nullable
     ZipAlign getZipAlign()
+
+    /**
+     * Returns the Library AAR packaging task.
+     */
+    @Nullable
+    Zip getPackageLibrary()
 
     /**
      * Returns the assemble task.

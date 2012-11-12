@@ -210,6 +210,7 @@ public class LibraryPlugin extends BasePlugin implements Plugin<Project> {
         }
         bundle.from(project.file("$project.buildDir/$DIR_BUNDLES/${variant.dirName}"))
 
+        variant.packageLibTask = bundle
         variant.outputFile = bundle.archivePath
 
         project.artifacts.add(buildTypeData.buildType.name, bundle)

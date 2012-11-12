@@ -6,27 +6,3 @@ buildscript {
         classpath 'com.android.tools.build:gradle:0.3-SNAPSHOT'
     }
 }
-apply plugin: 'android'
-
-android {
-    target "android-15"
-}
-
-// query for all (non-test) variants and inject a new step in the builds
-android.buildVariants.each { variant ->
-    // create a task that "handles" the compile classes
-    // does some processing (or not)
-    // and outputs a jar
-    def jarTask = tasks.add(name: "jar${variant.name.capitalize()}", type: Jar) {
-        from           variant.javaCompile.destinationDir
-        destinationDir file("${buildDir}/jars/${variant.dirName}")
-        baseName       "classes"
-    }
-
-    // this task depends on the compilation task
-    jarTask.dependsOn variant.javaCompile
-
-    // now make the dex task depend on it and use its output
-    variant.dex.dependsOn jarTask
-    variant.dex.sourceFiles = files(jarTask.archivePath).files
-}
