@@ -9,13 +9,34 @@ configurations {
     gradleApi.extendsFrom groovy
 }
 
+sourceSets {
+    integrationTest {
+        groovy.srcDir file('src/integration-test/groovy')
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
 dependencies {
     gradleApi gradleApi()
     groovy localGroovy()
     compile project(':builder')
 
     testCompile 'junit:junit:3.8.1'
+
+    integrationTestCompile sourceSets.main.output
+    integrationTestCompile configurations.testCompile
+    integrationTestCompile sourceSets.test.output
+    integrationTestRuntime configurations.testRuntime
 }
+
+task integrationTest(type: Test, dependsOn: jar) {
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    systemProperties['jar.path'] = jar.archivePath
+}
+
+check.dependsOn integrationTest
+
 
 def getVersion() {
     if (project.has("release")) {
