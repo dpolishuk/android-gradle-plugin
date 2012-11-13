@@ -21,7 +21,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 16
 
-        signingStoreLocation "debug.keystore"
+        signingStoreLocation "$rootDir/debug.keystore"
         signingStorePassword "android"
         signingKeyAlias "androiddebugkey"
         signingKeyPassword "android"

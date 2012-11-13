@@ -26,7 +26,7 @@ android {
     testBuildType "blah"
 
 	defaultConfig {
-		signingStoreLocation "debug.keystore"
+		signingStoreLocation "$rootDir/debug.keystore"
 		signingStorePassword "android"
 		signingKeyAlias "androiddebugkey"
 		signingKeyPassword "android"

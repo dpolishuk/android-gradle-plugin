@@ -18,15 +18,15 @@ android.buildVariants.each { variant ->
     // does some processing (or not)
     // and outputs a jar
     def jarTask = tasks.add(name: "jar${variant.name.capitalize()}", type: Jar) {
-        from           variant.compileTask.destinationDir
+        from           variant.javaCompile.destinationDir
         destinationDir file("${buildDir}/jars/${variant.dirName}")
         baseName       "classes"
     }
 
     // this task depends on the compilation task
-    jarTask.dependsOn variant.compileTask
+    jarTask.dependsOn variant.javaCompile
 
     // now make the dex task depend on it and use its output
-    variant.dexTask.dependsOn jarTask
-    variant.dexTask.sourceFiles = files(jarTask.archivePath).files
+    variant.dex.dependsOn jarTask
+    variant.dex.sourceFiles = files(jarTask.archivePath).files
 }

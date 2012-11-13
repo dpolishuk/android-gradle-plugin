@@ -24,27 +24,60 @@ import java.security.CodeSource
  * Base class for tests.
  */
 public abstract class BaseTest extends TestCase {
+
     /**
-     * Returns the Android source tree root dir.
-     * @return the root dir or null if it couldn't be computed.
+     * Returns the gradle plugin test folder.
      */
-    protected File getTestDir() {
+    protected File getRootDir() {
         CodeSource source = getClass().getProtectionDomain().getCodeSource()
         if (source != null) {
             URL location = source.getLocation();
             try {
                 File dir = new File(location.toURI())
                 assertTrue(dir.getPath(), dir.exists())
-                System.out.println(dir.absolutePath)
 
-                File rootDir = dir.getParentFile().getParentFile().getParentFile().getParentFile()
-
-                return new File(rootDir, "tests")
+                return dir.getParentFile().getParentFile().getParentFile().getParentFile()
             } catch (URISyntaxException e) {
                 fail(e.getLocalizedMessage())
             }
         }
 
         fail("Fail to get tests folder")
+    }
+
+
+    /**
+     * Returns the root folder for the tests projects.
+     */
+    protected File getTestDir() {
+        File rootDir = getRootDir()
+        return new File(rootDir, "tests")
+    }
+
+    /**
+     * Returns the SDK folder as built from the Android source tree.
+     * @return
+     */
+    protected File getSdkDir() {
+        // get the gradle project root dir.
+        File rootDir = getRootDir()
+
+        // go up twice and get the root Android dir.
+        File androidRootDir = rootDir.getParentFile().getParentFile()
+
+        // get the sdk folder
+        File sdk = new File(androidRootDir, "out" + File.separatorChar + "host" + File.separatorChar + "darwin-x86" + File.separatorChar + "sdk")
+
+        File[] files = sdk.listFiles(new FilenameFilter() {
+
+            @Override
+            boolean accept(File file, String s) {
+                return s.startsWith("android-sdk_") && new File(file,s ).isDirectory()
+            }
+        })
+
+        if (files.length == 1) {
+            return files[0]
+        }
     }
 }
