@@ -31,6 +31,7 @@ import com.android.builder.ProductFlavor
 import com.android.builder.VariantConfiguration
 import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.compile.JavaCompile
 
 /**
@@ -54,6 +55,8 @@ public abstract class ApplicationVariant {
     DexTask dexTask
     PackageApplicationTask packageApplicationTask
     ZipAlignTask zipAlignTask
+
+    Zip packageLibTask
 
     File outputFile
 

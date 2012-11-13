@@ -28,6 +28,7 @@ import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.compile.JavaCompile
 
 /**
@@ -135,8 +136,14 @@ public class DefaultBuildVariant implements BuildVariant {
         return variant.packageApplicationTask
     }
 
+    @Override
     ZipAlign getZipAlign() {
         return variant.zipAlignTask
+    }
+
+    @Override
+    Zip getPackageLibrary() {
+        return variant.packageLibTask
     }
 
     @Override

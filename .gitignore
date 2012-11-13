@@ -8,6 +8,7 @@ local.properties
 gradle/build
 tests/*/build
 tests/*/build
+tests/api/*/build
 tests/multiproject/*/build
 tests/tictactoe/*/build
 tests/applibtest/*/build
