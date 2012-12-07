@@ -45,7 +45,6 @@ public abstract class BaseTest extends TestCase {
         fail("Fail to get tests folder")
     }
 
-
     /**
      * Returns the root folder for the tests projects.
      */
