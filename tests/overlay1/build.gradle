@@ -1,0 +1,14 @@
+buildscript {
+    repositories {
+        maven { url '../../repo' }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.3-SNAPSHOT'
+    }
+}
+
+apply plugin: 'android'
+
+android {
+    target "android-15"
+}

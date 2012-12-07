@@ -23,6 +23,9 @@ import com.google.common.collect.Sets
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 
+import javax.imageio.ImageIO
+import java.awt.image.BufferedImage
+
 /**
  */
 class ProjectTest extends BaseTest {
@@ -81,6 +84,24 @@ class ProjectTest extends BaseTest {
         buildProject("multiproject")
     }
 
+    void testOverlay1() {
+        File project = buildProject("overlay1")
+        File drawableOutput = new File(project, "build/res/debug/drawable" )
+
+        checkImageColor(drawableOutput, "no_overlay.png", (int) 0xFF00FF00)
+        checkImageColor(drawableOutput, "type_overlay.png", (int) 0xFF00FF00)
+    }
+
+    void testOverlay2() {
+        File project = buildProject("overlay2")
+        File drawableOutput = new File(project, "build/res/one/debug/drawable" )
+
+        checkImageColor(drawableOutput, "no_overlay.png", (int) 0xFF00FF00)
+        checkImageColor(drawableOutput, "type_overlay.png", (int) 0xFF00FF00)
+        checkImageColor(drawableOutput, "flavor_overlay.png", (int) 0xFF00FF00)
+        checkImageColor(drawableOutput, "type_flavor_overlay.png", (int) 0xFF00FF00)
+    }
+
     void testRepo() {
         // this is not an actual project, but we add it so that the catch-all below doesn't
         // try to build it again
@@ -114,11 +135,13 @@ class ProjectTest extends BaseTest {
         }
     }
 
-    private void buildProject(String name) {
+    private File buildProject(String name) {
         File project = new File(testDir, name)
         builtProjects.add(name)
 
         buildProject(project, "clean", "assemble")
+
+        return project;
     }
 
     private void buildProject(File project, String... tasks) {
@@ -147,5 +170,16 @@ class ProjectTest extends BaseTest {
         localProp.save()
 
         return (File) localProp.file
+    }
+
+    private void checkImageColor(File folder, String fileName, int expectedColor) {
+        File f = new File(folder, fileName)
+        assertTrue("File '" + f.getAbsolutePath() + "' does not exist.", f.isFile())
+
+        BufferedImage image = ImageIO.read(f)
+        int rgb = image.getRGB(0, 0)
+        assertEquals(String.format("Expected: 0x%08X, actual: 0x%08X for file %s",
+                expectedColor, rgb, f),
+                expectedColor, rgb);
     }
 }
