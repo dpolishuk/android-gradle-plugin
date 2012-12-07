@@ -37,6 +37,11 @@ task integrationTest(type: Test, dependsOn: jar) {
 
 check.dependsOn integrationTest
 
+idea {
+    module {
+        testSourceDirs += file('src/integration-test/groovy')
+    }
+}
 
 def getVersion() {
     if (project.has("release")) {
