@@ -784,6 +784,29 @@ public class AndroidBuilder {
         mCmdLineRunner.runCmdLine(command);
     }
 
+    public void compileJni() throws IOException, InterruptedException {
+        // launch dx: create the command line
+        ArrayList<String> command = Lists.newArrayList();
+
+//        @SuppressWarnings("deprecation")
+//        String dxPath = mTarget.getPath(IAndroidTarget.DX);
+        command.add("/opt/android-ndk-r8b/ndk-build");
+
+        command.add("all");
+//
+//        mLogger.info("dx command: %s", command.toString());
+//
+//        mLogger.verbose("Dex class inputs: " + classesList);
+//
+//        command.addAll(classesList);
+//
+//        mLogger.verbose("Dex library inputs: " + libraryList);
+//
+//        command.addAll(libraryList);
+
+        mCmdLineRunner.runCmdLine(command);
+    }
+
     /**
      * Packages the apk.
      *

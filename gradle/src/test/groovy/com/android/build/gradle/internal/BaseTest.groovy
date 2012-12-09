@@ -62,21 +62,22 @@ public abstract class BaseTest extends TestCase {
         File rootDir = getRootDir()
 
         // go up twice and get the root Android dir.
-        File androidRootDir = rootDir.getParentFile().getParentFile()
+//        File androidRootDir = rootDir.getParentFile().getParentFile()
+        return new File("/home/dp/Downloads/android-sdk-linux/")
 
-        // get the sdk folder
-        File sdk = new File(androidRootDir, "out" + File.separatorChar + "host" + File.separatorChar + "darwin-x86" + File.separatorChar + "sdk")
-
-        File[] files = sdk.listFiles(new FilenameFilter() {
-
-            @Override
-            boolean accept(File file, String s) {
-                return s.startsWith("android-sdk_") && new File(file,s ).isDirectory()
-            }
-        })
-
-        if (files.length == 1) {
-            return files[0]
-        }
+//        // get the sdk folder
+//        File sdk = new File(androidRootDir, "out" + File.separatorChar + "host" + File.separatorChar + "darwin-x86" + File.separatorChar + "sdk")
+//
+//        File[] files = sdk.listFiles(new FilenameFilter() {
+//
+//            @Override
+//            boolean accept(File file, String s) {
+//                return s.startsWith("android-sdk_") && new File(file,s ).isDirectory()
+//            }
+//        })
+//
+//        if (files.length == 1) {
+//            return files[0]
+//        }
     }
 }

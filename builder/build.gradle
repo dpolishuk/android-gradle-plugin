@@ -57,7 +57,7 @@ uploadArchives {
             }
 
             repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
+                authentication(userName: 'user', password: 'pass')
             }
 
             // Discard all the dependencies from the POM, as they are packaged in the JAR.
