@@ -31,6 +31,7 @@ import com.android.build.gradle.internal.tasks.AndroidDependencyTask
 import com.android.build.gradle.internal.tasks.DexTask
 import com.android.build.gradle.internal.tasks.GenerateBuildConfigTask
 import com.android.build.gradle.internal.tasks.InstallTask
+import com.android.build.gradle.internal.tasks.JniBuildTask
 import com.android.build.gradle.internal.tasks.PackageApplicationTask
 import com.android.build.gradle.internal.tasks.PrepareDependenciesTask
 import com.android.build.gradle.internal.tasks.PrepareLibraryTask
@@ -94,6 +95,7 @@ public abstract class BasePlugin {
 
     protected Project project
     protected File sdkDir
+    protected File ndkDir
     private DefaultSdkParser androidSdkParser
     private LoggerWrapper loggerWrapper
 
@@ -123,6 +125,7 @@ public abstract class BasePlugin {
             "Assembles all variants of all applications and secondary packages."
 
         findSdk(project)
+        findNdk(project)
 
         uninstallAll = project.tasks.add("uninstallAll")
         uninstallAll.description = "Uninstall all applications."
@@ -221,6 +224,37 @@ public abstract class BasePlugin {
         if (!sdkDir.directory) {
             throw new RuntimeException(
                     "The SDK directory '$sdkDir' specified in local.properties does not exist.")
+        }
+    }
+
+    private void findNdk(Project project) {
+        def rootDir = project.rootDir
+        def localProperties = new File(rootDir, SdkConstants.FN_LOCAL_PROPERTIES)
+        if (localProperties.exists()) {
+            Properties properties = new Properties()
+            localProperties.withInputStream { instr ->
+                properties.load(instr)
+            }
+            def ndkDirProp = properties.getProperty('ndk.dir')
+            if (!ndkDirProp) {
+                throw new RuntimeException("No ndk.dir property defined in local.properties file.")
+            }
+            ndkDir = new File(ndkDirProp)
+        } else {
+            def envVar = System.getenv("ANDROID_NDK_ROOT")
+            if (envVar != null) {
+                ndkDir = new File(envVar)
+            }
+        }
+
+        if (ndkDir == null) {
+            throw new RuntimeException(
+                    "NDK location not found. Define location with ndk.dir in the local.properties file or with an ANDROID_NDK_ROOT environment variable.")
+        }
+
+        if (!ndkDir.directory) {
+            throw new RuntimeException(
+                    "The NDK directory '$ndkDir' specified in local.properties does not exist.")
         }
     }
 
@@ -600,10 +634,14 @@ public abstract class BasePlugin {
         }
         dexTask.dexOptions = extension.dexOptions
 
+        def jniBuild = project.tasks.add("jniBuild${variant.name}", JniBuildTask)
+        jniBuild.ndkDir = ndkDir
+        variant.jniBuildTask = jniBuild
+
         // Add a task to generate application package
         def packageApp = project.tasks.add("package${variant.name}", PackageApplicationTask)
         variant.packageApplicationTask = packageApp
-        packageApp.dependsOn variant.processResourcesTask, dexTask, variant.processJavaResources
+        packageApp.dependsOn variant.jniBuildTask, variant.processResourcesTask, dexTask, variant.processJavaResources
 
         packageApp.plugin = this
         packageApp.variant = variant
@@ -617,6 +655,10 @@ public abstract class BasePlugin {
 
         packageApp.conventionMapping.javaResourceDir = {
             getOptionalDir(variant.processJavaResources.destinationDir)
+        }
+
+        packageApp.conventionMapping.jniDir = {
+            project.file("${project.buildDir}/libs/")
         }
 
         packageApp.conventionMapping.debugSigned = { config.buildType.debugSigned }

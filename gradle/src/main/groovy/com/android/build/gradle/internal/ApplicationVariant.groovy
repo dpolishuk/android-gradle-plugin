@@ -25,7 +25,7 @@ import com.android.build.gradle.internal.tasks.ProcessImagesTask
 import com.android.build.gradle.internal.tasks.ProcessResourcesTask
 import com.android.build.gradle.internal.tasks.RunTestsTask
 import com.android.build.gradle.internal.tasks.ZipAlignTask
-import com.android.build.gradle.tasks.JniCompile
+import com.android.build.gradle.tasks.JniBuild
 import com.android.build.gradle.tasks.ProcessManifest
 import com.android.builder.AndroidBuilder
 import com.android.builder.ProductFlavor
@@ -51,7 +51,7 @@ public abstract class ApplicationVariant {
     GenerateBuildConfigTask generateBuildConfigTask
 
     JavaCompile javaCompileTask
-    JniCompile jniCompileTask;
+    JniBuild jniBuildTask;
 
     Copy processJavaResources
 

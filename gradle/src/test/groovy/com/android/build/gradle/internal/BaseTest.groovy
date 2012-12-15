@@ -49,8 +49,7 @@ public abstract class BaseTest extends TestCase {
      * Returns the root folder for the tests projects.
      */
     protected File getTestDir() {
-        File rootDir = getRootDir()
-        return new File(rootDir, "tests")
+        return new File("/home/dp/work/android-tools-build/tests")
     }
 
     /**

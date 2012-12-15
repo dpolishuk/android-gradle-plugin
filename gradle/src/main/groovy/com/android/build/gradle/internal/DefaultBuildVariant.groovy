@@ -19,13 +19,12 @@ import com.android.build.gradle.BuildVariant
 import com.android.build.gradle.tasks.AidlCompile
 import com.android.build.gradle.tasks.Dex
 import com.android.build.gradle.tasks.GenerateBuildConfig
-import com.android.build.gradle.tasks.JniCompile
 import com.android.build.gradle.tasks.PackageApplication
 import com.android.build.gradle.tasks.ProcessImages
 import com.android.build.gradle.tasks.ProcessManifest
 import com.android.build.gradle.tasks.ProcessResources
 import com.android.build.gradle.tasks.ZipAlign
-import com.android.build.gradle.tasks.JniCompile
+import com.android.build.gradle.tasks.JniBuild
 import com.android.builder.BuildType
 import com.android.builder.ProductFlavor
 import org.gradle.api.Task
@@ -124,8 +123,8 @@ public class DefaultBuildVariant implements BuildVariant {
     }
 
     @Override
-    JniCompile getJniCompile() {
-        return variant.jniCompileTask
+    JniBuild getJniCompile() {
+        return variant.jniBuildTask
     }
 
     @Override

@@ -49,6 +49,8 @@ public class PackageApplicationTask extends PackageApplication {
     void generate() {
 
         try {
+            getLogger().info("JNI PATH: " + getJniDir()?.absolutePath)
+
             getBuilder().packageApk(
                     getResourceFile().absolutePath,
                     getDexFile().absolutePath,

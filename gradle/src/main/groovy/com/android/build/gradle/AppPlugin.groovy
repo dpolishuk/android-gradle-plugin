@@ -414,16 +414,6 @@ class AppPlugin extends com.android.build.gradle.BasePlugin implements org.gradl
 
         def variant = new ProductionAppVariant(variantConfig)
 
-        try {
-            throw new Exception("111")
-        } catch (Exception e) {
-            StringWriter writer = new StringWriter()
-            PrintWriter out = new PrintWriter(writer)
-            e.printStackTrace(out)
-            getLogger().warning(writer.toString())
-        }
-
-
         createPrepareDependenciesTask(variant, configDependencies)
 
         // Add a task to process the manifest(s)

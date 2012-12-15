@@ -21,7 +21,7 @@ import com.android.annotations.Nullable
 import com.android.build.gradle.tasks.AidlCompile
 import com.android.build.gradle.tasks.Dex
 import com.android.build.gradle.tasks.GenerateBuildConfig
-import com.android.build.gradle.tasks.JniCompile
+import com.android.build.gradle.tasks.JniBuild
 import com.android.build.gradle.tasks.PackageApplication
 import com.android.build.gradle.tasks.ProcessImages
 import com.android.build.gradle.tasks.ProcessManifest
@@ -144,7 +144,7 @@ public interface BuildVariant {
     JavaCompile getJavaCompile()
 
     @Nullable
-    JniCompile getJniCompile()
+    JniBuild getJniCompile()
 
     /**
      * Returns the Java resource processing task.
