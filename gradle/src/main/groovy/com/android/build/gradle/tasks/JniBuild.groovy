@@ -18,6 +18,8 @@ class JniBuild extends BaseTask {
         project.exec {
             executable = new File(ndkDir, "ndk-build")
             args 'all'
+            args 'NDK_APP_OUT=' + project.buildDir
+            args 'NDK_APP_PROJECT_PATH=' + project.buildDir
         }
     }
 }
