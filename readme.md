@@ -1,3 +1,5 @@
+I added simple NDK support. To use it just specify ndk.dir in local.properties of your project.
+
 ## What is this?
 
 A prototype Gradle plugin to build Android applications. This is intended to be used to explore how such a plugin
